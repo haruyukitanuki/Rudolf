@@ -38,7 +38,7 @@ There is no runtime validation, transport or logic.
 
 This repository only contains the structure of wire format. Please refer to [Rudolf Adapter Repository](https://github.com/haruyukitanuki/Rudolf.Adapters).
 
-Otherwise, you can always write your own if none is present!
+Otherwise, you can always write your own if none is present for your use case!
 
 ## Specification
 
