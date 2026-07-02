@@ -26,10 +26,10 @@ I decided to deprecate OpenTetsu for that reason and create another format, call
 
 ## Packages
 
-| Language   | Package                           | Location                            |
+| Language   | Package                           | Installation                        |
 | ---------- | --------------------------------- | ----------------------------------- |
-| TypeScript | [`@tanuden/rudolf`](./typescript) | `npm install @tanuden/rudolf`       |
-| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | `dotnet add package Tanuden.Rudolf` |
+| TypeScript | [`@tanuden/rudolf`](./typescript) | Coming soon       | <!-- npm install @tanuden/rudolf -->
+| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | Coming soon | <!-- dotnet add package Tanuden.Rudolf -->
 
 Both packages contain only the type definitions.
 There is no runtime validation, transport or logic.
