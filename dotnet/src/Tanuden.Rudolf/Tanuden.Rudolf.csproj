@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Tanuden.Rudolf</PackageId>
+    <Version>0.1.0</Version>
+    <Description>Type definitions for the RUDOLF (Railway Unified Display Object Link Format) wire schema.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>rudolf;trainsim;bve;traincrew;tims;mon;japanese-rail</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DocumentationFile />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\..\..\LICENSE" Pack="true" PackagePath="\" Link="LICENSE"/>
+  </ItemGroup>
+
+</Project>
