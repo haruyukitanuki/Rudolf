@@ -1,6 +1,6 @@
 # `@tanuden/rudolf`
 
-TypeScript type definitions for the **Rudolf** (Railway Unified Display Object Link Format) wire schema.
+TypeScript type definitions for the **Rudolf (Railway Unified Display Object Link Format)** wire schema.
 
 ## Install
 
@@ -26,7 +26,7 @@ This package contains **only** type definitions and small factory/constant helpe
 
 ## Specification
 
-See [the RUDOLF spec](https://github.com/tanuden/rudolf/blob/main/spec/rudolf-spec.md) for the full wire format.
+See [Rudolf spec](https://github.com/tanuden/rudolf/blob/main/spec/rudolf-spec.md) for the full wire format.
 
 ## License
 
