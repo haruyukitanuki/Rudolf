@@ -8,5 +8,4 @@ export const PantographDirection = {
   Both: 'Both'
 } as const satisfies Record<string, string>;
 
-export type PantographDirection =
-  (typeof PantographDirection)[keyof typeof PantographDirection];
+export type PantographDirection = (typeof PantographDirection)[keyof typeof PantographDirection];
