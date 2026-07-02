@@ -26,7 +26,7 @@ This package contains **only** type definitions and small factory/constant helpe
 
 ## Specification
 
-See [Rudolf spec](https://github.com/tanuden/rudolf/blob/main/spec/rudolf-spec.md) for the full wire format.
+See [Rudolf spec](https://github.com/haruyukitanuki/rudolf/blob/main/spec/rudolf-spec.md) for the full wire format.
 
 ## License
 
