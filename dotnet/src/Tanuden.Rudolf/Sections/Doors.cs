@@ -20,7 +20,8 @@ public class CarDoorState
 
   /// <summary>
   ///   Which side(s) are open. See <see cref="Tanuden.Rudolf.Enums.SideOpened" /> for the int convention.
-  ///   <c>null</c> if doors opened but side unknown
+  ///   <c>3</c> (<see cref="Tanuden.Rudolf.Enums.SideOpened.OpenSideUnknown" />) if doors open but side unknown;
+  ///   <c>null</c> only if no value is available (spec §3.1).
   /// </summary>
   public int? SideOpened;
 }

@@ -14,7 +14,7 @@ Differences between schemas:
 - Static per-car data (`cars[].model`, `cars[].properties.{hasMotor,...}`) → `SimulatorProfile.vehicle.cars[]`
 - `Transponder.speedlimit` (lowercase typo) → `signals.list[].transponders[].speedLimit` (correct camelCase)
 - `Station.doorDirection: 'LeftSide' | 'RightSide'` (string enum) → `stations.list[].doorSide: int` (-1=Left, 0=None/Unknown, 1=Right, 2=Both)
-- `CarState.isDoorClosed: bool` → `doors.perCar[].sideOpened: int | null` (same -1/0/1/2 convention as `doorSide`; `0` means closed, `null` means open-side-unknown). Per-car door state moved entirely out of `cars[]`.
+- `CarState.isDoorClosed: bool` → `doors.perCar[].sideOpened: int | null` (same -1/0/1/2 convention as `doorSide`, plus `3` = open-side-unknown; `0` means closed, `3` means open-side-unknown, `null` means no value available). Per-car door state moved entirely out of `cars[]`.
 - `nextStation: NextStation` (full duplicated record) → `stations.nextIndex` (consumer looks up via `stations.list[nextIndex]`). `currentStation` similarly removed in favor of `stations.currentIndex`.
 - `Station.distance` → `stations.list[].fromStartDistance` (renamed for clarity; new sibling `stations.list[].absoluteDistance` for kilometer-post). `NextStation.distanceFromTrain` becomes `list[nextIndex].fromStartDistance - physics.fromStartDistance` at the consumer.
 - `diagram.{remainingDistance, direction='Both'}` → removed (`remainingDistance` derivable; `direction` typed as `LineDirection`: `'Left' | 'Right' | null` where `Left` = Upbound and `Right` = Downbound).

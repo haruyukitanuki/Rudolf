@@ -355,24 +355,25 @@ Note: `reverser` is an int with convention `-1 = Reverse, 0 = Neutral, 1 = Forwa
     { "carNo": 1, "sideOpened": 0 },
     { "carNo": 2, "sideOpened": 0 },
     { "carNo": 3, "sideOpened": 1 }, // right side open on this car
-    { "carNo": 4, "sideOpened": 0 },
+    { "carNo": 4, "sideOpened": 3 }, // open, side unknown (e.g. TRAIN CREW)
     // ...
   ],
 }
 ```
 
-`sideOpened` is `int | null`. Convention mirrors `stations.list[].doorSide` but with an explicit `null` for "unknown which side":
+`sideOpened` is `int | null`. Convention mirrors `stations.list[].doorSide` but adds a positive value (`3`) for "open, side unknown," and reserves `null` for the spec-wide "no value" meaning (§3.1):
 
 - `-1` = Left side open
-- `0` = Closed (all doors on this car are shut: known closed state)/None/Unknown
+- `0` = Closed (all doors on this car are shut: known closed state)
 - `1` = Right side open
 - `2` = Both sides open
-- `null` = Open, side unknown (sim can't distinguish L/R)
+- `3` = Open, side unknown (sim knows doors are open but can't distinguish L/R)
+- `null` = No per-car door value available (spec §3.1)
 
 Notes:
 
 - `allClosed` (train-level bool) stays first-class: it's natively provided by both sims (`TC TrainState.AllClose`, `BVE DoorSet.AreAllClosed`) and is the load-bearing "safe to proceed?" indicator for the HMI.
-- TC has only one bool per car (no L/R distinction): TC adapter emits `0` when closed and `null` when open (since the side cannot be determined natively). BVE adapter emits real per-side data (`-1`/`1`/`2`).
+- TC has only one bool per car (no L/R distinction): TC adapter emits `0` when closed and `3` (open, side unknown) when open (since the side cannot be determined natively). BVE adapter emits real per-side data (`-1`/`1`/`2`).
 
 ### 5.7 `lamps`
 

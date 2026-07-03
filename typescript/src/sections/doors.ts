@@ -4,7 +4,8 @@ export interface CarDoorState {
   carNo: number;
   /**
    * Which side(s) are open. See `SideOpened` for the int convention.
-   * `null` if doors opened but side unknown.
+   * `3` (`SideOpened.OpenSideUnknown`) if doors open but side unknown;
+   * `null` only if no value is available (spec §3.1).
    */
   sideOpened: number | null;
 }
