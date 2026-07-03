@@ -42,7 +42,7 @@ camelCase on the wire. C# producers convert from PascalCase via `CamelCaseProper
 
 #### String encoding
 
-All string values are emitted as literal UTF-8 — **no `\uXXXX` escape sequences**. Japanese text (station names, route names, vehicle names) MUST appear as-is on the wire (e.g. `"立会川"`, not `"立会川"`). Producers configure their serializer's encoder accordingly (e.g. .NET `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`); the documents are never embedded raw in HTML, so HTML-escaping the output is unnecessary. Consumers MUST accept both forms regardless (`\u`-escaped JSON decodes to the same string).
+All string values are emitted as literal UTF-8 — **no `\uXXXX` escape sequences**. Japanese text (station names, route names, vehicle names) MUST appear as-is on the wire (e.g. `"立会川"`, not `"\u7ACB\u4F1A\u5DDD"`). Producers configure their serializer's encoder accordingly (e.g. .NET `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`); the documents are never embedded raw in HTML, so HTML-escaping the output is unnecessary. Consumers MUST accept both forms regardless (`\u`-escaped JSON decodes to the same string).
 
 #### Units
 
@@ -678,6 +678,7 @@ Used with `SetButton`. Vocabulary derived from TRAIN CREW SDK with cleaner namin
 Rudolf defines the document shapes but is **transport-agnostic**.
 
 Recommended transports:
+
 - HTTP
 - WebSocket/Socket.IO
 - Shared memory (Windows)
