@@ -10,11 +10,21 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <AssemblyTitle>Railway Unified Display Object Link Format (Rudolf)</AssemblyTitle>
+
+    <WebPage>https://github.com/haruyukitanuki/Rudolf</WebPage>
+
+    <Company>Tanukigawa Railway (狸河電鉄)</Company>
+    <Product>Rudolf</Product>
+    <Version>1.0.0</Version>
+
+    <Copyright>© 2026 Tanukigawa Railway (Haruyuki Tanukiji). Apache-2.0.</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DocumentationFile />
+    <DebugType>none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
