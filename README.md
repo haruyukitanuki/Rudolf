@@ -28,7 +28,7 @@ I decided to deprecate OpenTetsu for that reason and create another format, call
 
 | Language   | Package                           | Installation                        |
 | ---------- | --------------------------------- | ----------------------------------- |
-| TypeScript | [`@tanuden/rudolf`](./typescript) | Coming soon       | <!-- npm install @tanuden/rudolf -->
+| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | Coming soon       | <!-- npm install @tanuden/rudolf -->
 | C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | Coming soon | <!-- dotnet add package Tanuden.Rudolf -->
 
 Both packages contain only the type definitions.
