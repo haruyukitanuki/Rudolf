@@ -38,7 +38,7 @@ public class AtsRichState
   /// <summary>Human-readable display labels (e.g. <c>"P接近"</c>).</summary>
   public string[] Name = Array.Empty<string>();
 
-  /// <summary>0 = info, 2 = warning, 3 = critical.</summary>
+  /// <summary>0 = info, 1 = warning, 2 = critical; values above 2 are sim/vehicle-specific custom severities.</summary>
   public int[] Severity = Array.Empty<int>();
 
   /// <summary>Machine-readable event category for each state (parallel with <see cref="Code" />).</summary>

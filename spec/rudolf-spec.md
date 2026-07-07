@@ -160,7 +160,17 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "length": -1
       }
     ],
-    "leadCar": 4
+    "leadCar": 4,
+    "capabilities": {
+      "masconType": "OneHandle",
+      "masconBrakeType": "Notched",
+      "powerNotches": 5,
+      "brakeNotches": 8,
+      "ebNotch": -8,
+      "holdingBrakeNotches": 0,
+      "cpStartPressure": 750,
+      "cpStopPressure": 880
+    }
   },
   "capabilities": {
     "physics.gradient": true,
@@ -184,6 +194,18 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
   }
 }
 ```
+
+### 4.1 `vehicle.capabilities`
+
+Static control-hardware description for the vehicle — distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
+
+- `masconType` — master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
+- `masconBrakeType` — brake-handle behaviour: `'Notched' | 'LapCapable' | null` (MasconBrakeType).
+- `powerNotches` — number of power notches (e.g. P1..P5 = 5); `null` when unknown.
+- `brakeNotches` — number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
+- `ebNotch` — signed notch value representing EB in the SetNotch encoding (e.g. `-8`); `null` when unknown.
+- `holdingBrakeNotches` — number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
+- `cpStartPressure` / `cpStopPressure` — air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
 ## 5. OutputDataFrame
 
@@ -268,7 +290,7 @@ Permissive: adapters fill what the sim natively knows. Heuristic derivation is N
   "trainNumber": "1234A", // string | null : TC diaName; BVE: parsed from ScenarioInfo.Title
   "boundFor": "館浜", // string | null : TC native; BVE: title-parse if possible
   "serviceType": "普通", // string | null : TC native; BVE: title-keyword match
-  "direction": null, // 'Left' | 'Right' | null: LineDirection: Left=Upbound, Right=Downbound
+  "direction": null, // 'Upbound' | 'Downbound' | null: LineDirection
   "runNumber": null, // string | null : sim-native only; not derived
 }
 ```
@@ -407,13 +429,13 @@ Notes:
   "class": "ATS-P", // string | null : TC ATS_Class; BVE: from per-family-profile (v1: usually null)
   "speed": -1, // number | null : current ATS speed limit. -1 = free (unlimited); null = blank display; otherwise km/h
   "state": "P接近", // string | null : TC ATS_State (rich); BVE v1: 'EB' or null
-  "richState": null, // { code: string[], name: string[], severity: (0|1|2)[], type: AtsRichStateType[] } | null : parallel arrays, index N = Nth active state
+  "richState": null, // { code: string[], name: string[], severity: number[], type: AtsRichStateType[] } | null : parallel arrays, index N = Nth active state
 }
 ```
 
 `ats.speed` convention: `-1` = free (unlimited/ATS not asserting any cap), `null` = display blank (no value to show), any other number = the asserted speed cap in km/h. This replaces TC's "F"-mapped-to-magic-`300` hack and the previous `'free'` string sentinel: all values are now numeric (or null), so consumers don't need union-type handling.
 
-**`richState` structure:** When non-null, `richState` carries four parallel arrays, `code`, `name`, `severity`, and `type`, where index N across all four describes the Nth simultaneously active ATS state. `code` is the sim's raw free-form string (e.g. `"P_APPROACH"`); `name` is the display label (e.g. `"P接近"`); `severity` is `0` (info) / `1` (warning) / `2` (critical); `type` is the machine-readable category from the vocabulary below.
+**`richState` structure:** When non-null, `richState` carries four parallel arrays, `code`, `name`, `severity`, and `type`, where index N across all four describes the Nth simultaneously active ATS state. `code` is the sim's raw free-form string (e.g. `"P_APPROACH"`); `name` is the display label (e.g. `"P接近"`); `severity` is `0` (info) / `1` (warning) / `2` (critical), with values above `2` reserved for sim/vehicle-specific custom severities; `type` is the machine-readable category from the vocabulary below.
 
 **`AtsRichStateType` vocabulary:**
 
@@ -763,7 +785,17 @@ Recommended transports:
         "length": -1
       }
     ],
-    "leadCar": 4
+    "leadCar": 4,
+    "capabilities": {
+      "masconType": "OneHandle",
+      "masconBrakeType": "Notched",
+      "powerNotches": 5,
+      "brakeNotches": 8,
+      "ebNotch": -8,
+      "holdingBrakeNotches": 0,
+      "cpStartPressure": 750,
+      "cpStopPressure": 880
+    }
   },
   "capabilities": {
     "physics.gradient": true,

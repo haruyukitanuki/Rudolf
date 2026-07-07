@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf;
 
 /// <summary>
 ///   Per-frame snapshot of dynamic train and cab state emitted by a simulator (sim → consumer).
-///   Sent at ~4 Hz/every sim tick. Pair with a <see cref="SimulatorProfile" /> sharing the same
+///   Sent per-frame at the producer's cadence (~4 Hz typical; producers may emit faster). Pair with a <see cref="SimulatorProfile" /> sharing the same
 ///   <see cref="ScenarioId" /> for capability flags and vocabulary overrides.
 /// </summary>
 public class OutputDataFrame

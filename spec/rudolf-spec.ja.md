@@ -160,7 +160,17 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "length": -1
       }
     ],
-    "leadCar": 4
+    "leadCar": 4,
+    "capabilities": {
+      "masconType": "OneHandle",
+      "masconBrakeType": "Notched",
+      "powerNotches": 5,
+      "brakeNotches": 8,
+      "ebNotch": -8,
+      "holdingBrakeNotches": 0,
+      "cpStartPressure": 750,
+      "cpStopPressure": 880
+    }
   },
   "capabilities": {
     "physics.gradient": true,
@@ -184,6 +194,18 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   }
 }
 ```
+
+### 4.1 `vehicle.capabilities`
+
+車両の静的な制御機器情報です。トップレベルの`capabilities`マップ（アダプターがどの`OutputDataFrame`フィールドを実際に生成するかを宣言するもの）とは別物です。すべてのフィールドはnull許容で、`null`は「シミュレーターが現時点で値を持たない」ことを意味します。
+
+- `masconType`：マスコンのハンドル方式。`'OneHandle' | 'TwoHandle' | null`（MasconType）。
+- `masconBrakeType`：ブレーキハンドルの挙動。`'Notched' | 'LapCapable' | null`（MasconBrakeType）。
+- `powerNotches`：力行ノッチ数（例：P1〜P5なら5）。不明な場合は`null`。
+- `brakeNotches`：常用ブレーキノッチ数（例：B1〜B7なら7）。不明な場合は`null`。
+- `ebNotch`：SetNotchエンコーディングにおいてEBを表す符号付きノッチ値（例：`-8`）。不明な場合は`null`。
+- `holdingBrakeNotches`：抑速ブレーキのノッチ数。備えていない場合は`0`、不明な場合は`null`。
+- `cpStartPressure`／`cpStopPressure`：空気圧縮機の始動／停止圧力（kPa）。不明な場合は`null`。
 
 ## 5. OutputDataFrame
 
@@ -268,7 +290,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "trainNumber": "1234A", // string | null：TCのdiaName／BVE：ScenarioInfo.Titleから解析
   "boundFor": "館浜", // string | null：TCはネイティブ／BVE：可能ならタイトルから解析
   "serviceType": "普通", // string | null：TCはネイティブ／BVE：タイトルのキーワード一致
-  "direction": null, // 'Left' | 'Right' | null：LineDirection。Left=上り、Right=下り
+  "direction": null, // 'Upbound' | 'Downbound' | null：LineDirection。Upbound=上り、Downbound=下り
   "runNumber": null, // string | null：シミュレーターネイティブのみ。導出はしない
 }
 ```
@@ -407,13 +429,13 @@ const distanceToNext =
   "class": "ATS-P", // string | null：TCのATS_Class／BVE：ファミリーごとのプロファイルから（v1：通常はnull）
   "speed": -1, // number | null：現在のATS速度制限。-1 = フリー（無制限）／null = 表示なし／それ以外はkm/h
   "state": "P接近", // string | null：TCのATS_State（リッチ）／BVE v1：'EB' またはnull
-  "richState": null, // { code: string[], name: string[], severity: (0|1|2)[], type: AtsRichStateType[] } | null：並列配列。インデックスN = N番目の有効な状態
+  "richState": null, // { code: string[], name: string[], severity: number[], type: AtsRichStateType[] } | null：並列配列。インデックスN = N番目の有効な状態
 }
 ```
 
 `ats.speed`の規約：`-1` = フリー（無制限／ATSが上限を課していない）、`null` = 表示ブランク（表示する値がない）、それ以外の数値 = 課されている速度上限（km/h）。これは、TCの「F」をマジックナンバー`300`に対応させるハックや、以前の`'free'`という文字列センチネルを置き換えるものです。すべての値が数値（またはnull）になったため、コンシューマーはユニオン型を扱う必要がありません。
 
-**`richState`の構造：** 非nullのとき、`richState`は`code`、`name`、`severity`、`type`という4つの並列配列を持ちます。4つすべてにわたるインデックスNは、同時に有効なN番目のATS状態を表します。`code`はシミュレーターの生の自由形式文字列（例：`"P_APPROACH"`）、`name`は表示ラベル（例：`"P接近"`）、`severity`は`0`（情報）／`1`（警告）／`2`（重大）、`type`は下記の語彙による機械可読なカテゴリーです。
+**`richState`の構造：** 非nullのとき、`richState`は`code`、`name`、`severity`、`type`という4つの並列配列を持ちます。4つすべてにわたるインデックスNは、同時に有効なN番目のATS状態を表します。`code`はシミュレーターの生の自由形式文字列（例：`"P_APPROACH"`）、`name`は表示ラベル（例：`"P接近"`）、`severity`は`0`（情報）／`1`（警告）／`2`（重大）で、`2`を超える値はシミュレーター・車両固有のカスタム重大度に予約されています。`type`は下記の語彙による機械可読なカテゴリーです。
 
 **`AtsRichStateType`の語彙：**
 
@@ -763,7 +785,17 @@ Rudolfはドキュメントの形状を定義しますが、**転送方式には
         "length": -1
       }
     ],
-    "leadCar": 4
+    "leadCar": 4,
+    "capabilities": {
+      "masconType": "OneHandle",
+      "masconBrakeType": "Notched",
+      "powerNotches": 5,
+      "brakeNotches": 8,
+      "ebNotch": -8,
+      "holdingBrakeNotches": 0,
+      "cpStartPressure": 750,
+      "cpStopPressure": 880
+    }
   },
   "capabilities": {
     "physics.gradient": true,

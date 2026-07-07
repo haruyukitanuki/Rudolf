@@ -36,6 +36,12 @@ public class VehicleInfo
   ///   <see cref="VehicleInfo.Cars" />.
   /// </summary>
   public int LeadCar = 0;
+
+  /// <summary>
+  ///   Static control-hardware description (mascon layout, notch counts, holding brake, compressor
+  ///   pressures). Inner fields are null when the sim has no value for them.
+  /// </summary>
+  public VehicleCapabilities Capabilities = new();
 }
 
 /// <summary>Static composition for a single car (cabs, motors, pantograph layout).</summary>

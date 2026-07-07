@@ -96,7 +96,7 @@ public class CommandJsonConverter : JsonConverter<Command>
       case SetDeadmanCommand c:
         writer.WriteStartObject();
         writer.WriteString("kind", "SetDeadman");
-        writer.WritePropertyName("channel");
+        writer.WritePropertyName("method");
         JsonSerializer.Serialize(writer, c.Method, options);
         writer.WriteBoolean("holding", c.Holding);
         writer.WriteEndObject();

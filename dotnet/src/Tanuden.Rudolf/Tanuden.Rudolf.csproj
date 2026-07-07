@@ -23,8 +23,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DocumentationFile />
-    <DebugType>none</DebugType>
+    <DocumentationFile>bin\Release\Tanuden.Rudolf.xml</DocumentationFile>
+    <DebugType>embedded</DebugType>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DocumentationFile>bin\Debug\Tanuden.Rudolf.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
