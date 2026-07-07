@@ -26,19 +26,23 @@ I decided to deprecate OpenTetsu for that reason and create another format, call
 
 ## Packages
 
-| Language   | Package                           | Installation                        |
-| ---------- | --------------------------------- | ----------------------------------- |
-| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | Coming soon       | <!-- npm install @tanuden/rudolf -->
-| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | Coming soon | <!-- dotnet add package Tanuden.Rudolf -->
+| Language   | Package                                                          | Installation                |
+| ---------- | ---------------------------------------------------------------- | --------------------------- |
+| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf` |
+| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)                                     | Coming soon                 | <!-- dotnet add package Tanuden.Rudolf -->
+
 
 Both packages contain only the type definitions.
 There is no runtime validation, transport or logic.
 
 ## Adapter Packages
 
-This repository only contains the structure of wire format. Please refer to [Rudolf Adapter Repository](https://github.com/haruyukitanuki/Rudolf.Adapters).
+This repository only contains the structure of wire format. You will need an adapter to fill up the data in Rudolf format for you.
 
-Otherwise, you can always write your own if none is present for your use case!
+Currently available adapters:
+- [Rudolf.Adapters.TrainCrew](https://github.com/haruyukitanuki/Rudolf.Adapters.TrainCrew)
+
+If one does not exist for the simulator you are working on, you can always write your own if none is present!
 
 ## Specification
 
@@ -51,13 +55,13 @@ For migrations, please refer to [`docs/opentetsu-rudolf-migration.md`](./docs/op
 It was supposed to be RUDF but I kept reading it as _Rudolf_ when it gets katakana'ifed.
 And yes, Uma. _Symboli Rudolf_.
 
-## 💾 Open Source @ Tanuden
+## Open Source @ Tanuden
 
 Rudolf is Open Source Software (OSS), licensed under Apache 2.0. You may freely distribute, use and modify code provided to you in repository in accordance with it.
 
 A copy of the license can be found at the root of the repository [here](https://github.com/haruyukitanuki/rudolf/blob/main/LICENSE.md).
 
-## 💝 Support
+## Support
 
 [Tanuden Discord Server](https://go.tanu.ch/tanuden-discord) | [Twitter](https://go.tanu.ch/twitter) | [YouTube](https://go.tanu.ch/tanutube)
 

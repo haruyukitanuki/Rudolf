@@ -28,7 +28,7 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 
 | 言語       | パッケージ                        | インストール                        |
 | ---------- | --------------------------------- | ----------------------------------- |
-| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | 近日公開       | <!-- npm install @tanuden/rudolf -->
+| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf` |
 | C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | 近日公開 | <!-- dotnet add package Tanuden.Rudolf -->
 
 どちらのパッケージにも型定義のみが含まれています。
@@ -36,7 +36,10 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 
 ## アダプターパッケージ
 
-このリポジトリにはワイヤーフォーマットの構造のみが含まれています。実装については[Rudolfアダプターリポジトリ](https://github.com/haruyukitanuki/Rudolf.Adapters) を参照してください。
+このリポジトリにはワイヤーフォーマットの構造のみが含まれています。Rudolf形式でデータを投入するには、アダプターが必要です。
+
+現在利用可能なアダプター：
+- [Rudolf.Adapters.TrainCrew](https://github.com/haruyukitanuki/Rudolf.Adapters.TrainCrew)
 
 もし目的に合うアダプターがなければ、いつでも自分で実装できます！
 
@@ -51,13 +54,13 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 本当はRUDFにするつもりだったのですが、カタカナにするとどうしても「ルドルフ」と読んでしまうんですよね。
 そう、ウマ娘です。「シンボリルドルフ」。
 
-## 💾 オープンソース @ タヌ電
+## オープンソース @ タヌ電
 
 RudolfはApache 2.0ライセンスのオープンソースソフトウェア（OSS）です。ライセンスに従う限り、このリポジトリで提供されるコードを自由に配布・利用・改変できます。
 
 ライセンスの全文はリポジトリのルート（[こちら](https://github.com/haruyukitanuki/rudolf/blob/main/LICENSE.md)）にあります。
 
-## 💝 サポート
+## サポート
 
 [タヌ電Discordサーバー](https://go.tanu.ch/tanuden-discord) | [Twitter](https://go.tanu.ch/twitter) | [YouTube](https://go.tanu.ch/tanutube)
 
