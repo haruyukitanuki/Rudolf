@@ -7,14 +7,14 @@ namespace Tanuden.Rudolf.Profile;
 public class VehicleInfo
 {
   /// <summary>
-  ///   Human display name for the formation (e.g. <c>"225系0番台"</c>). Please ensure the correct kanji is used
-  ///   for kei and bandai.
+  ///   Human display name for the model (e.g. <c>"225系0番台"</c>). Please ensure the correct kanji is used
+  ///   for kei and bandai. If there is more than one type of model, please delimit it with a <c>+</c> (e.g. <c>"E231系1000番台+E233系3000番台"</c>).
   /// </summary>
   public string Name = string.Empty;
 
   /// <summary>
-  ///   Vehicle/formation model identifier (e.g. <c>"E233-1000"</c>). For maximum interoperability, it should
-  ///   be in format of <c>series-subseries</c>; Avoid using Japanese characters.
+  ///   Vehicle model identifier (e.g. <c>"225-0"</c>). For maximum interoperability, it should
+  ///   be in format of <c>series-subseries</c>; Romanise all kana in TitleCase. If there is more than one type of model, please delimit it with a <c>+</c> (e.g. <c>"E231-1000+E233-3000"</c>).
   /// </summary>
   public string Model = string.Empty;
 
