@@ -207,6 +207,12 @@ Static control-hardware description for the vehicle — distinct from the top-le
 - `holdingBrakeNotches` — number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
 - `cpStartPressure` / `cpStopPressure` — air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
+### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
+
+- `name` — human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
+- `model` — vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it should be in `series-subseries` format; romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
+- `operator` — operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). For maximum compatibility, refer to Japanese Wikipedia for the full operator name (not group) and TitleCase it.
+
 ## 5. OutputDataFrame
 
 Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core section key is structurally present (even when empty); fields within sections may be null.

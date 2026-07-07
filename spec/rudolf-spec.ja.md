@@ -207,6 +207,12 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 - `holdingBrakeNotches`：抑速ブレーキのノッチ数。備えていない場合は`0`、不明な場合は`null`。
 - `cpStartPressure`／`cpStopPressure`：空気圧縮機の始動／停止圧力（kPa）。不明な場合は`null`。
 
+### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
+
+- `name`：車両モデルの表示名（例：`"225系0番台"`）。系や番台の漢字が正しいことを確認してください。編成に複数のモデルが含まれる場合は、`+`で区切ってください（例：`"E231系1000番台+E233系3000番台"`）。
+- `model`：車両モデルの識別子（例：`"225-0"`）。相互運用性を最大化するため、`series-subseries`形式にしてください。かなはすべてTitleCaseでローマ字化します。編成に複数のモデルが含まれる場合は、`+`で区切ってください（例：`"E231-1000+E233-3000"`）。
+- `operator`：運営会社（例：`"EastJapanRailwayCompany"`、`"TokyuCorporation"`）。互換性を最大化するため、（グループ名ではなく）正式な事業者名を日本語版Wikipediaで確認し、TitleCaseにしてください。
+
 ## 5. OutputDataFrame
 
 フレームごとに送信されます（通常4 Hz程度。シミュレーターはこれより速くも遅くも出力できます）。コアとなる各セクションのキーは、構造上つねに存在します（空の場合でも）。セクション内のフィールドはnullになることがあります。
