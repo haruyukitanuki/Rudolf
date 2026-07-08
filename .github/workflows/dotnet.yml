@@ -11,6 +11,9 @@ on:
       - "dotnet/**"
       - ".github/workflows/dotnet.yml"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
