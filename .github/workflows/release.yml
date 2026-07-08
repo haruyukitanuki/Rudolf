@@ -42,6 +42,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
+          draft: true
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
