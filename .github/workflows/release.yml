@@ -47,4 +47,3 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             dotnet/artifacts/*.nupkg
-            dotnet/artifacts/*.snupkg

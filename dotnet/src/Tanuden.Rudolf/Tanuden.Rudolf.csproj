@@ -6,8 +6,9 @@
     <Description>Type definitions for the RUDOLF (Railway Unified Display Object Link Format) wire schema.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>rudolf;trainsim;bve;traincrew;tims;mon;japanese-rail</PackageTags>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Symbols are embedded in the DLL (DebugType=embedded below), not shipped as a separate .snupkg:
+         the package is distributed as a GitHub release asset, not to nuget.org, so there is no symbol
+         server for a .snupkg to feed. -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
