@@ -29,7 +29,7 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 | 言語       | パッケージ                        | インストール                        |
 | ---------- | --------------------------------- | ----------------------------------- |
 | TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf` |
-| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | 近日公開 | <!-- dotnet add package Tanuden.Rudolf -->
+| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | リリースの[.nupkg](https://github.com/haruyukitanuki/Rudolf/releases)を参照 |
 
 どちらのパッケージにも型定義のみが含まれています。
 実行時のバリデーションやトランスポート、ロジックは含まれていません。
