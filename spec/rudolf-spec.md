@@ -200,7 +200,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 Static control-hardware description for the vehicle — distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
 
 - `masconType` — master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
-- `masconBrakeType` — brake-handle behaviour: `'Notched' | 'LapCapable' | null` (MasconBrakeType).
+- `masconBrakeType` — brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
 - `powerNotches` — number of power notches (e.g. P1..P5 = 5); `null` when unknown.
 - `brakeNotches` — number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
 - `ebNotch` — signed notch value representing EB in the SetNotch encoding (e.g. `-8`); `null` when unknown.

@@ -200,7 +200,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 車両の静的な制御機器情報です。トップレベルの`capabilities`マップ（アダプターがどの`OutputDataFrame`フィールドを実際に生成するかを宣言するもの）とは別物です。すべてのフィールドはnull許容で、`null`は「シミュレーターが現時点で値を持たない」ことを意味します。
 
 - `masconType`：マスコンのハンドル方式。`'OneHandle' | 'TwoHandle' | null`（MasconType）。
-- `masconBrakeType`：ブレーキハンドルの挙動。`'Notched' | 'LapCapable' | null`（MasconBrakeType）。
+- `masconBrakeType`：ブレーキハンドルの挙動。`'Notched' | 'LapCapable' | 'Continuous' | null`（MasconBrakeType）。`LapCapable`はラップ付きの連続ブレーキ（＝連続を含意）、`Continuous`はラップ位置を持たない非段階（直通）ハンドルです。
 - `powerNotches`：力行ノッチ数（例：P1〜P5なら5）。不明な場合は`null`。
 - `brakeNotches`：常用ブレーキノッチ数（例：B1〜B7なら7）。不明な場合は`null`。
 - `ebNotch`：SetNotchエンコーディングにおいてEBを表す符号付きノッチ値（例：`-8`）。不明な場合は`null`。
