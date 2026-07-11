@@ -26,10 +26,10 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 
 ## パッケージ
 
-| 言語       | パッケージ                        | インストール                        |
-| ---------- | --------------------------------- | ----------------------------------- |
-| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf` |
-| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)      | リリースの[.nupkg](https://github.com/haruyukitanuki/Rudolf/releases)を参照 |
+| 言語       | パッケージ                                                       | インストール                                                                |
+| ---------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf`                                               |
+| C#/.NET    | [`Tanuden.Rudolf`](./dotnet)                                     | リリースの[.nupkg](https://github.com/haruyukitanuki/Rudolf/releases)を参照 |
 
 どちらのパッケージにも型定義のみが含まれています。
 実行時のバリデーションやトランスポート、ロジックは含まれていません。
@@ -39,6 +39,7 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 このリポジトリにはワイヤーフォーマットの構造のみが含まれています。Rudolf形式でデータを投入するには、アダプターが必要です。
 
 現在利用可能なアダプター：
+
 - [Rudolf.Adapters.TrainCrew](https://github.com/haruyukitanuki/Rudolf.Adapters.TrainCrew)
 
 もし目的に合うアダプターがなければ、いつでも自分で実装できます！

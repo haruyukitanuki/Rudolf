@@ -643,64 +643,70 @@ Consumer → sim. One command per InputCommand document (batching is an explicit
 
 All commands are discriminated by `command.kind`. The set:
 
-| Kind            | Payload                                           | Semantics                                                                                                                            |
-| --------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `SetNotch`      | `{ value: int }`                                  | Combined notch. Signed: -8=EB, -7=B6 … -2=B1, -1=抑速, 0=N, 1=P1 … 5=P5.                                                             |
-| `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                             |
-| `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                             |
-| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                  |
-| `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Values outside this range MUST be rejected.                         |
-| `SetButton`     | `{ action: InputAction, state: bool }`            | Generic button. See InputAction enum (§6.2).                                                                                         |
-| `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | Wiper position.                                                                                                                      |
-| `SetAtoNotch`   | `{ value: int }`                                  | ATO notch suggestion. Per TC semantics: when notch > 0, applied only if manual notch is N; when notch < 0, max(manual, ato) applied. |
-| `SetDeadman`    | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | Deadman switch state per channel.                                                                                                    |
+| Kind            | Payload                                           | Semantics                                                                                                                                                                                                                                                                     |
+| --------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency — train-agnostic, supersedes the old hardcoded -8. |
+| `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                                                                                                                                                                      |
+| `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                                                                                                                                                                      |
+| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                                                                                                                                                           |
+| `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Values outside this range MUST be rejected.                                                                                                                                                                  |
+| `SetButton`     | `{ action: string, state: bool }`                 | Generic button. `action` is a `VehicleAction` (§6.2) or `GameAction` (§6.3) name, or a custom action string. Custom/non-spec actions are unvalidated passthrough, gated by `capabilities['input.button.<action>']`.                                                           |
+| `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | Wiper position.                                                                                                                                                                                                                                                               |
+| `SetAtoNotch`   | `{ value: int }`                                  | ATO notch suggestion. Per TC semantics: when notch > 0, applied only if manual notch is N; when notch < 0, max(manual, ato) applied.                                                                                                                                          |
+| `SetDeadman`    | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | Deadman switch state per channel.                                                                                                                                                                                                                                             |
 
 Producers MUST set fields described as such; OPTIONAL fields use a `default behavior` documented per-command.
 
-### 6.2 InputAction enum
+> **`SetNotch` Emergency sentinel.** The reserved constant `EB = -100` (any `value <= -100`) requests Emergency regardless of `relative`. Prefer the constant over a bare literal; it is train-agnostic and supersedes the old hardcoded `-8`.
+>
+> **Custom `SetButton` actions.** `VehicleAction` (§6.2) and `GameAction` (§6.3) are the spec vocabularies whose members serialize to the `action` string. Actions outside that vocabulary travel through the same string field via a separate custom-action method, and are unvalidated passthrough — a sim declares support with `capabilities['input.button.<action>']`.
 
-Used with `SetButton`. Vocabulary derived from TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims may not support all: consult `SimulatorProfile.capabilities['input.button.<Action>']`.
+### 6.2 VehicleAction enum
 
-**Mascon/notch shortcuts:**
+Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims may not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action — use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
 
-- `NotchUp`: step one notch toward power
-- `NotchDown`: step one notch toward brake
-- `NotchN`: set to neutral
-- `NotchTowardN`: step one notch toward neutral
-- `NotchEB`: set to EB
-- `NotchB1`: set to B1
+- `EBReset`: reset the EB/deadman alarm (EB復帰)
+- `GradientStart`: engage the gradient-start / anti-rollback switch (勾配起動スイッチ)
+- `SafetyBrake`: safety-brake switch (保安ブレーキ)
+- `SnowBrake`: snow-resistance brake switch (耐雪ブレーキ)
+- `HornAir`: air horn (空気笛)
+- `HornElectric`: electric horn (電気笛)
+- `Buzzer`: cab buzzer (合図ブザー)
+- `BoardingPrompt`: boarding-prompt buzzer (乗降促進)
+- `InCarBroadcast`: in-car announcement / PA (車内放送) — was `Broadcast`
+- `DoorOpenLeft`: open the left-side passenger doors (左ドア開)
+- `DoorCloseLeft`: close the left-side passenger doors (左ドア閉)
+- `DoorOpenRight`: open the right-side passenger doors (右ドア開)
+- `DoorCloseRight`: close the right-side passenger doors (右ドア閉)
+- `DoorReopen`: re-open/re-close switch after an interrupted closure (再開閉SW)
+- `DoorKey`: door-switch key operation (ドアスイッチ鍵)
+- `PartialDoor`: 3/4-door partial-open switch (3/4閉スイッチ)
+- `DoorCut`: door cut-out switch (ドアカットSW)
+- `HeadLightLow`: dim the headlight / low beam (前灯減光) — was `LightLow`
+- `HeadLight`: headlight switch (前照灯SW)
+- `CabinLight`: passenger-cabin light switch (客室灯SW)
+- `CrewRoomLight`: crew-room light switch (乗務員室灯SW)
+- `InstrumentLight`: instrument/meter light switch (計器灯SW)
 
-**Driving safety:**
+### 6.3 GameAction enum
 
-- `EBReset`: clear EB state
-- `GradientStart`: engage gradient-start switch (anti-rollback)
+Camera/view/UI/sim-meta actions used with `SetButton`. These are optional — consumers SHOULD NOT depend on any of them being supported; consult `SimulatorProfile.capabilities['input.button.<action>']`.
 
-**Sound:**
+**Camera / view:**
 
-- `HornAir`: pneumatic horn (空笛)
-- `HornElectric`: electric horn (電笛)
-- `Buzzer`: connecting buzzer (連絡ブザ)
+- `ExteriorView`: toggle the exterior/external view (外部視点切替)
+- `DriverAlternateView`: driver alternate viewpoint
+- `ConductorAlternateView`: conductor rear-confirmation view (後方確認)
+- `LeftWindowView`: look out of the left window
+- `RightWindowView`: look out of the right window
 
-**Doors:**
+**Simulator UI:**
 
-- `DoorOpen`: open passenger doors
-- `DoorClose`: close passenger doors
-- `DoorReopen`: re-open/re-close switch (再開閉SW)
-- `DoorKey`: door switch key operation (ドアスイッチ鍵)
-- `BoardingPrompt`: boarding-prompt buzzer (乗降促進/JoukouSokusin)
-- `Broadcast`: in-car announcement (車内放送)
-
-**Lights:**
-
-- `LightLow`: headlight dim (前灯減光)
-
-**Conductor:**
-
-- `ConductorViewBack`: rear-confirmation view (後方確認)
-
-**Sim-UI (optional; consumers shouldn't depend on these being supported):**
-
-- `ViewChange`, `PauseMenu`, `ViewDiagram`, `ViewUserInterface`, `ViewHome`, `DriverViewLeft`, `DriverViewRight`, `DriverViewCenter`
+- `TogglePauseMenu`: toggle the pause menu
+- `ToggleDiagramDisplay`: toggle the diagram/schedule display (スタフ表示)
+- `ToggleGUI`: toggle the in-game UI (画面表示)
+- `ToggleCrewDoor`: toggle the crew door
+- `ToggleCrewWindow`: toggle the crew window
 
 ## 7. Wire transport
 

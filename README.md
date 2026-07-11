@@ -26,11 +26,10 @@ I decided to deprecate OpenTetsu for that reason and create another format, call
 
 ## Packages
 
-| Language   | Package                                                          | Installation                |
-| ---------- | ---------------------------------------------------------------- | --------------------------- |
-| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf` |
+| Language   | Package                                                          | Installation                                                                            |
+| ---------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| TypeScript | [`@tanuden/rudolf`](https://github.com/haruyukitanuki/rudolf-ts) | `npm install @tanuden/rudolf`                                                           |
 | C#/.NET    | [`Tanuden.Rudolf`](./dotnet)                                     | Reference the [.nupkg](https://github.com/haruyukitanuki/Rudolf/releases) from Releases |
-
 
 Both packages contain only the type definitions.
 There is no runtime validation, transport or logic.
@@ -40,6 +39,7 @@ There is no runtime validation, transport or logic.
 This repository only contains the structure of wire format. You will need an adapter to fill up the data in Rudolf format for you.
 
 Currently available adapters:
+
 - [Rudolf.Adapters.TrainCrew](https://github.com/haruyukitanuki/Rudolf.Adapters.TrainCrew)
 
 If one does not exist for the simulator you are working on, you can always write your own if none is present!

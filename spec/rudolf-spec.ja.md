@@ -643,64 +643,70 @@ BVEアダプターは、出力時に`Section.CurrentSignalIndex`へ`+1`しなけ
 
 すべてのコマンドは`command.kind`によって判別されます。一覧：
 
-| 種別            | ペイロード                                        | 意味                                                                                                                              |
-| --------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int }`                                  | 統合ノッチ。符号付き：-8=EB、-7=B6 … -2=B1、-1=抑速、0=N、1=P1 … 5=P5。                                                           |
-| `SetPowerNotch` | `{ value: int }`                                  | 力行のみの正の整数。                                                                                                              |
-| `SetBrakeNotch` | `{ value: int }`                                  | ブレーキのみの正の整数。                                                                                                          |
-| `SetBrakeSAP`   | `{ kPa: double }`                                 | 電磁直通ブレーキのSAP圧力目標。0〜400 = 常用、410 = 非常。                                                                        |
-| `SetReverser`   | `{ value: int }`                                  | レバーサー位置。`-1` = 後進、`0` = 中立、`1` = 前進。この範囲外の値は拒否しなければなりません。                                   |
-| `SetButton`     | `{ action: InputAction, state: bool }`            | 汎用ボタン。InputAction列挙型（§6.2）を参照。                                                                                     |
-| `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | ワイパー位置。                                                                                                                    |
-| `SetAtoNotch`   | `{ value: int }`                                  | ATOのノッチ提案。TCのセマンティクスに従う：notch > 0のときは手動ノッチがNの場合のみ適用。notch < 0のときはmax(手動, ato) を適用。 |
-| `SetDeadman`    | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | チャンネルごとのデッドマンスイッチの状態。                                                                                        |
+| 種別            | ペイロード                                        | 意味                                                                                                                                                                                                                                                                              |
+| --------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SetNotch`      | `{ value: int, relative?: bool }`                 | 統合ノッチ。`relative`（既定は`false`）= 絶対値：valueは統合ノッチ（0=N、+n=Pn、-1=抑速、-2…=B1…）。`relative: true` = 符号付きのステップ差分。いずれの場合も、`value <= -100`（センチネル`EB = -100`）は非常で、車両に依存せず、従来のハードコードされた -8 に取って代わります。 |
+| `SetPowerNotch` | `{ value: int }`                                  | 力行のみの正の整数。                                                                                                                                                                                                                                                              |
+| `SetBrakeNotch` | `{ value: int }`                                  | ブレーキのみの正の整数。                                                                                                                                                                                                                                                          |
+| `SetBrakeSAP`   | `{ kPa: double }`                                 | 電磁直通ブレーキのSAP圧力目標。0〜400 = 常用、410 = 非常。                                                                                                                                                                                                                        |
+| `SetReverser`   | `{ value: int }`                                  | レバーサー位置。`-1` = 後進、`0` = 中立、`1` = 前進。この範囲外の値は拒否しなければなりません。                                                                                                                                                                                   |
+| `SetButton`     | `{ action: string, state: bool }`                 | 汎用ボタン。`action`は`VehicleAction`（§6.2）または`GameAction`（§6.3）の名前、あるいはカスタムアクションの文字列です。カスタム／仕様外のアクションは検証なしのパススルーで、`capabilities['input.button.<action>']`によってゲートされます。                                      |
+| `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | ワイパー位置。                                                                                                                                                                                                                                                                    |
+| `SetAtoNotch`   | `{ value: int }`                                  | ATOのノッチ提案。TCのセマンティクスに従う：notch > 0のときは手動ノッチがNの場合のみ適用。notch < 0のときはmax(手動, ato) を適用。                                                                                                                                                 |
+| `SetDeadman`    | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | チャンネルごとのデッドマンスイッチの状態。                                                                                                                                                                                                                                        |
 
 プロデューサーは、そのように記述されたフィールドを設定しなければなりません。OPTIONALなフィールドは、コマンドごとに文書化された`default behavior`（デフォルトの挙動）に従います。
 
-### 6.2 InputAction列挙型
+> **`SetNotch`の非常センチネル。** 予約された定数`EB = -100`（`value <= -100`のすべて）は、`relative`にかかわらず非常を要求します。生のリテラルよりこの定数を優先してください。車両に依存せず、従来のハードコードされた`-8`に取って代わります。
+>
+> **カスタム`SetButton`アクション。** `VehicleAction`（§6.2）と`GameAction`（§6.3）は、そのメンバーが`action`文字列にシリアライズされる仕様上の語彙です。この語彙の外にあるアクションは、専用のカスタムアクションメソッドを通じて同じ文字列フィールドを流れ、検証なしのパススルーとなります。シミュレーターは`capabilities['input.button.<action>']`で対応を宣言します。
 
-`SetButton`で使用します。語彙はTRAIN CREW SDKに由来し、より整理された命名になっています。各エントリーには既知の意味があります。すべてのシミュレーターが対応しているとは限らないため、`SimulatorProfile.capabilities['input.button.<Action>']`を確認してください。
+### 6.2 VehicleAction列挙型
 
-**マスコン／ノッチのショートカット：**
+`SetButton`で使用する、物理的な運転台／車両の操作です。語彙はTRAIN CREW SDKに由来し、より整理された命名になっています。各エントリーには既知の意味があります。すべてのシミュレーターが対応しているとは限らないため、`SimulatorProfile.capabilities['input.button.<action>']`を確認してください。ノッチはボタンアクションではなくなりました。`SetNotch`（§6.1）を使用してください。旧`InputAction`からの改名：`Broadcast` → `InCarBroadcast`、`LightLow` → `HeadLightLow`。
 
-- `NotchUp`：力行方向へ1ノッチ進める
-- `NotchDown`：ブレーキ方向へ1ノッチ進める
-- `NotchN`：中立にする
-- `NotchTowardN`：中立方向へ1ノッチ進める
-- `NotchEB`：EBにする
-- `NotchB1`：B1にする
-
-**運転保安：**
-
-- `EBReset`：EB状態を解除する
-- `GradientStart`：勾配起動スイッチを作動させる（転動防止）
-
-**音：**
-
-- `HornAir`：空気式警笛（空笛）
-- `HornElectric`：電気式警笛（電笛）
-- `Buzzer`：連絡ブザー（連絡ブザ）
-
-**ドア：**
-
-- `DoorOpen`：客用ドアを開く
-- `DoorClose`：客用ドアを閉じる
-- `DoorReopen`：再開閉スイッチ（再開閉SW）
+- `EBReset`：EB／デッドマン警報を復帰させる（EB復帰）
+- `GradientStart`：勾配起動／転動防止スイッチを作動させる（勾配起動スイッチ）
+- `SafetyBrake`：保安ブレーキスイッチ（保安ブレーキ）
+- `SnowBrake`：耐雪ブレーキスイッチ（耐雪ブレーキ）
+- `HornAir`：空気笛を鳴らす（空気笛）
+- `HornElectric`：電気笛を鳴らす（電気笛）
+- `Buzzer`：合図ブザーを押す（合図ブザー）
+- `BoardingPrompt`：乗降促進ブザー（乗降促進）
+- `InCarBroadcast`：車内放送／PA（車内放送） — 旧`Broadcast`
+- `DoorOpenLeft`：左側の客用ドアを開く（左ドア開）
+- `DoorCloseLeft`：左側の客用ドアを閉じる（左ドア閉）
+- `DoorOpenRight`：右側の客用ドアを開く（右ドア開）
+- `DoorCloseRight`：右側の客用ドアを閉じる（右ドア閉）
+- `DoorReopen`：閉扉中断後の再開閉スイッチ（再開閉SW）
 - `DoorKey`：ドアスイッチ鍵の操作（ドアスイッチ鍵）
-- `BoardingPrompt`：乗降促進ブザー（乗降促進／JoukouSokusin）
-- `Broadcast`：車内放送
+- `PartialDoor`：3/4ドア部分開スイッチ（3/4閉スイッチ）
+- `DoorCut`：ドアカットスイッチ（ドアカットSW）
+- `HeadLightLow`：前照灯の減光／ロービーム（前灯減光） — 旧`LightLow`
+- `HeadLight`：前照灯スイッチ（前照灯SW）
+- `CabinLight`：客室灯スイッチ（客室灯SW）
+- `CrewRoomLight`：乗務員室灯スイッチ（乗務員室灯SW）
+- `InstrumentLight`：計器灯スイッチ（計器灯SW）
 
-**灯火：**
+### 6.3 GameAction列挙型
 
-- `LightLow`：前照灯の減光（前灯減光）
+`SetButton`で使用する、カメラ／視点／UI／シミュレーターメタのアクションです。これらは省略可能です。コンシューマーは、いずれかが対応していることに依存すべきではありません。`SimulatorProfile.capabilities['input.button.<action>']`を確認してください。
 
-**車掌：**
+**カメラ／視点：**
 
-- `ConductorViewBack`：後方確認の視点（後方確認）
+- `ExteriorView`：外部／外観視点を切り替える（外部視点切替）
+- `DriverAlternateView`：運転士の別視点
+- `ConductorAlternateView`：車掌の後方確認視点（後方確認）
+- `LeftWindowView`：左の窓から見る
+- `RightWindowView`：右の窓から見る
 
-**シミュレーターUI（省略可能。コンシューマーは、これらが対応していることに依存すべきではありません）：**
+**シミュレーターUI／メタ：**
 
-- `ViewChange`、`PauseMenu`、`ViewDiagram`、`ViewUserInterface`、`ViewHome`、`DriverViewLeft`、`DriverViewRight`、`DriverViewCenter`
+- `TogglePauseMenu`：ポーズメニューを切り替える
+- `ToggleDiagramDisplay`：スタフ／時刻表の表示を切り替える（スタフ表示）
+- `ToggleGUI`：ゲーム内UIを切り替える（画面表示）
+- `ToggleCrewDoor`：乗務員ドアを切り替える
+- `ToggleCrewWindow`：乗務員窓を切り替える
 
 ## 7. ワイヤー転送
 
