@@ -15,6 +15,15 @@ public class Vocabularies
   /// <summary>Per-route overrides for the default 0-7 signal-phase vocabulary.</summary>
   public Dictionary<string, string>? SignalPhase;
 
+  /// <summary>
+  ///   Per-route signal-phase-speed vocabulary. Maps Rudolf phase-index-as-string
+  ///   ("1".."7" and any "8+" override) to a km/h cap. Value convention:
+  ///   <c>n &gt;= 0</c> = km/h cap; <c>-1</c> = unlimited (no inherent cap, line speed);
+  ///   <c>null</c> = unknown. Consumers fall back to the spec's default-speed table for keys
+  ///   absent from this map. Populated by both adapters at profile-emit time.
+  /// </summary>
+  public Dictionary<string, double?>? SignalPhaseSpeed;
+
   /// <summary>Sim-known beacon type code → human-readable meaning.</summary>
   public Dictionary<string, string>? Transponders;
 }

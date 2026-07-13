@@ -79,7 +79,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 ### 3.3 Extensibility
 
 - **Extension blocks:** `extensions.<sim>:<concern>` namespacing. Examples: `bve:beaconRing`, `bve:atsPanelArray`. Third parties can author their own blocks freely.
-- **Vocabularies:** Default vocabularies (signal phases, lamp keys, transponder type meanings) are published in this spec. SimulatorProfile.vocabularies may override per-scenario.
+- **Vocabularies:** Default vocabularies (signal phases, signal-phase speeds, lamp keys, transponder type meanings) are published in this spec. SimulatorProfile.vocabularies may override per-scenario.
 
 ## 4. SimulatorProfile
 
@@ -190,7 +190,8 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
   "vocabularies": {
     "lamps": null,
     "signalPhase": null,
-    "transponders": null
+    "transponders": null,
+    "signalPhaseSpeed": null
   }
 }
 ```
@@ -329,6 +330,8 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 ```
 
 `name` is the station's display name **only** — no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
+
+`isTimeTaken`: bool | null: timing point (採時駅); null when the sim doesn't model it. Producers that derive this heuristically SHOULD report `false` rather than `null` when time data is present but no real arrival/departure applies at this station.
 
 Consumers derive full station records + live distance to next via lookup:
 
@@ -516,6 +519,28 @@ Notes:
 Indexing rationale: `0` is reserved for "disabled/unknown/no signal info" so consumers can distinguish a _non-functional_ signal from a deliberate R aspect (which is a real instruction, not the absence of one). Within the proceed-ordered range `1..7`, indices increase with increasing permissiveness: each higher number is at-least-as-permissive as the previous, with YGF correctly slotted between YG (65 km/h) and G (line speed) since it grants 75-105 km/h on the private railways that use it.
 
 BVE adapter MUST add `+1` to `Section.CurrentSignalIndex` when emitting (BVE's native `0=R` becomes Rudolf's `1=R`, etc.). The 15-route corpus survey validated BVE's native indices 0-4, which under Rudolf transposition become 1-5. Routes using non-default meanings (e.g. a route emitting BVE-native `4` to mean YGF rather than G) override via `SimulatorProfile.vocabularies.signalPhase`.
+
+**Default signal-phase-speed table:**
+
+| Phase index | Default km/h | Notes                                                 |
+| ----------: | -----------: | ----------------------------------------------------- |
+|           0 |         `-1` | Disabled/unknown; no cap to display                   |
+|           1 |          `0` | R (stop)                                              |
+|           2 |         `25` | YY (~25 km/h)                                         |
+|           3 |         `45` | Y (~45 km/h)                                          |
+|           4 |         `65` | YG (~65 km/h)                                         |
+|           5 |         `90` | YGF (centre of 75–105 km/h range)                     |
+|           6 |         `-1` | G (no inherent cap; line speed)                       |
+|           7 |         `-1` | GG (no inherent cap; high-speed proceed)              |
+|          8+ | (no default) | Producers publish via `vocabularies.signalPhaseSpeed` |
+
+**Value convention for `vocabularies.signalPhaseSpeed`:**
+
+- `n ≥ 0` — the km/h speed cap imposed by this aspect.
+- `-1` — unlimited (no inherent cap; line speed or route-defined maximum).
+- `null` — unknown (phase exists but no speed value is available).
+
+Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]`, where the `?? defaults[phase]` fallback fires only on a _missing key_, not on an explicit `null` value.
 
 ### 5.10 `speedLimit`
 
@@ -827,7 +852,8 @@ Recommended transports:
   "vocabularies": {
     "lamps": null,
     "signalPhase": null,
-    "transponders": null
+    "transponders": null,
+    "signalPhaseSpeed": null
   }
 }
 ```

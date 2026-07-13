@@ -79,7 +79,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 ### 3.3 拡張性
 
 - **拡張ブロック：** `extensions.<sim>:<concern>`という名前空間を使います。例：`bve:beaconRing`、`bve:atsPanelArray`。サードパーティは独自のブロックを自由に定義できます。
-- **語彙（Vocabularies）：** デフォルトの語彙（信号現示、ランプキー、地上子タイプの意味）は本仕様で公開されています。SimulatorProfile.vocabulariesによってシナリオごとに上書きできます。
+- **語彙（Vocabularies）：** デフォルトの語彙（信号現示、信号現示の速度、ランプキー、地上子タイプの意味）は本仕様で公開されています。SimulatorProfile.vocabulariesによってシナリオごとに上書きできます。
 
 ## 4. SimulatorProfile
 
@@ -190,7 +190,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "vocabularies": {
     "lamps": null,
     "signalPhase": null,
-    "transponders": null
+    "transponders": null,
+    "signalPhaseSpeed": null
   }
 }
 ```
@@ -328,7 +329,9 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 }
 ```
 
-`name`は駅の表示名の**み**です —— 駅コードや駅ナンバリングは含みません（例：`"品川"`。`"KK01品川"`、`"品川(JK20)"`、`"KK01"`などは不可）。他のすべての文字列と同様、`\u`エスケープシーケンスを使わないリテラルなUTF-8として出力されます（§3.1の「文字列エンコーディング」を参照）。
+`name`は駅の表示名の**み**です —— 駅コードや駅ナンバリングは含みません（例：`"品川"`。`"KK01品川"`、`"品川(JK20)"、`"KK01"`などは不可）。他のすべての文字列と同様、`\u`エスケープシーケンスを使わないリテラルなUTF-8として出力されます（§3.1の「文字列エンコーディング」を参照）。
+
+`isTimeTaken`：bool | null。採時駅（タイミングポイント）かどうか。シミュレーターが対応していない場合はnull。ヒューリスティックに導出するプロデューサーは、時刻データが存在するが有効な着・発時刻が無い駅には`null`ではなく`false`を出力すべきです。
 
 コンシューマーは、参照（ルックアップ）によって完全な駅レコードと次駅までのライブ距離を導出します。
 
@@ -516,6 +519,28 @@ const distanceToNext =
 インデックス設計の根拠：`0`は「無効／不明／信号情報なし」のために予約されています。これにより、コンシューマーは機能していない信号と、意図的なR現示（それは指示の不在ではなく、実際の指示です）を区別できます。進行順に並んだ範囲`1..7`の中では、インデックスは許容度が高くなるほど大きくなります。各上位の数値は前の数値と同等以上に許容的であり、YGFはYG（65 km/h）とG（線路最高速度）の間に正しく位置づけられます。YGFを使用する私鉄では75〜105 km/hを許容するためです。
 
 BVEアダプターは、出力時に`Section.CurrentSignalIndex`へ`+1`しなければなりません（BVEネイティブの`0=R`がRudolfの`1=R`になる、など）。15路線のコーパス調査によりBVEネイティブのインデックス0〜4が検証されており、これらはRudolfへの変換後1〜5になります。デフォルトと異なる意味を使う路線（例：BVEネイティブの`4`をGではなくYGFの意味で出力する路線）は、`SimulatorProfile.vocabularies.signalPhase`によって上書きします。
+
+**デフォルトの信号現示速度テーブル：**
+
+| 現示インデックス |    デフォルト km/h | 備考                                                        |
+| ---------------: | -----------------: | ----------------------------------------------------------- |
+|                0 |               `-1` | 無効／不明。表示するキャップなし                            |
+|                1 |                `0` | R（停止）                                                   |
+|                2 |               `25` | YY（〜25 km/h）                                             |
+|                3 |               `45` | Y（〜45 km/h）                                              |
+|                4 |               `65` | YG（〜65 km/h）                                             |
+|                5 |               `90` | YGF（75〜105 km/hの中央値）                                 |
+|                6 |               `-1` | G（キャップなし。線路最高速度）                             |
+|                7 |               `-1` | GG（キャップなし。高速進行）                                |
+|               8+ | （デフォルトなし） | プロデューサーが`vocabularies.signalPhaseSpeed`を通じて公開 |
+
+**`vocabularies.signalPhaseSpeed`の値の規約：**
+
+- `n ≥ 0` — その現示が課す速度キャップ（km/h）。
+- `-1` — 無制限（キャップなし。線路最高速度、または路線定義の上限速度）。
+- `null` — 不明（現示は存在するが、速度値は得られない）。
+
+コンシューマーは`vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]`によって実効的な現示速度を求めます。`?? defaults[phase]`のフォールバックは、明示的な`null`値ではなく*欠落キー*に対してのみ発火します。
 
 ### 5.10 `speedLimit`
 
@@ -827,7 +852,8 @@ Rudolfはドキュメントの形状を定義しますが、**転送方式には
   "vocabularies": {
     "lamps": null,
     "signalPhase": null,
-    "transponders": null
+    "transponders": null,
+    "signalPhaseSpeed": null
   }
 }
 ```
