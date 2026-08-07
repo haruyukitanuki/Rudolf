@@ -49,9 +49,13 @@ All string values are emitted as literal UTF-8 — **no `\uXXXX` escape sequence
 - speed: **km/h**
 - pressure: **kPa**
 - distance/location: **meters**
-- gradient: **‰** (per mille)
+- gradient: **‰** (permille)
 - current: **A** (amperes)
 - time: ISO 8601 strings, with `Kind=Unspecified` permitted for sims that lack real dates
+
+If the field has the unit of **%** (percent) or **‰** (permille), it means that the value is a proportion that is multiplied by 100 or 1000 respectively when communicated. For example,
+- `physics.gradient` has the unit **‰**. If the gradient is -33‰, the field will have the value of `-33.0`.
+- `cars.list[...].occupancyRate` has the unit **%**. If the occupancy is 150%, the field will have the value of `150.0`.
 
 #### Nullables
 
@@ -349,7 +353,8 @@ const distanceToNext =
   "speed": 78.4, // km/h; train-level; always present
   "fromStartDistance": 12345.6, // meters traveled from scenario start point; always present
   "absoluteDistance": 47823.6, // meters | null: absolute kilometer-post position on the route (キロ程)
-  "gradient": null, // ‰ | null: BVE 2.0.8 doesn't expose
+  "curveRadius": -500.0, // meters | null: negative for left turns, positive for right turns
+  "gradient": null, // ‰ | null: BVE 2.0.8 doesn't expose; up is positive, down is negative
   "mrPressure": 740.0, // kPa; train-level; always present
 }
 ```
