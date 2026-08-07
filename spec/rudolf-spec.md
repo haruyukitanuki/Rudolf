@@ -353,7 +353,7 @@ const distanceToNext =
   "speed": 78.4, // km/h; train-level; always present
   "fromStartDistance": 12345.6, // meters traveled from scenario start point; always present
   "absoluteDistance": 47823.6, // meters | null: absolute kilometer-post position on the route (キロ程)
-  "curveRadius": -500.0, // meters | null: negative for left turns, positive for right turns
+  "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns
   "gradient": null, // ‰ | null: BVE 2.0.8 doesn't expose; up is positive, down is negative
   "mrPressure": 740.0, // kPa; train-level; always present
 }
@@ -361,6 +361,7 @@ const distanceToNext =
 
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
+- `curveRadius` and `gradient` should be exact values at the position of the lead car. Keyframe values are permitted if exact values are unavailable.
 
 Per-car BC pressure and amperage live in `cars`.
 
