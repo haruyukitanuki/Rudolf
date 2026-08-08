@@ -178,9 +178,12 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
   },
   "capabilities": {
     "physics.gradient": true,
+    "physics.curveRadius": false,
     "physics.perCar": "true",
     "ats.richState": "rich",
+    "stations.next": "multiStatic",
     "speedLimit.next": "single",
+    "signal.next": "single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -217,6 +220,10 @@ Static control-hardware description for the vehicle — distinct from the top-le
 - `name` — human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
 - `model` — vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it should be in `series-subseries` format; romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
 - `operator` — operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). For maximum compatibility, refer to Japanese Wikipedia for the full operator name (not group) and TitleCase it.
+
+### 4.3 `capabilities`
+
+This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim.
 
 ## 5. OutputDataFrame
 
