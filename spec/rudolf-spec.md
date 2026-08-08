@@ -318,7 +318,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
       "name": "起点",
       "fromStartDistance": 0, // meters from scenario start; always present
       "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程); TC always null
-      "doorSide": 1, // int: -1=Left, 0=None/Unknown, 1=Right, 2=Both
+      "doorSide": 1, // int | null: direction to open the doors (see §5.6); null if cannot be determined
       "stopType": "PassengerStop", // 'PassengerStop' | 'OperationStop' | 'Passing' | null
       "arrival": null,
       "departure": "10:00:00",
@@ -334,6 +334,8 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 ```
 
 `name` is the station's display name **only** — no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
+
+`doorSide` has the same available values as the per-car doors in §5.6. Producers may derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` should only be used if the direction is impossible to determine.
 
 `isTimeTaken`: bool | null: timing point (採時駅); null when the sim doesn't model it. Producers that derive this heuristically SHOULD report `false` rather than `null` when time data is present but no real arrival/departure applies at this station.
 
