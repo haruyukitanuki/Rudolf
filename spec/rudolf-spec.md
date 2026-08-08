@@ -232,7 +232,7 @@ This section provides information on how certain data fields are populated in th
 | `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string must be provided by the producer (see §5.1). |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
-| `physics.perCar` | One of {`true` | `broadcast` | `unavailable`}. | Per-car physics availability. If `true`, `DataFrame.cars` contains data for all cars. If `broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `unavailable`, no per-car data is provided in `DataFrame.cars`. |
+| `physics.perCar` | One of {`true`, `broadcast`, `unavailable`}. | Per-car physics availability. If `true`, `DataFrame.cars` contains data for all cars. If `broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `unavailable`, no per-car data is provided in `DataFrame.cars`. |
 | `ats.richState` | `bool` | Availability of `DataFrame.ats.richState` data (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimit.next` | `NextItemArrayType` | |
