@@ -225,6 +225,35 @@ Static control-hardware description for the vehicle — distinct from the top-le
 
 This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim.
 
+#### 4.3.1 OutputDataFrame Capabilities
+
+| Key | Value | Description |
+| :--- | :--- | :--- |
+| `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string must be provided by the producer (see §5.1). |
+| `physics.gradient` | `bool` | |
+| `physics.curveRadius` | `bool` | |
+| `physics.perCar` | One of {`true` | `broadcast` | `unavailable`}. | Per-car physics availability. If `true`, `DataFrame.cars` contains data for all cars. If `broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `unavailable`, no per-car data is provided in `DataFrame.cars`. |
+| `ats.richState` | `bool` | Availability of `DataFrame.ats.richState` data (see §5.8). |
+| `stations.next` | `NextItemArrayType` | |
+| `speedLimit.next` | `NextItemArrayType` | |
+| `signals.next` | `NextItemArrayType` | |
+
+`NextItemArrayType` specifies the behavior of arrays that store objects in a scenario:
+
+| Name | Length of list | Data in list |
+| :--- | :--- | :--- |
+| `none` | 0 item(s) | N/A |
+| `single` | 0 or 1 item(s) | The next object ahead of the train, or nothing. |
+| `multiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. |
+| `multiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
+
+#### 4.3.2 InputCommand Capabilities
+
+| Key | Value | Description |
+| :--- | :--- | :--- |
+| `input.command.*` | `bool` | `*` is a command type specified in §6.1. All fields in §6.1 must be set by the producer. |
+| `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
+
 ## 5. OutputDataFrame
 
 Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core section key is structurally present (even when empty); fields within sections may be null.
