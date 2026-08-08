@@ -335,7 +335,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `name` is the station's display name **only** — no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
 
-`doorSide` has the same available values as the per-car doors in §5.6. Producers may derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` should only be used if the direction is impossible to determine.
+`doorSide` has the same available values as the per-car doors in §5.6. Producers may derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` should only be used if the state is impossible to determine.
 
 `isTimeTaken`: bool | null: timing point (採時駅); null when the sim doesn't model it. Producers that derive this heuristically SHOULD report `false` rather than `null` when time data is present but no real arrival/departure applies at this station.
 
@@ -355,7 +355,7 @@ const distanceToNext =
   "speed": 78.4, // km/h; train-level; always present
   "fromStartDistance": 12345.6, // meters traveled from scenario start point; always present
   "absoluteDistance": 47823.6, // meters | null: absolute kilometer-post position on the route (キロ程)
-  "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns
+  "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns, 0 for straights
   "gradient": null, // ‰ | null: BVE 2.0.8 doesn't expose; up is positive, down is negative
   "mrPressure": 740.0, // kPa; train-level; always present
 }
