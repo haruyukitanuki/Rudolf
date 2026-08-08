@@ -240,19 +240,19 @@ This section provides information on how certain data fields are populated in th
 
 `NextItemArrayType` specifies the behavior of arrays that store objects in a scenario:
 
-| Name | Length of list | Data in list |
+| Value | Length of array | Data in array |
 | :--- | :--- | :--- |
-| `none` | 0 item(s) | N/A |
+| `none` | 0 item(s) | Nothing. |
 | `single` | 0 or 1 item(s) | The next object ahead of the train, or nothing. |
-| `multiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. |
+| `multiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
 | `multiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
 
 #### 4.3.2 InputCommand Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
-| `input.command.*` | `bool` | `*` is a command type specified in §6.1. All fields in §6.1 must be set by the producer. |
-| `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
+| `input.command.*` | `bool` | `*` is a command type specified in §6.1. Producers MUST set capabilities for all of those command types. |
+| `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. Producers SHOULD set capabilities for these commands. |
 
 ## 5. OutputDataFrame
 
