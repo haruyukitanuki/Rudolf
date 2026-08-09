@@ -182,7 +182,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "physics.perCar": "true",
     "ats.richState": "rich",
     "stations.next": "multiStatic",
-    "speedLimit.next": "single",
+    "speedLimits.next": "single",
     "signal.next": "single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
@@ -235,7 +235,7 @@ This section provides information on how certain data fields are populated in th
 | `physics.perCar` | One of {`true`, `broadcast`, `unavailable`}. | Per-car physics availability. If `true`, `DataFrame.cars` contains data for all cars. If `broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `unavailable`, no per-car data is provided in `DataFrame.cars`. |
 | `ats.richState` | `bool` | Availability of `DataFrame.ats.richState` data (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
-| `speedLimit.next` | `NextItemArrayType` | |
+| `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
 
 `NextItemArrayType` specifies the behavior of arrays that store objects in a scenario:
@@ -292,7 +292,7 @@ Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core sectio
   "signals": {
     /* ... */
   },
-  "speedLimit": {
+  "speedLimits": {
     /* ... */
   },
   "cars": {
@@ -586,7 +586,7 @@ BVE adapter MUST add `+1` to `Section.CurrentSignalIndex` when emitting (BVE's n
 
 Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]`, where the `?? defaults[phase]` fallback fires only on a _missing key_, not on an explicit `null` value.
 
-### 5.10 `speedLimit`
+### 5.10 `speedLimits`
 
 ```jsonc
 {
