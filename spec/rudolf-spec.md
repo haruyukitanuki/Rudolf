@@ -254,6 +254,30 @@ This section provides information on how certain data fields are populated in th
 | `input.command.*` | `bool` | `*` is a command type specified in §6.1. Producers MUST set capabilities for all of those command types. |
 | `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. Producers SHOULD set capabilities for these commands. |
 
+#### 4.4 `vocabularies`
+
+#### 4.4.1 `lamps`
+
+#### 4.4.2 `signalPhase`
+
+#### 4.4.3 `signalPhaseSpeed`
+
+This section defines overrides to the default signal speed table in §5.9. Each entry consists of the phase index as a string, and the speed limit in km/h. Producers should define all the phases that are used on the route.
+
+Example:
+
+```jsonc
+    "signalPhaseSpeed": {
+      "1": 0,
+      "2": 25,
+      "3": 55,
+      "4": 80,
+      "6": 110
+    },
+```
+
+#### 4.4.4 `transponders`
+
 ## 5. OutputDataFrame
 
 Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core section key is structurally present (even when empty); fields within sections may be null.
