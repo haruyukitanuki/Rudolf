@@ -261,9 +261,9 @@ Sim-specific overrides as a list of key-value pairs. Producers may freely define
 | Section | Target | Keys | Values |
 | :--- | :--- | :--- | :--- |
 | `lamps` | Default list of available lamps (see §5.7) | | |
-| `signalPhase` | Default signal aspect names (see §5.9) | `string`. Signal index. | `string`. Signal code (e.g., "R"). |
-| `signalPhaseSpeed` | Default signal speed table (see §5.9) | `string`. Signal index. | `double \| null`. Speed in km/h. |
-| `transponders` | Default transponder categories (see §5.9) | `int`. Sim-native code number (e.g., BVE beacon type). | `string`. Human-readable name. |
+| `signalPhase` | Default signal aspect names (see §5.9) | `string`. Signal index number as text. | `string`. Signal code (e.g., "R"). |
+| `signalPhaseSpeed` | Default signal speed table (see §5.9) | `string`. Signal index number as text. | `double \| null`. Speed in km/h. |
+| `transponders` | Default transponder categories (see §5.9) | `string`. Sim-native code number (e.g., BVE beacon type) as text. | `string`. Human-readable name. |
 
 An example of the `signalPhaseSpeed` section is shown below:
 
