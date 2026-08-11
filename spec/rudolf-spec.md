@@ -256,15 +256,16 @@ This section provides information on how certain data fields are populated in th
 
 #### 4.4 `vocabularies`
 
-#### 4.4.1 `lamps`
+Sim-specific overrides as a list of key-value pairs. Producers may freely define new values and override default values. Consumers must prefer the overrides if they are present.
 
-#### 4.4.2 `signalPhase`
+| Section | Target | Keys | Values |
+| :--- | :--- | :--- | :--- |
+| `lamps` | Default list of available lamps (see §5.7) | | |
+| `signalPhase` | Default signal aspect names (see §5.9) | `string`. Signal index. | `string`. Signal code (e.g., "R"). |
+| `signalPhaseSpeed` | Default signal speed table (see §5.9) | `string`. Signal index. | `double \| null`. Speed in km/h. |
+| `transponders` | Default transponder categories (see §5.9) | `int`. Sim-native code number (e.g., BVE beacon type). | `string`. Human-readable name. |
 
-#### 4.4.3 `signalPhaseSpeed`
-
-This section defines overrides to the default signal speed table in §5.9. Each entry consists of the phase index as a string, and the speed limit in km/h. Producers should define all the phases that are used on the route.
-
-Example:
+An example of the `signalPhaseSpeed` section is shown below:
 
 ```jsonc
     "signalPhaseSpeed": {
@@ -275,8 +276,6 @@ Example:
       "6": 110
     },
 ```
-
-#### 4.4.4 `transponders`
 
 ## 5. OutputDataFrame
 
