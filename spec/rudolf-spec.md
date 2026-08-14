@@ -481,7 +481,7 @@ Notes:
 
 ### 5.7 `lamps`
 
-Lamps store data primarily intended for simple state indicators. Up to 64 slots are available; some are filled with predefined names, and more can be added using `vocabularies`. Consumers can access lamps using their name or index.
+Lamps store data primarily intended for simple state indicators. Up to 128 slots are available; some are filled with predefined names, and more can be added using `vocabularies`. Consumers can access lamps using their name or index.
 
 ```jsonc
 {
@@ -511,11 +511,14 @@ Lamps store data primarily intended for simple state indicators. Up to 64 slots 
 | 2 | `atsBrakeApply` | ATS brake application. |
 | 3 | `atsOpen` | ATS is disabled. |
 | 4 | `regenerative` | Regenerative brake is active. |
-| 5 | `ebTimer` | EB device (vigilance/deadman switch) warning. |
+| 5 | `ebTimer` | EB device (vigilance/deadman) warning. |
 | 6 | `emergencyBrake` | Emergency brake is active. |
 | 7 | `overload` | Electrical overload fault. |
-| 8 | `ato` | Automatic Train Operation in use. |
-| 9..63 | (null) | May be freely defined by the producer. |
+| 8 | `ato` | Automatic Train Operation. |
+| 9 | `snowBrake` | Snow-resistant brake (耐雪ブレーキ). |
+| 10 | `wheelSlip` | Wheel slip. |
+| 11..31 | (null) | Reserved. |
+| 32..127 | (null) | May be freely defined by the producer. |
 
 **BVE-specific:** `AtsPanelArray[1024]` (vehicle-author convention) is mapped to named keys via `SimulatorProfile.vocabularies.lamps.bveIndexToKey` before emit. Raw array may additionally appear in `extensions["bve:atsPanelArray"]` for advanced consumers (per-vehicle-plugin debuggers, etc.).
 
