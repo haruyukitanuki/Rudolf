@@ -529,13 +529,13 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
   "class": "ATS-P", // string | null : TC ATS_Class; BVE: from per-family-profile (v1: usually null)
   "speed": -1, // number | null : current ATS speed limit. -1 = free (unlimited); null = blank display; otherwise km/h
   "state": "P接近", // string | null : TC ATS_State (rich); BVE v1: 'EB' or null
-  "richState": null, // { code: string[], name: string[], severity: number[], type: AtsRichStateType[] } | null : parallel arrays, index N = Nth active state
+  "richState": null, // AtsRichState[] | null : parallel arrays, index N = Nth active state
 }
 ```
 
 `ats.speed` convention: `-1` = free (unlimited/ATS not asserting any cap), `null` = display blank (no value to show), any other number = the asserted speed cap in km/h. This replaces TC's "F"-mapped-to-magic-`300` hack and the previous `'free'` string sentinel: all values are now numeric (or null), so consumers don't need union-type handling.
 
-**`richState` structure:** When non-null, `richState` carries four parallel arrays, `code`, `name`, `severity`, and `type`, where index N across all four describes the Nth simultaneously active ATS state. `code` is the sim's raw free-form string (e.g. `"P_APPROACH"`); `name` is the display label (e.g. `"P接近"`); `severity` is `0` (info) / `1` (warning) / `2` (critical), with values above `2` reserved for sim/vehicle-specific custom severities; `type` is the machine-readable category from the vocabulary below.
+**`richState` structure:** When non-null, `richState` carries an array of `AtsRichState` objects. Each `AtsRichState` object represents a currently active ATS state, including the fields `code`, `name`, `severity`, and `type`. `code` is the sim's raw free-form string (e.g. `"P_APPROACH"`); `name` is the display label (e.g. `"P接近"`); `severity` is `0` (info) / `1` (warning) / `2` (critical), with values above `2` reserved for sim/vehicle-specific custom severities; `type` is the machine-readable category from the vocabulary below.
 
 **`AtsRichStateType` vocabulary:**
 
