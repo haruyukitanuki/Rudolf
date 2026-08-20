@@ -29,7 +29,7 @@ Every document carries:
 
 - `schemaVersion: string`: Rudolf spec version. Current version: `"1.0"`.
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`: discriminator.
-- `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it.
+- `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it. This value can be in any format so long as it is unique to the current scenario session loaded in the game.
 - `sentAt: string`: ISO 8601 timestamp at producer.
 
 ## 3. Architecture
@@ -390,7 +390,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
       "index": 0,
       "name": "起点",
       "fromStartDistance": 0, // meters from scenario start; always present
-      "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程); TC always null
+      "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程);
       "doorSide": 1, // int | null: direction to open the doors (see §5.6); null if cannot be determined
       "stopType": "PassengerStop", // 'PassengerStop' | 'OperationStop' | 'Passing' | null
       "arrival": null,
@@ -753,7 +753,7 @@ Consumer → sim. One command per InputCommand document (batching is an explicit
 {
   "schemaVersion": "1.0",
   "kind": "InputCommand",
-  "scenarioId": "petrichor-e131-evening-2026-06-25T14:23:00Z",
+  "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-06-25T14:23:17.350Z",
   "sequenceNumber": 1042, // monotonic per consumer; for ordering/idempotency
   "command": {
