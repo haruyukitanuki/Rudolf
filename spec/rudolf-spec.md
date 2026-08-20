@@ -57,6 +57,14 @@ If the field has the unit of **%** (percent) or **‰** (permille), it means tha
 - `physics.gradient` has the unit **‰**. If the gradient is -33‰, the field will have the value of `-33.0`.
 - `cars.list[...].occupancyRate` has the unit **%**. If the occupancy is 150%, the field will have the value of `150.0`.
 
+#### Raw Values
+
+Producers SHOULD emit raw values that preserve all physical information from the sim. Data fidelity should be preserved and that values MUST NOT be transformed, clamped, or otherwise modified in a way that loses detail. The sim's physical gauge limitations (e.g., a needle that only moves in one direction) are a display concern for the consumer, not a reason to distort the data layer.
+
+As an illustration, `physics.current` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Do not emit `Math.Abs(current)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
+
+Similarly, do NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is absolutely neccessary for data type safety.
+
 #### Nullables
 
 A field set to `null` means that "the sim really doesn't have this value right now."
