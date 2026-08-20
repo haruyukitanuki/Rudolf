@@ -42,7 +42,7 @@ camelCase on the wire. C# producers convert from PascalCase via `CamelCaseProper
 
 #### String encoding
 
-All string values are emitted as literal UTF-8 — **no `\uXXXX` escape sequences**. Japanese text (station names, route names, vehicle names) MUST appear as-is on the wire (e.g. `"立会川"`, not `"\u7ACB\u4F1A\u5DDD"`). Producers configure their serializer's encoder accordingly (e.g. .NET `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`); the documents are never embedded raw in HTML, so HTML-escaping the output is unnecessary. Consumers MUST accept both forms regardless (`\u`-escaped JSON decodes to the same string).
+All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequences**. Japanese text (station names, route names, vehicle names) MUST appear as-is on the wire (e.g. `"立会川"`, not `"\u7ACB\u4F1A\u5DDD"`). Producers configure their serializer's encoder accordingly (e.g. .NET `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`); the documents are never embedded raw in HTML, so HTML-escaping the output is unnecessary. Consumers MUST accept both forms regardless (`\u`-escaped JSON decodes to the same string).
 
 #### Units
 
@@ -205,21 +205,21 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 
 ### 4.1 `vehicle.capabilities`
 
-Static control-hardware description for the vehicle — distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
+Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
 
-- `masconType` — master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
-- `masconBrakeType` — brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
-- `powerNotches` — number of power notches (e.g. P1..P5 = 5); `null` when unknown.
-- `brakeNotches` — number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
-- `ebNotch` — signed notch value representing EB in the SetNotch encoding (e.g. `-8`); `null` when unknown.
-- `holdingBrakeNotches` — number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
-- `cpStartPressure` / `cpStopPressure` — air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
+- `masconType`: master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
+- `masconBrakeType`: brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
+- `powerNotches`: number of power notches (e.g. P1..P5 = 5); `null` when unknown.
+- `brakeNotches`: number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
+- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`); `null` when unknown.
+- `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
+- `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
 ### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
 
-- `name` — human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
-- `model` — vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it should be in `series-subseries` format; romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
-- `operator` — operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). For maximum compatibility, refer to Japanese Wikipedia for the full operator name (not group) and TitleCase it.
+- `name`: human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
+- `model`: vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it should be in `series-subseries` format; romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
+- `operator`: operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). For maximum compatibility, refer to Japanese Wikipedia for the full operator name (not group) and TitleCase it.
 
 ### 4.3 `capabilities`
 
@@ -398,7 +398,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 }
 ```
 
-`name` is the station's display name **only** — no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
+`name` is the station's display name **only**, with no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
 
 `doorSide` has the same available values as the per-car doors in §5.6. Producers may derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` should only be used if the state is impossible to determine.
 
@@ -421,7 +421,7 @@ const distanceToNext =
   "fromStartDistance": 12345.6, // meters traveled from scenario start point; always present
   "absoluteDistance": 47823.6, // meters | null: absolute kilometer-post position on the route (キロ程)
   "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns, 0 for straights
-  "gradient": null, // ‰ | null: BVE 2.0.8 doesn't expose; up is positive, down is negative
+  "gradient": null, // ‰ | null: old versions of BVEEx doesn't expose
   "mrPressure": 740.0, // kPa; train-level; always present
 }
 ```
@@ -627,9 +627,9 @@ BVE adapter MUST add `+1` to `Section.CurrentSignalIndex` when emitting (BVE's n
 
 **Value convention for `vocabularies.signalPhaseSpeed`:**
 
-- `n ≥ 0` — the km/h speed cap imposed by this aspect.
-- `-1` — unlimited (no inherent cap; line speed or route-defined maximum).
-- `null` — unknown (phase exists but no speed value is available).
+- `n ≥ 0`: the km/h speed cap imposed by this aspect.
+- `-1`: unlimited (no inherent cap; line speed or route-defined maximum).
+- `null`: unknown (phase exists but no speed value is available).
 
 Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]`, where the `?? defaults[phase]` fallback fires only on a _missing key_, not on an explicit `null` value.
 
@@ -640,7 +640,7 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
   "current": 90, // km/h
   "currentType": "SpeedLimit", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
   "next": [
-    // Array<{ limit, distance, type }> | null — upcoming changes, nearest first. null when none known.
+    // Array<{ limit, distance, type }> | null: upcoming changes, nearest first. null when none known.
     {
       "limit": 65,
       "distance": 412,
@@ -658,7 +658,7 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 - `'Restriction'`: a temporary or operational restriction (curve restriction, weather-related slow order, work zone, station-approach restriction, special-event slow)
 - `null`: type unknown or unclassified (sim has the limit value but not its origin)
 
-**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change — never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimit.next']`: `'full'` (lists all upcoming changes) | `'single'` (only the immediate next) | `false`/absent (unsupported).
+**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimit.next']`: `'full'` (lists all upcoming changes) | `'single'` (only the immediate next) | `false`/absent (unsupported).
 
 ### 5.11 `cars`
 
@@ -761,7 +761,7 @@ All commands are discriminated by `command.kind`. The set:
 
 | Kind            | Payload                                           | Semantics                                                                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency — train-agnostic, supersedes the old hardcoded -8. |
+| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
 | `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                                                                                                                                                                      |
 | `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                                                                                                                                                                      |
 | `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                                                                                                                                                           |
@@ -775,11 +775,11 @@ Producers MUST set fields described as such; OPTIONAL fields use a `default beha
 
 > **`SetNotch` Emergency sentinel.** The reserved constant `EB = -100` (any `value <= -100`) requests Emergency regardless of `relative`. Prefer the constant over a bare literal; it is train-agnostic and supersedes the old hardcoded `-8`.
 >
-> **Custom `SetButton` actions.** `VehicleAction` (§6.2) and `GameAction` (§6.3) are the spec vocabularies whose members serialize to the `action` string. Actions outside that vocabulary travel through the same string field via a separate custom-action method, and are unvalidated passthrough — a sim declares support with `capabilities['input.button.<action>']`.
+> **Custom `SetButton` actions.** `VehicleAction` (§6.2) and `GameAction` (§6.3) are the spec vocabularies whose members serialize to the `action` string. Actions outside that vocabulary travel through the same string field via a separate custom-action method, and are unvalidated passthrough; a sim declares support with `capabilities['input.button.<action>']`.
 
 ### 6.2 VehicleAction enum
 
-Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims may not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action — use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
+Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims may not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action; use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
 
 - `EBReset`: reset the EB/deadman alarm (EB復帰)
 - `GradientStart`: engage the gradient-start / anti-rollback switch (勾配起動スイッチ)
@@ -789,7 +789,7 @@ Physical cab/train controls used with `SetButton`. Vocabulary derived from the T
 - `HornElectric`: electric horn (電気笛)
 - `Buzzer`: cab buzzer (合図ブザー)
 - `BoardingPrompt`: boarding-prompt buzzer (乗降促進)
-- `InCarBroadcast`: in-car announcement / PA (車内放送) — was `Broadcast`
+- `InCarBroadcast`: in-car announcement / PA (車内放送), was `Broadcast`
 - `DoorOpenLeft`: open the left-side passenger doors (左ドア開)
 - `DoorCloseLeft`: close the left-side passenger doors (左ドア閉)
 - `DoorOpenRight`: open the right-side passenger doors (右ドア開)
@@ -798,7 +798,7 @@ Physical cab/train controls used with `SetButton`. Vocabulary derived from the T
 - `DoorKey`: door-switch key operation (ドアスイッチ鍵)
 - `PartialDoor`: 3/4-door partial-open switch (3/4閉スイッチ)
 - `DoorCut`: door cut-out switch (ドアカットSW)
-- `HeadLightLow`: dim the headlight / low beam (前灯減光) — was `LightLow`
+- `HeadLightLow`: dim the headlight / low beam (前灯減光), was `LightLow`
 - `HeadLight`: headlight switch (前照灯SW)
 - `CabinLight`: passenger-cabin light switch (客室灯SW)
 - `CrewRoomLight`: crew-room light switch (乗務員室灯SW)
@@ -806,7 +806,7 @@ Physical cab/train controls used with `SetButton`. Vocabulary derived from the T
 
 ### 6.3 GameAction enum
 
-Camera/view/UI/sim-meta actions used with `SetButton`. These are optional — consumers SHOULD NOT depend on any of them being supported; consult `SimulatorProfile.capabilities['input.button.<action>']`.
+Camera/view/UI/sim-meta actions used with `SetButton`. These are optional; consumers SHOULD NOT depend on any of them being supported; consult `SimulatorProfile.capabilities['input.button.<action>']`.
 
 **Camera / view:**
 
