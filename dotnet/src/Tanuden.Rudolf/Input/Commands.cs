@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Input;
 public class SetNotchCommand : Command
 {
   /// <summary>Reserved emergency sentinel; any <see cref="Value" /> &lt;= <c>EB</c> is treated as Emergency regardless of <see cref="Relative" />.</summary>
-  public const int EB = int.MinValue;
+  public const int EB = -100;
 
   /// <summary>
   ///   When <see cref="Relative" /> is false (absolute): signed combined notch: 0=N, +n=Pn,
