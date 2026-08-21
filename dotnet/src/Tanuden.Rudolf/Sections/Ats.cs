@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Tanuden.Rudolf.Enums;
 
 namespace Tanuden.Rudolf.Sections;
@@ -23,24 +24,23 @@ public class Ats
   public string? State;
 
   /// <summary>Structured rich-state alternative to <see cref="State" />; null when the family profile doesn't fill it.</summary>
-  public AtsRichState? RichState;
+  public List<AtsRichState> RichState = new List<AtsRichState>();
 }
 
 /// <summary>
-///   Machine-readable ATS events (alternative to the free-form <see cref="Ats.State" /> string).
-///   Parallel arrays: index N across all fields describes the Nth active state.
+///   Describes a single machine-readable ATS event (alternative to the free-form <see cref="Ats.State" /> string).
 /// </summary>
 public class AtsRichState
 {
   /// <summary>Stable enum-like codes (e.g. <c>"P_APPROACH"</c>, <c>"EB"</c>).</summary>
-  public string[] Code = Array.Empty<string>();
+  public string Code = string.Empty;
 
   /// <summary>Human-readable display labels (e.g. <c>"P接近"</c>).</summary>
-  public string[] Name = Array.Empty<string>();
+  public string Name = string.Empty;
 
   /// <summary>0 = info, 1 = warning, 2 = critical; values above 2 are sim/vehicle-specific custom severities.</summary>
-  public int[] Severity = Array.Empty<int>();
+  public int Severity;
 
   /// <summary>Machine-readable event category for each state (parallel with <see cref="Code" />).</summary>
-  public AtsRichStateType[] Type = Array.Empty<AtsRichStateType>();
+  public AtsRichStateType Type;
 }
