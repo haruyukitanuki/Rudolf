@@ -6,7 +6,11 @@ namespace Tanuden.Rudolf.Sections;
 /// <summary>Ordered station list for the diagram plus pointers into it.</summary>
 public class Stations
 {
-  /// <summary>Stations in scheduled visit order. May be empty before the diagram is loaded.</summary>
+  /// <summary>
+  ///   Stations in scheduled visit order, or upcoming stations nearest first.
+  ///   Check <see cref="Tanuden.Rudolf.Profile.Capabilities" /> for the behavior.
+  ///   May be empty before the diagram is loaded.
+  /// </summary>
   public List<Station> List = new();
 
   /// <summary>Index into <see cref="List" /> for the station the train is currently at; null when between stations.</summary>
@@ -35,7 +39,7 @@ public class Station
   /// <summary>Absolute kilometer-post; null when the sim doesn't expose chainage.</summary>
   public double? AbsoluteDistance;
 
-  /// <summary>Which side the doors open. See <see cref="Tanuden.Rudolf.Enums.DoorSide" /> for the int convention.</summary>
+  /// <summary>Which side the doors open. See <see cref="Tanuden.Rudolf.Enums.SideOpened" /> for the int convention.</summary>
   public int DoorSide;
 
   /// <summary>Whether this is a passenger stop, operation-only stop, or pass.</summary>

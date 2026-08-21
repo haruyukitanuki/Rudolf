@@ -4,6 +4,7 @@ namespace Tanuden.Rudolf.Enums;
 ///   Which side the doors are expected to open at a station. Serialized as its underlying int.
 ///   <c>-1 = Left, 0 = None/Unknown, 1 = Right, 2 = Both</c>
 /// </summary>
+[System.Obsolete]
 public enum DoorSide
 {
   /// <summary>Doors open on the left side.</summary>
