@@ -241,7 +241,7 @@ This section provides information on how certain data fields are populated in th
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
 | `physics.perCar` | One of {`true`, `broadcast`, `unavailable`}. | Per-car physics availability. If `true`, `DataFrame.cars` contains data for all cars. If `broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `unavailable`, no per-car data is provided in `DataFrame.cars`. |
-| `ats.richState` | One of {`rich`, `eb-only`, `none`}. | Availability of `DataFrame.ats.richState` data (see §5.8). |
+| `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
