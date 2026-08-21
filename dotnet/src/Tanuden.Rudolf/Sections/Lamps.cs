@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Tanuden.Rudolf.Sections;
 
 /// <summary>
-///   Panel-lamp state, vocabulary-keyed.
+///   Panel-lamp state as an integer array.
 ///   Values: <c>0</c> = off, <c>1</c> = on, <c>2+</c> = vehicle-specific alternative
 ///   (blinking, dim, multicolor). Basic TIMS that only knows 0/1 SHOULD treat any nonzero as truthy.
 ///   Default keys include <c>doorClose</c>, <c>atsReady</c>, <c>atsBrakeApply</c>, <c>atsOpen</c>,
@@ -12,6 +12,8 @@ namespace Tanuden.Rudolf.Sections;
 /// </summary>
 public class Lamps
 {
-  /// <summary>Lamp key → integer state. See class-level docs for the value convention.</summary>
-  public Dictionary<string, int> Values = new();
+  /// <summary>
+  ///   Lamp index → integer state. See class-level docs for the value convention.
+  /// </summary>
+  public int[] Values = new int[512];
 }
