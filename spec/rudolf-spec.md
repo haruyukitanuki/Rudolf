@@ -27,7 +27,7 @@ Rudolf defines three document types. All are JSON, UTF-8 encoded, camelCase.
 
 Every document carries:
 
-- `schemaVersion: string`: Rudolf spec version. Current version: `"2.0"`.
+- `schemaVersion: string`: Rudolf spec version. Current version: `"1.0"`.
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`: discriminator.
 - `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it. This value can be in any format so long as it is unique to the current scenario session loaded in the game.
 - `sentAt: string`: ISO 8601 timestamp at producer.

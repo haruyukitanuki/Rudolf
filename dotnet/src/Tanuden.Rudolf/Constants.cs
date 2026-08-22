@@ -4,5 +4,5 @@ namespace Tanuden.Rudolf;
 public static class Constants
 {
   /// <summary>RUDOLF schema version emitted on the wire as <c>schemaVersion</c>.</summary>
-  public const string SchemaVersion = "2.0";
+  public const string SchemaVersion = "1.0";
 }
