@@ -4,7 +4,7 @@ using Tanuden.Rudolf.Enums;
 namespace Tanuden.Rudolf.Sections;
 
 /// <summary>Currently enforced speed limit plus the upcoming change points.</summary>
-public class SpeedLimit
+public class SpeedLimits
 {
   /// <summary>Current speed limit in km/h. <c>-1</c> means no posted limit (an unlimited section).</summary>
   public double Current;
