@@ -51,7 +51,7 @@ public class OutputDataFrame
   public Signals Signals = new();
 
   /// <summary>Current speed limit and the next change point.</summary>
-  public SpeedLimits SpeedLimit = new();
+  public SpeedLimits SpeedLimits = new();
 
   /// <summary>Per-car dynamic state (BC pressure, amperage, occupancy).</summary>
   public Cars Cars = new();
