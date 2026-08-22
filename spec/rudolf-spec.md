@@ -188,11 +188,11 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "time.dateKnown": false,
     "physics.gradient": true,
     "physics.curveRadius": false,
-    "physics.perCar": "true",
-    "ats.richState": "rich",
-    "stations.next": "multiStatic",
-    "speedLimits.next": "single",
-    "signal.next": "single",
+    "physics.perCar": "True",
+    "ats.richState": "true",
+    "stations.next": "MultiStatic",
+    "speedLimits.next": "Single",
+    "signal.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -241,7 +241,7 @@ This section provides information on how certain data fields are populated in th
 | `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string must be provided by the producer (see §5.1). |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
-| `physics.perCar` | One of {`true`, `broadcast`, `unavailable`}. | Per-car physics availability. If `true`, `DataFrame.cars` contains data for all cars. If `broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `unavailable`, no per-car data is provided in `DataFrame.cars`. |
+| `physics.perCar` | One of {`True`, `Broadcast`, `Unavailable`}. | Per-car physics availability. If `True`, `DataFrame.cars` contains data for all cars. If `Broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `Unavailable`, no per-car data is provided in `DataFrame.cars`. |
 | `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
@@ -251,10 +251,10 @@ This section provides information on how certain data fields are populated in th
 
 | Value | Length of array | Data in array |
 | :--- | :--- | :--- |
-| `none` | 0 item(s) | Nothing. |
-| `single` | 0 or 1 item(s) | The next object ahead of the train, or nothing. |
-| `multiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
-| `multiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
+| `None` | 0 item(s) | Nothing. |
+| `Single` | 0 or 1 item(s) | The next object ahead of the train, or nothing. |
+| `MultiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
+| `MultiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
 
 #### 4.3.2 InputCommand Capabilities
 
