@@ -9,20 +9,20 @@ namespace Tanuden.Rudolf.Profile;
 /// </summary>
 public class Vocabularies
 {
-  /// <summary>Panel-lamp index → name overrides; null when no overrides apply.</summary>
-  public Dictionary<string, string> Lamps = new Dictionary<string, string>
+  /// <summary>Panel-lamp name → indexes; null when no overrides apply.</summary>
+  public Dictionary<string, int> Lamps = new Dictionary<string, int>
   {
-    { "0", "doorClose" },
-    { "1", "atsReady" },
-    { "2", "atsBrakeApply" },
-    { "3", "atsOpen" },
-    { "4", "regenerative" },
-    { "5", "ebTimer" },
-    { "6", "emergencyBrake" },
-    { "7", "overload" },
-    { "8", "ato" },
-    { "9", "snowBrake" },
-    { "10", "wheelSlip" },
+    { "doorClose", 0 },
+    { "atsReady", 1 },
+    { "atsBrakeApply", 2 },
+    { "atsOpen", 3 },
+    { "regenerative", 4 },
+    { "ebTimer", 5 },
+    { "emergencyBrake", 6 },
+    { "overload", 7 },
+    { "ato", 8 },
+    { "snowBrake", 9 },
+    { "wheelSlip", 10 },
   };
 
   /// <summary>Per-route overrides for the default 0-7 signal-phase vocabulary.</summary>

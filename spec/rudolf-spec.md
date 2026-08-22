@@ -269,7 +269,7 @@ Sim-specific overrides as a list of key-value pairs.
 
 | Section | Target to Modify | Keys | Values |
 | :--- | :--- | :--- | :--- |
-| `lamps` | Lamp names (see §5.7) | `string`. Lamp index number as text. | `string`. Lamp name. |
+| `lamps` | Lamp name/index mapping (see §5.7) | `string`. Lamp name as text. | `int`. Lamp array index. |
 | `signalPhase` | Signal aspect names (see §5.9) | `string`. Signal index number as text. | `string`. Signal code (e.g., "R"). |
 | `signalPhaseSpeed` | Signal speed table (see §5.9) | `string`. Signal index number as text. | `double \| null`. Speed in km/h. |
 | `transponders` | Transponder categories (see §5.9) | `string`. Sim-native code number (e.g., BVE beacon type) as text. | `string`. Human-readable name. |
@@ -489,18 +489,13 @@ Notes:
 
 ### 5.7 `lamps`
 
-Lamps store data primarily intended for simple state indicators. Up to 512 slots are available; 128 have predefined meanings or are reserved. More functions can be added using `vocabularies`. Consumers can access lamps using their name or index.
+Lamps store data primarily intended for simple state indicators. Up to 512 slots are available; 128 have predefined meanings or are reserved. Producers may define more lamps using `vocabularies`. Consumers can access lamps using their index, and convert from name to index using `vocabularies`.
 
 ```jsonc
 {
-  "values": {
-    "doorClose": 1,
-    "atsReady": 1,
-    "atsBrakeApply": 0,
-    "regenerative": 1,
-    "pilot": 1,
-    // sim/vehicle-specific keys allowed freely
-  },
+  "values": [
+    1, 1, 0, 0, // ... total 512 values
+  ],
 }
 ```
 
@@ -528,7 +523,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 | 11..127 | (null) | Reserved. |
 | 128..511 | (null) | May be freely defined by the producer. |
 
-**BVE-specific:** `AtsPanelArray[1024]` (vehicle-author convention) is mapped to named keys via `SimulatorProfile.vocabularies.lamps.bveIndexToKey` before emit. Raw array may additionally appear in `extensions["bve:atsPanelArray"]` for advanced consumers (per-vehicle-plugin debuggers, etc.).
+**BVE-specific:** A separate array of 1024 integers may be available in `extensions["bve:atsPanelArray"]` for advanced consumers (per-vehicle-plugin debuggers, etc.).
 
 ### 5.8 `ats`
 
