@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json;
+using Tanuden.Rudolf.Enums;
 
 namespace Tanuden.Rudolf.Profile;
 
@@ -11,4 +12,28 @@ namespace Tanuden.Rudolf.Profile;
 /// </summary>
 public class Capabilities : Dictionary<string, JsonElement>
 {
+  /// <summary>
+  ///   Create a new Capabilities section with definitions for default values.
+  /// </summary>
+  public Capabilities()
+  {
+    this.Add("time.dateKnown", JsonSerializer.SerializeToElement(false));
+    this.Add("physics.gradient", JsonSerializer.SerializeToElement(false));
+    this.Add("physics.curveRadius", JsonSerializer.SerializeToElement(false));
+    this.Add("physics.perCar", JsonSerializer.SerializeToElement(PerCarPhysicsType.Unavailable));
+    this.Add("ats.richState", JsonSerializer.SerializeToElement(false));
+    this.Add("stations.next", JsonSerializer.SerializeToElement(NextItemArrayType.None));
+    this.Add("speedLimits.next", JsonSerializer.SerializeToElement(NextItemArrayType.None));
+    this.Add("signals.next", JsonSerializer.SerializeToElement(NextItemArrayType.None));
+
+    this.Add("input.command.setNotch", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setPowerNotch", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setBrakeNotch", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setBrakeSAP", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setReverser", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setButton", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setWiper", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setAtoNotch", JsonSerializer.SerializeToElement(false));
+    this.Add("input.command.setDeadman", JsonSerializer.SerializeToElement(false));
+  }
 }

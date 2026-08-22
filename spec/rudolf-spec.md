@@ -27,7 +27,7 @@ Rudolf defines three document types. All are JSON, UTF-8 encoded, camelCase.
 
 Every document carries:
 
-- `schemaVersion: string`: Rudolf spec version. Current version: `"1.0"`.
+- `schemaVersion: string`: Rudolf spec version. Current version: `"2.0"`.
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`: discriminator.
 - `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it. This value can be in any format so long as it is unique to the current scenario session loaded in the game.
 - `sentAt: string`: ISO 8601 timestamp at producer.
@@ -185,6 +185,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     }
   },
   "capabilities": {
+    "time.dateKnown": false,
     "physics.gradient": true,
     "physics.curveRadius": false,
     "physics.perCar": "true",
@@ -359,7 +360,6 @@ Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core sectio
 ```jsonc
 {
   "sim": "10:34:22", // "HH:MM:SS" bare time when dateKnown=false; ISO datetime when true
-  "dateKnown": false, // true if sim provides real date
   "elapsed": 412.5, // seconds since scenario start; monotonic
   "tick": 1650, // frame counter; increments each emit
 }
