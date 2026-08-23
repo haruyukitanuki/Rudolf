@@ -21,7 +21,7 @@ Rudolf defines three document types. All are JSON, UTF-8 encoded, camelCase.
 
 | Document           | Direction      | Cadence                                      | Purpose                                        |
 | ------------------ | -------------- | -------------------------------------------- | ---------------------------------------------- |
-| `SimulatorProfile` | sim → consumer | Once per scenario load (and on vehicle swap) | Static metadata, capabilities, vocabulary maps |
+| `SimulatorProfile` | sim → consumer | Once per scenario load                       | Static metadata, capabilities, vocabulary maps |
 | `OutputDataFrame`  | sim → consumer | Per-frame (typically 4 Hz/250 ms)            | Live train + game state snapshot               |
 | `InputCommand`     | consumer → sim | Per input event                              | Device commands (notch, button, etc.)          |
 
@@ -95,7 +95,10 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ## 4. SimulatorProfile
 
-Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`.
+Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId` and `sequence`.
+
+- `scenarioId` is only changed when a new drive is started.
+- `sequence` (type `long`) is incremented when data is changed within a drive (e.g., due to coupling and decoupling, signal speed limit changes on different track sections).
 
 ```json
 {
@@ -103,6 +106,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
   "kind": "SimulatorProfile",
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:18:18.3444612+00:00",
+  "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
     "version": "",
@@ -750,7 +754,7 @@ Consumer → sim. One command per InputCommand document (batching is an explicit
   "kind": "InputCommand",
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-06-25T14:23:17.350Z",
-  "sequenceNumber": 1042, // monotonic per consumer; for ordering/idempotency
+  "sequenceNumber": 1042, // long: monotonic per consumer; for ordering/idempotency
   "command": {
     "kind": "SetNotch",
     "value": -2,
