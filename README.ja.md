@@ -20,7 +20,7 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 そうした理由から、私はOpenTetsuを非推奨とし、Rudolfという別のフォーマットを作ることにしました（これで競合する標準が2つに増えてしまいましたね(笑)）。
 
 <figure>
-  <img src="./docs/standards.png" alt='"Standards"'>
+  <img src="./images/standards.ja.png" alt='"Standards"'>
   <figcaption><a href="https://xkcd.com/927/">xkcd.com</a> による "Standards"</figcaption>
 </figure>
 

@@ -20,7 +20,7 @@ When OpenTetsu was developed, it was created as a improved and organised way to 
 I decided to deprecate OpenTetsu for that reason and create another format, called Rudolf (now there are 2 competing standards lol).
 
 <figure>
-  <img src="./docs/standards.png" alt='"Standards"'>
+  <img src="./images/standards.png" alt='"Standards"'>
   <figcaption>"Standards" by <a href="https://xkcd.com/927/">xkcd.com</a></figcaption>
 </figure>
 
