@@ -232,7 +232,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 
 ### 4.3 `capabilities`
 
-This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim.
+This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are optional; an undefined key must be treated as unsupported.
 
 #### 4.3.1 OutputDataFrame Capabilities
 
@@ -260,8 +260,8 @@ This section provides information on how certain data fields are populated in th
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
-| `input.command.*` | `bool` | `*` is a command type specified in §6.1. Producers MUST set capabilities for all of those command types. |
-| `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. Producers SHOULD set capabilities for these commands. |
+| `input.command.*` | `bool` | `*` is a command type specified in §6.1. |
+| `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
 
 #### 4.4 `vocabularies`
 
