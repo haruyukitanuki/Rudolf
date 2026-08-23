@@ -22,6 +22,9 @@ public class SimulatorProfile
   /// <summary>ISO 8601 timestamp at the producer.</summary>
   public string SentAt = string.Empty;
 
+  /// <summary>Incremented when profile data is changed within a drive.</summary>
+  public long Sequence = 0;
+
   /// <summary>Simulator + adapter identity (name + version).</summary>
   public SimInfo Sim = new();
 
