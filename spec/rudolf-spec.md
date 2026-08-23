@@ -22,7 +22,7 @@ Rudolf defines three document types. All are JSON, UTF-8 encoded, camelCase.
 | Document           | Direction      | Cadence                                      | Purpose                                        |
 | ------------------ | -------------- | -------------------------------------------- | ---------------------------------------------- |
 | `SimulatorProfile` | sim → consumer | Once per scenario load                       | Static metadata, capabilities, vocabulary maps |
-| `OutputDataFrame`  | sim → consumer | Per-frame (typically 4 Hz/250 ms)            | Live train + game state snapshot               |
+| `OutputDataFrame`  | sim → consumer | Per-frame (typically 10 Hz/100 ms)           | Live train + game state snapshot               |
 | `InputCommand`     | consumer → sim | Per input event                              | Device commands (notch, button, etc.)          |
 
 Every document carries:
@@ -298,7 +298,7 @@ An example of the `signalPhaseSpeed` section is shown below:
 
 ## 5. OutputDataFrame
 
-Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core section key is structurally present (even when empty); fields within sections may be null.
+Sent per-frame (~10 Hz / 100 ms typical, sim MAY emit faster or slower). Every core section key is structurally present (even when empty); fields within sections MAY be null.
 
 ```jsonc
 {
