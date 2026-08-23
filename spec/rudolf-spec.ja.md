@@ -2,35 +2,35 @@
 
 [English](./rudolf-spec.md) | **日本語**
 
-## 1. 用語
+## 1. 用語定義
 
-| 用語                       | 意味                                                                                                                             |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Sim（シム）                | Rudolfドキュメントを出力する列車シミュレーター（BVE、TRAIN CREWなど）。                                                          |
-| Adapter（アダプター）      | シミュレーターのネイティブAPIを読み取り、ワイヤー上のRudolf形式へ変換するコード。                                                |
-| Consumer（コンシューマー） | Rudolfドキュメントを読み取るもの全般：HMIディスプレイ、ドライブレコーダー、Webダッシュボード、物理デバイスのコントローラーなど。 |
-| Producer（プロデューサー） | Rudolfドキュメントを出力するもの全般：通常はシミュレーターの内部または隣で動作するアダプター。                                   |
-| Section（セクション）      | `OutputDataFrame`のトップレベルキー（例：`physics`、`signals`）。                                                                |
-| Extension（拡張）          | `extensions:`配下に置かれる、名前空間付きのシミュレーター固有・ベンダー固有ブロック（例：`bve:beaconRing`）。                    |
-| Scenario（シナリオ）       | シナリオの読み込みから終了までの、シミュレーターの1回のプレイセッション。                                                        |
-| HMI                        | ヒューマンマシンインターフェース。すなわち列車情報管理装置（TIMS／INTEROS）。                                                    |
+| 用語 | 意味 |
+| --- | --- |
+| Sim（シム） | Rudolfドキュメントを出力する列車運転シミュレーター（BVE、TRAIN CREWなど）。 |
+| Adapter（アダプター） | シミュレーターのネイティブAPIを読み取り、通信経路上でRudolf形式へ変換するコード。 |
+| Consumer（コンシューマー） | Rudolfドキュメントを読み取る側全般：HMIディスプレイ、ドライブレコーダー、Webダッシュボード、物理デバイスコントローラーなど。 |
+| Producer（プロデューサー） | Rudolfドキュメントを出力する側全般：通常はシミュレーターの内部または隣で動作するアダプター。 |
+| Section（セクション） | `OutputDataFrame` のトップレベルキー（例：`physics`、`signals`）。 |
+| Extension（拡張） | `extensions:` 配下に置かれる、名前空間付きのシミュレーター固有・ベンダー固有ブロック（例：`bve:beaconRing`）。 |
+| Scenario（シナリオ） | シナリオの読み込みから終了までの、シミュレーターの1回のプレイセッション。 |
+| HMI | ヒューマンマシンインターフェース。すなわち列車情報管理装置（TIMS／INTEROS／MON等）。 |
 
 ## 2. ドキュメントの種類
 
-Rudolfは3種類のドキュメントを定義します。いずれもJSONで、UTF-8エンコード、camelCaseです。
+Rudolfは3種類のドキュメントを定義します。いずれもJSON形式で、UTF-8エンコード、キー名はcamelCase（キャメルケース）です。
 
-| ドキュメント       | 方向           | 頻度                                        | 目的                                     |
-| ------------------ | -------------- | ------------------------------------------- | ---------------------------------------- |
-| `SimulatorProfile` | sim → consumer | シナリオ読み込み時に1回（および車両変更時） | 静的メタデータ、capabilities、語彙マップ |
-| `OutputDataFrame`  | sim → consumer | フレームごと（通常4 Hz／250 ms）            | 列車＋ゲーム状態のライブスナップショット |
-| `InputCommand`     | consumer → sim | 入力イベントごと                            | デバイスコマンド（ノッチ、ボタンなど）   |
+| ドキュメント | 方向 | 送信頻度 | 目的 |
+| --- | --- | --- | --- |
+| `SimulatorProfile` | sim → consumer | シナリオ読み込み時に1回 | 静的メタデータ、対応機能（capabilities）、語彙マップ |
+| `OutputDataFrame` | sim → consumer | フレームごと（通常4 Hz／250 ms間隔） | 列車およびゲーム状態のリアルタイムスナップショット |
+| `InputCommand` | consumer → sim | 入力イベント発生ごと | デバイスへの入力コマンド（ノッチ、ボタンなど） |
 
-すべてのドキュメントは次のフィールドを持ちます。
+すべてのドキュメントは共通して次のフィールドを持ちます。
 
-- `schemaVersion: string`：Rudolf仕様のバージョン。現行バージョン：`"1.0"`。
+- `schemaVersion: string`：Rudolf仕様のバージョン。現行バージョンは `"1.0"`。
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`：ドキュメント種別の判別子。
-- `scenarioId: string`：1つのプレイセッションに属するすべてのドキュメントを結び付ける不透明な識別子。同一の`scenarioId`が、そのSimulatorProfile、そのシナリオ内のすべてのOutputDataFrame、およびそれを対象とするすべてのInputCommandに現れます。
-- `sentAt: string`：プロデューサー側でのISO 8601タイムスタンプ。
+- `scenarioId: string`：1つのプレイセッションに属するすべてのドキュメントを紐付ける識別子。同一セッション内では、SimulatorProfile、そのシナリオ内のすべてのOutputDataFrame、およびそれらを対象とするすべてのInputCommandで同一の `scenarioId` が使用されます。ゲーム内でロードされた現在のシナリオセッションに対して一意である限り、この値のフォーマットは任意です。
+- `sentAt: string`：プロデューサー側におけるISO 8601形式のタイムスタンプ。
 
 ## 3. アーキテクチャ
 
@@ -38,30 +38,43 @@ Rudolfは3種類のドキュメントを定義します。いずれもJSONで、
 
 #### 命名規約
 
-ワイヤー上ではcamelCaseを使用します。C# のプロデューサーは`CamelCasePropertyNamesContractResolver`によってPascalCaseから変換します。TypeScript／JavaScriptのコンシューマーはcamelCaseをそのまま読み取ります。
+通信経路上（ワイヤー上）ではcamelCaseを使用します。C# のプロデューサーは `CamelCasePropertyNamesContractResolver` 等によってPascalCaseから変換します。TypeScript／JavaScriptのコンシューマーはcamelCaseのまま直接読み取ります。
 
 #### 文字列エンコーディング
 
-すべての文字列値はリテラルなUTF-8として出力されます —— **`\uXXXX`のエスケープシーケンスは使いません**。日本語テキスト（駅名、路線名、車両名）はワイヤー上にそのまま現れなければなりません（例：`\u7ACB\u4F1A\u5DDD`のようにエスケープするのではなく、`"立会川"`）。プロデューサーは、それに合わせてシリアライザーのエンコーダーを設定します（例：.NETの`JavaScriptEncoder.UnsafeRelaxedJsonEscaping`）。これらのドキュメントが生のHTMLに埋め込まれることはないため、出力をHTMLエスケープする必要はありません。いずれにせよコンシューマーは両方の形式を受け入れなければなりません（`\u`エスケープされたJSONも、デコードすれば同じ文字列になります）。
+すべての文字列値はリテラルなUTF-8として出力されます —— **`\uXXXX` のようなエスケープシーケンスは使用しません**。日本語テキスト（駅名、路線名、車両名など）は通信経路上にそのまま出力されなければなりません（MUST。例：`\u7ACB\u4F1A\u5DDD` のようにエスケープするのではなく、`"立会川"` とそのまま記述）。プロデューサーは、シリアライザーのエンコーダーを適切に設定してください（例：.NETの `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`）。これらのドキュメントが生のHTMLに直接埋め込まれることはないため、出力をHTMLエスケープする必要はありません。なお、コンシューマーは両方の形式を受け入れられるように実装しなければなりません（MUST。`\u` エスケープされたJSONも、デコード結果は同一の文字列になります）。
 
 #### 単位
 
 - 速度：**km/h**
 - 圧力：**kPa**
-- 距離／位置：**メートル**
+- 距離／位置：**メートル (m)**
 - 勾配：**‰**（パーミル）
 - 電流：**A**（アンペア）
-- 時刻：ISO 8601文字列。実日付を持たないシミュレーターでは`Kind=Unspecified`を許容します。
+- 時刻：ISO 8601形式の文字列。正確な日付を持たないシミュレーターのために、`Kind=Unspecified` を許容します。
+
+フィールドの単位が **%**（パーセント）または **‰**（パーミル）である場合、通信時の値はそれぞれ割合に100または1000を掛けた数値であることを意味します。
+例：
+- `physics.gradient` の単位は **‰** です。勾配が -33‰ の場合、フィールドの値は `-33.0` となります。
+- `cars.list[...].occupancyRate` の単位は **%** です。乗車率が 150% の場合、フィールドの値は `150.0` となります。
+
+#### 生の値（Raw Values）
+
+プロデューサーは、シミュレーターからのすべての物理情報を保持した生の数値を出力すべきです（SHOULD）。データの忠実性は維持されなければならず（MUST）、情報が失われるような値の変換、クランプ（範囲制限）、改変を行ってはなりません（MUST NOT）。シミュレーター側の物理計器の制約（例：メーターの針が一方向にしか動かない等）はコンシューマー側での表示上の関心事であり、データ層の値を歪める理由にはなりません。
+
+例として、`physics.current` は回生ブレーキまたは発電ブレーキの電流を表す場合があり、これは物理的には負の値になります。一部のシミュレーターでは、運転台の電流計の針が一方向にしか振れず運転士が文脈から符号を判別する構造であるために、これを正の値として出力することがあります。Rudolfにおいては、物理的な電流が負であるなら、フィールドの値も必ず負でなければなりません（MUST）。計器が正の値しか表示できないからという理由で `Math.Abs(current)` を出力してはなりません（MUST NOT）。物理計器やHMIを駆動するコンシューマー側が、負の値を自身の表示範囲にマッピングする責任を負います。
+
+同様に、シミュレーター自体がネイティブで行っている場合や、データ型の安全性のために絶対に必要な場合を除き、値を「妥当な」範囲にクランプしたり、四捨五入、平滑化、補間を行ったりしてはなりません（MUST NOT）。
 
 #### null許容フィールド
 
-`null`が設定されたフィールドは、「シミュレーターが今この値を本当に持っていない」ことを意味します。
+`null` が設定されたフィールドは、「シミュレーターが現在その値を実際に持っていない（未取得・不明）」ことを意味します。
 
-JSONに存在しないフィールドは、「シミュレーターがこのフィールドをそもそもサポートしていない」ことを意味します（これはSimulatorProfile.capabilitiesでも示されます）。通常は生成するものの現時点で値がないフィールドについては、プロデューサーは省略よりも`null`を優先すべきです。
+JSONにフィールド自体が存在しない（省略されている）場合、それは「シミュレーターがそのフィールドをそもそもサポートしていない」ことを意味します（これは `SimulatorProfile.capabilities` でも宣言されます）。通常は出力されるものの現時点で値がないフィールドについては、プロデューサーは省略するのではなく `null` を出力すべきです（SHOULD）。
 
 #### バージョニング
 
-すべてのドキュメントは、エンベロープレベルに単一の`schemaVersion`を持ちます。いずれかのセクションへの破壊的変更があれば`schemaVersion`を更新します。コンシューマーは、将来のマイナーバージョンで追加される未知のフィールドを許容しなければなりません（知っているものを読み、知らないものは無視する）。
+すべてのドキュメントは、エンベロープレベルに単一の `schemaVersion` を持ちます。いずれかのセクションに破壊的変更が行われた場合、`schemaVersion` を更新します。コンシューマーは、将来のマイナーバージョンで追加される未知のフィールドを許容しなければなりません（MUST。理解できるフィールドを読み取り、未知のフィールドは無視する）。
 
 ### 3.2 ドキュメント構造
 
@@ -70,7 +83,7 @@ SimulatorProfile = { schemaVersion, kind, scenarioId, sentAt, sim, scenario, veh
 
 OutputDataFrame = { schemaVersion, kind, scenarioId, sentAt,
                 time, diagram, stations, physics, controllers, doors,
-                lamps, ats, signals, speedLimit, cars, switches, gameState,
+                lamps, ats, signals, speedLimits, cars, switches, gameState,
                 extensions? }
 
 InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, command }
@@ -78,12 +91,15 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ### 3.3 拡張性
 
-- **拡張ブロック：** `extensions.<sim>:<concern>`という名前空間を使います。例：`bve:beaconRing`、`bve:atsPanelArray`。サードパーティは独自のブロックを自由に定義できます。
-- **語彙（Vocabularies）：** デフォルトの語彙（信号現示、信号現示の速度、ランプキー、地上子タイプの意味）は本仕様で公開されています。SimulatorProfile.vocabulariesによってシナリオごとに上書きできます。
+- **拡張ブロック：** `extensions.<sim>:<concern>` という名前空間を使用します。例：`bve:beaconRing`、`bve:atsPanelArray`。サードパーティは独自のブロックを自由に定義できます。
+- **語彙（Vocabularies）：** デフォルトの語彙（信号現示、信号現示速度、表示灯キー、地上子タイプの意味）は本仕様で定義されています。`SimulatorProfile.vocabularies` によってシナリオごとに上書きできます（MAY）。
 
 ## 4. SimulatorProfile
 
-シナリオ読み込み時に1回送信されます。車両変更時に再送されます。`scenarioId`によってキャッシュ可能です。
+シナリオ読み込み時に1回送信されます。車両変更時に再送されます。`scenarioId` および `sequence` によってキャッシュ可能です。
+
+- `scenarioId` は新しい運転セッションが開始されたときにのみ変更されます。
+- `sequence`（型 `long`）は、運転中にデータが変更されたとき（例：連結・解放、異なる線路区間での信号制限速度変更など）にインクリメントされます。
 
 ```json
 {
@@ -91,6 +107,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "kind": "SimulatorProfile",
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:18:18.3444612+00:00",
+  "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
     "version": "",
@@ -173,10 +190,14 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     }
   },
   "capabilities": {
+    "time.dateKnown": false,
     "physics.gradient": true,
-    "physics.perCar": "true",
-    "ats.richState": "rich",
-    "speedLimit.next": "single",
+    "physics.curveRadius": false,
+    "physics.perCar": "True",
+    "ats.richState": "true",
+    "stations.next": "MultiStatic",
+    "speedLimits.next": "Single",
+    "signal.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -198,25 +219,87 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ### 4.1 `vehicle.capabilities`
 
-車両の静的な制御機器情報です。トップレベルの`capabilities`マップ（アダプターがどの`OutputDataFrame`フィールドを実際に生成するかを宣言するもの）とは別物です。すべてのフィールドはnull許容で、`null`は「シミュレーターが現時点で値を持たない」ことを意味します。
+車両の静的な制御機器情報です。トップレベルの `capabilities` マップ（アダプターがどの `OutputDataFrame` フィールドを実際に生成・配信するかを宣言するもの）とは別個に定義されます。すべてのフィールドはnull許容であり、`null` は「シミュレーターが現時点で値を持たない」ことを意味します。
 
 - `masconType`：マスコンのハンドル方式。`'OneHandle' | 'TwoHandle' | null`（MasconType）。
-- `masconBrakeType`：ブレーキハンドルの挙動。`'Notched' | 'LapCapable' | 'Continuous' | null`（MasconBrakeType）。`LapCapable`はラップ付きの連続ブレーキ（＝連続を含意）、`Continuous`はラップ位置を持たない非段階（直通）ハンドルです。
-- `powerNotches`：力行ノッチ数（例：P1〜P5なら5）。不明な場合は`null`。
-- `brakeNotches`：常用ブレーキノッチ数（例：B1〜B7なら7）。不明な場合は`null`。
-- `ebNotch`：SetNotchエンコーディングにおいてEBを表す符号付きノッチ値（例：`-8`）。不明な場合は`null`。
-- `holdingBrakeNotches`：抑速ブレーキのノッチ数。備えていない場合は`0`、不明な場合は`null`。
-- `cpStartPressure`／`cpStopPressure`：空気圧縮機の始動／停止圧力（kPa）。不明な場合は`null`。
+- `masconBrakeType`：ブレーキハンドルの動作方式。`'Notched' | 'LapCapable' | 'Continuous' | null`（MasconBrakeType）。`LapCapable` は重なり位置（ラップ）を持つ制御（連続制御を含意）、`Continuous` は重なり位置を持たない無段階（直通空気ブレーキなど）のハンドルです。
+- `powerNotches`：力行ノッチ段数（例：P1〜P5なら5）。不明な場合は `null`。
+- `brakeNotches`：常用ブレーキノッチ段数（例：B1〜B8なら8）。不明な場合は `null`。
+- `ebNotch`：SetNotchエンコーディングにおいて非常ブレーキ（EB）を表す符号付きノッチ値（例：`-8`）。不明な場合は `null`。
+- `holdingBrakeNotches`：抑速ブレーキのノッチ段数。備えていない場合は `0`、不明な場合は `null`。
+- `cpStartPressure`／`cpStopPressure`：空気圧縮機（コンプレッサー）の起動／停止圧力（kPa）。不明な場合は `null`。
 
 ### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
 
-- `name`：車両モデルの表示名（例：`"225系0番台"`）。系や番台の漢字が正しいことを確認してください。編成に複数のモデルが含まれる場合は、`+`で区切ってください（例：`"E231系1000番台+E233系3000番台"`）。
-- `model`：車両モデルの識別子（例：`"225-0"`）。相互運用性を最大化するため、`series-subseries`形式にしてください。かなはすべてTitleCaseでローマ字化します。編成に複数のモデルが含まれる場合は、`+`で区切ってください（例：`"E231-1000+E233-3000"`）。
-- `operator`：運営会社（例：`"EastJapanRailwayCompany"`、`"TokyuCorporation"`）。互換性を最大化するため、（グループ名ではなく）正式な事業者名を日本語版Wikipediaで確認し、TitleCaseにしてください。
+- `name`：車両形式の表示名（例：`"225系0番台"`）。「系」や「番台」の漢字表記が正確であることを確認してください。編成内に複数の形式が混結されている場合は、`+` で連結します（例：`"E231系1000番台+E233系3000番台"`）。
+- `model`：車両モデル識別子（例：`"225-0"`）。相互運用性を最大化するため、`series-subseries` 形式とすべきであり（SHOULD）、かな表記はTitleCaseでローマ字化すべきです（SHOULD）。編成内に複数の形式が混結されている場合は、`+` で連結します（例：`"E231-1000+E233-3000"`）。
+- `operator`：運行会社（例：`"EastJapanRailwayCompany"`、`"TokyuCorporation"`）。互換性を最大化するため、グループ名ではなく日本語版Wikipediaに準拠した正式な鉄道事業者名をTitleCaseで記述すべきです（SHOULD）。
+
+### 4.3 `capabilities`
+
+本セクションは、`OutputDataFrame` 内の各データフィールドがどのように設定されるか、またはそのフィールドがサポートされているかについての情報を提供します。また、シミュレーターがサポートする `InputCommand` の種類も指定します。すべてのキーは省略可能であり（OPTIONAL）、未定義のキーは非対応として扱われなければなりません（MUST）。
+
+#### 4.3.1 OutputDataFrame Capabilities
+
+| キー | 値 | 説明 |
+| :--- | :--- | :--- |
+| `time.dateKnown` | `bool` | シミュレーターが正確な実日付を提供する場合 `true`。これはプロデューサーが時刻文字列をどのように提供しなければならないかに影響します（MUST。§5.1参照）。 |
+| `physics.gradient` | `bool` | 勾配データの利用可否。 |
+| `physics.curveRadius` | `bool` | 曲線半径データの利用可否。 |
+| `physics.perCar` | {`True`, `Broadcast`, `Unavailable`} のいずれか | 車両ごとの物理データの利用可否。`True` の場合、`DataFrame.cars` に全車両の実データが含まれます。`Broadcast` の場合、先頭車両のデータのみが存在し、コンシューマー側で先頭の値を全車にブロードキャストしなければなりません（MUST）。`Unavailable` の場合、`DataFrame.cars` に車両ごとのデータは提供されません。 |
+| `ats.richState` | `bool` | `DataFrame.ats.richState` コレクションの利用可否（§5.8参照）。 |
+| `stations.next` | `NextItemArrayType` | 駅データ配列の配信形態。 |
+| `speedLimits.next` | `NextItemArrayType` | 速度制限データ配列の配信形態。 |
+| `signals.next` | `NextItemArrayType` | 信号データ配列の配信形態。 |
+
+`NextItemArrayType` は、シナリオ内のオブジェクトを格納する配列の動作を指定します：
+
+| 値 | 配列の要素数 | 配列内のデータ |
+| :--- | :--- | :--- |
+| `None` | 0 件 | なし。 |
+| `Single` | 0 または 1 件 | 列車の前方にある直近のオブジェクト、またはなし。 |
+| `MultiDynamic` | 任意の件数 | 列車の前方にある複数のオブジェクト、またはなし。必ずしもシナリオ終端までとは限りません。 |
+| `MultiStatic` | 任意の件数 | シナリオの開始から終了までの全項目。`stations.next` にのみ適用されます。 |
+
+#### 4.3.2 InputCommand Capabilities
+
+| キー | 値 | 説明 |
+| :--- | :--- | :--- |
+| `input.command.*` | `bool` | `*` は §6.1 で定義されるコマンド種別です。 |
+| `input.button.*` | `bool` | `*` は SetButton コマンドで使用される操作対象です。標準の SetButton 操作は §6.2 および §6.3 で定義されています。 |
+
+### 4.4 `vocabularies`
+
+キーと値のペアによるシミュレーター固有の上書き設定です。
+
+| セクション | 変更対象 | キー | 値 |
+| :--- | :--- | :--- | :--- |
+| `lamps` | 表示灯名／インデックスのマッピング（§5.7参照） | `string`。テキストとしての表示灯名。 | `int`。表示灯配列のインデックス。 |
+| `signalPhase` | 信号現示名（§5.9参照） | `string`。テキストとしての信号インデックス番号。 | `string`。信号コード（例："R"）。 |
+| `signalPhaseSpeed` | 信号制限速度テーブル（§5.9参照） | `string`。テキストとしての信号インデックス番号。 | `double \| null`。速度（km/h）。 |
+| `transponders` | 地上子カテゴリー（§5.9参照） | `string`。テキストとしてのシミュレーターネイティブのコード番号（例：BVEのBeacon.Type）。 | `string`。人間可読な名前。 |
+
+`signalPhaseSpeed` セクションの設定例を以下に示します：
+
+```jsonc
+    "signalPhaseSpeed": {
+      "1": 0,
+      "2": 25,
+      "3": 55,
+      "4": 80,
+      "6": 110
+    },
+```
+
+**注意：**
+
+- プロデューサーはすべての `vocabularies` に新しい値を追加してよく（MAY）、`signalPhaseSpeed` のデフォルト値を上書きして構いません（MAY）。
+- 相互運用性を担保するため、`lamps`、`signalPhase`、および `transponders` の既存の名前を変更してはなりません（MUST NOT）。
+- シナリオ内でいずれかの `vocabularies` が変更された場合、コンシューマーに再読み込みを促すために `scenarioId` も更新しなければなりません（MUST）。
 
 ## 5. OutputDataFrame
 
-フレームごとに送信されます（通常4 Hz程度。シミュレーターはこれより速くも遅くも出力できます）。コアとなる各セクションのキーは、構造上つねに存在します（空の場合でも）。セクション内のフィールドはnullになることがあります。
+フレームごとに送信されます（通常約4 Hz間隔ですが、シミュレーターにより増減します）。コアとなる各セクションのキーは、構造上つねに存在します（空データの場合でも保持されます）。セクション内の個別フィールドは `null` になる場合があります。
 
 ```jsonc
 {
@@ -252,7 +335,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "signals": {
     /* ... */
   },
-  "speedLimit": {
+  "speedLimits": {
     /* ... */
   },
   "cars": {
@@ -281,28 +364,27 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ```jsonc
 {
-  "sim": "10:34:22", // dateKnown=falseのときは "HH:MM:SS" 形式の時刻のみ／trueのときはISO日時
-  "dateKnown": false, // シミュレーターが実日付を提供する場合はtrue
-  "elapsed": 412.5, // シナリオ開始からの秒数。単調増加
-  "tick": 1650, // フレームカウンター。出力ごとに増加
+  "sim": "10:34:22", // dateKnown=falseのときは "HH:MM:SS" 形式の時刻文字列、trueのときはISO日時文字列
+  "elapsed": 412.5, // シナリオ開始からの経過秒数（単調増加）
+  "tick": 1650, // フレームカウンター。出力ごとにインクリメント
 }
 ```
 
 ### 5.2 `diagram`
 
-寛容な設計です：アダプターは、シミュレーターがネイティブに知っている情報だけを埋めます。ヒューリスティックな導出は規定しません。コンシューマーは、必要であればローカルで導出値を計算してもかまいません。
+寛容な設計（Permissive）：アダプターはシミュレーターが元々把握している情報のみを設定します。推測による値の算出は規定されません。コンシューマーが必要に応じてローカルで導出値を計算して構いません（MAY）。
 
 ```jsonc
 {
-  "trainNumber": "1234A", // string | null：TCのdiaName／BVE：ScenarioInfo.Titleから解析
-  "boundFor": "館浜", // string | null：TCはネイティブ／BVE：可能ならタイトルから解析
-  "serviceType": "普通", // string | null：TCはネイティブ／BVE：タイトルのキーワード一致
-  "direction": null, // 'Upbound' | 'Downbound' | null：LineDirection。Upbound=上り、Downbound=下り
-  "runNumber": null, // string | null：シミュレーターネイティブのみ。導出はしない
+  "trainNumber": "1234A", // string | null：TCの運行番号（diaName）／BVE：ScenarioInfo.Titleからパース
+  "boundFor": "館浜", // string | null：TCはネイティブ値／BVE：可能ならタイトルからパース
+  "serviceType": "普通", // string | null：TCはネイティブ値／BVE：タイトルのキーワード一致
+  "direction": null, // 'Upbound' | 'Downbound' | null：路線方向（上り/下り）
+  "runNumber": null, // string | null：シミュレーターネイティブ値のみ（自動導出しない）
 }
 ```
 
-コンシューマーは、必要に応じて「終点までの残り距離」を`stations.list[last].fromStartDistance - physics.fromStartDistance`として計算します。
+コンシューマーは、必要に応じて終着駅までの残り距離を `stations.list[last].fromStartDistance - physics.fromStartDistance` として計算します。
 
 ### 5.3 `stations`
 
@@ -311,29 +393,31 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "list": [
     {
       "index": 0,
-      "name": "起点",
-      "fromStartDistance": 0, // シナリオ開始地点からのメートル数。つねに存在
-      "absoluteDistance": 35403.2, // meters | null：絶対キロ程。TCはつねにnull
-      "doorSide": 1, // int：-1=左、0=なし／不明、1=右、2=両側
-      "stopType": "PassengerStop", // 'PassengerStop' | 'OperationStop' | 'Passing' | null
+      "name": "中京",
+      "fromStartDistance": 0, // シナリオ開始地点からのメートル数（必須）
+      "absoluteDistance": 35403.2, // meters | null：絶対キロ程
+      "doorSide": 1, // int | null：開扉方向（§5.6参照）。判定不能な場合はnull
+      "stopType": "PassengerStop", // 'PassengerStop' (客扱い) | 'OperationStop' (運転停車) | 'Passing' (通過) | null
       "arrival": null,
       "departure": "10:00:00",
       "stopPositionName": "下り1番線", // string | null
-      "isTimeTaken": true, // bool | null：採時駅かどうか。シミュレーターが扱わない場合はnull
+      "isTimeTaken": true, // bool | null：採時駅かどうか。シミュレーターが未対応の場合はnull
       "stopPositions": [3, 4, 6], // number[] | null：現在の方向／番線における停止目標の両数候補。不明時はnull
     },
-    // ... 駅ごとに
+    // ... 駅ごとに繰り返し
   ],
-  "currentIndex": null, // number | null：列車が現在いる駅
-  "nextIndex": 5, // number | null：前方の次駅
+  "currentIndex": null, // number | null：列車が現在停車している駅のインデックス
+  "nextIndex": 5, // number | null：前方の次駅のインデックス
 }
 ```
 
-`name`は駅の表示名の**み**です —— 駅コードや駅ナンバリングは含みません（例：`"品川"`。`"KK01品川"`、`"品川(JK20)"、`"KK01"`などは不可）。他のすべての文字列と同様、`\u`エスケープシーケンスを使わないリテラルなUTF-8として出力されます（§3.1の「文字列エンコーディング」を参照）。
+`name` は駅の表示名**のみ**でなければならず（MUST）、駅ナンバリングや駅コードを含めてはなりません（MUST NOT。例：`"品川"`。`"KK01 品川"`、`"品川(JK20)"`、`"KK01"` などは不可）。他のすべての文字列と同様に、`\u` エスケープシーケンスを使用しないリテラルUTF-8として出力されます（§3.1「文字列エンコーディング」参照）。
 
-`isTimeTaken`：bool | null。採時駅（タイミングポイント）かどうか。シミュレーターが対応していない場合はnull。ヒューリスティックに導出するプロデューサーは、時刻データが存在するが有効な着・発時刻が無い駅には`null`ではなく`false`を出力すべきです。
+`doorSide` は §5.6 の車両ごとのドアと同じ定義値を使用します。プロデューサーは、たとえ 0（閉扉）と 3（開扉・側別不明）に限定される場合でも、ヒューリスティックにこれを導出して構いません（MAY）。`null` は状態の判定が不可能な場合にのみ使用すべきです（SHOULD）。
 
-コンシューマーは、参照（ルックアップ）によって完全な駅レコードと次駅までのライブ距離を導出します。
+`isTimeTaken`：採時駅かどうか（bool | null）。シミュレーターが対応していない場合は `null` です。ヒューリスティックに導出するプロデューサーは、時刻データが存在するものの有効な着・発時刻が適用されない駅に対しては、`null` ではなく `false` を出力すべきです（SHOULD）。
+
+コンシューマーは、参照（ルックアップ）によって完全な駅レコードと次駅までのリアルタイム距離を導出します。
 
 ```js
 const next =
@@ -346,36 +430,38 @@ const distanceToNext =
 
 ```jsonc
 {
-  "speed": 78.4, // km/h。列車単位。つねに存在
-  "fromStartDistance": 12345.6, // シナリオ開始地点からの走行メートル数。つねに存在
+  "speed": 78.4, // km/h。列車全体の速度（必須）
+  "fromStartDistance": 12345.6, // シナリオ開始地点からの走行距離（メートル、必須）
   "absoluteDistance": 47823.6, // meters | null：路線上の絶対キロ程
-  "gradient": null, // ‰ | null：BVE 2.0.8は公開していない
-  "mrPressure": 740.0, // kPa。列車単位。つねに存在
+  "curveRadius": -500.0, // meters | null：TRAIN CREWは非公開。左カーブは負、右カーブは正、直線は0
+  "gradient": null, // ‰ | null：旧バージョンのBVEEx等は非公開
+  "mrPressure": 740.0, // kPa。元空気溜圧力（必須）
 }
 ```
 
-- `fromStartDistance`はつねに存在します：シナリオ開始からの走行メートル数です。通常運転中は単調増加します（列車が後退するときのみ減少）。
-- `absoluteDistance`は、公式に測量されたキロ程です。路線をまたいだ対応付け、ATS地上子の参照、緯度経度へのマッピングに役立ちます。シミュレーターがシナリオ相対の距離しか知らない場合はnullになります。
+- `fromStartDistance` は必須フィールドです。シナリオ開始からの累計走行距離（メートル）を表します。通常の運転中は単調増加します（後退時のみ減少）。
+- `absoluteDistance` は公式に測量されたキロ程です。複数路線間のデータ連携、ATS地上子の参照、位置情報マッピング等に役立ちます。シミュレーターがシナリオ相対の距離しか持たない場合は `null` になります。
+- `curveRadius` および `gradient` は先頭車両の位置における正確な値であるべきです（SHOULD）。正確な値が得られない場合は、キーフレーム値の使用が許可されます（MAY）。
 
-車両ごとのBC圧力（ブレーキシリンダー圧力）と電流値は`cars`にあります。
+車両ごとのBC圧力（ブレーキシリンダー圧力）および電流値は `cars` に格納されます。
 
 ### 5.5 `controllers`
 
 ```jsonc
 {
-  "powerNotch": 2, // TCのPnotch／BVEのHandles.PowerNotch
-  "brakeNotch": 0, // TCのBnotch／BVEのHandles.BrakeNotch
+  "powerNotch": 2, // TCのPノッチ / BVEのHandles.PowerNotch
+  "brakeNotch": 0, // TCのBノッチ / BVEのHandles.BrakeNotch
   "reverser": 1, // int：-1=後進、0=中立、1=前進
   "ato": null, // { active: bool, notch?: number } | null
   "tasc": null, // { active: bool, notch?: number, inching: bool } | null
-  "deadman": null, // 'Hand' | 'Foot' | 'EB' | null：現在作動しているチャンネル
+  "deadman": null, // 'Hand' | 'Foot' | 'EB' | null：現在作動している方式
 }
 ```
 
-- `ato`は、列車で自動列車運転装置（ATO）が有効なとき非nullになります。`notch`（省略可能）は、ATOが指示しているノッチです。
-- `tasc`（定位置停止装置）は、次の停車に向けてTASCが有効なとき非nullになります。`active`は、TASCがブレーキ指示を制御しているときtrueになります。`inching`は、TASCが最終の低速位置合わせ段階（ホームの停止目標に合わせる小刻みな微調整）にあるときtrueになります。`notch`（省略可能）は、TASCが指示しているノッチです。
+- `ato` は、列車で自動列車運転装置（ATO）が作動している場合に非nullになります。`notch`（省略可能）はATOが指示しているノッチ段数です。
+- `tasc`（定位置停止装置）は、次の停車に向けてTASCが作動している場合に非nullになります。`active` はTASCがブレーキ出力を制御している場合にtrueとなり、`inching` はTASCが最終の低速位置合わせ段階（停止目標に合わせる小刻みな微調整）にある場合にtrueとなります。`notch`（省略可能）はTASCが指示しているノッチ段数です。
 
-注意：`reverser`は`-1 = 後進、0 = 中立、1 = 前進`という規約のintです。TCはこの範囲外の値をネイティブに出力します（例：`-2`はブレーキ優先セレクターの切り替えであり、実車のレバーサー機能ではありません）。Rudolfのアダプターは、こうした非標準の値をそのまま通すのではなく、最も近い自然なレバーサー位置へクランプしなければなりません（または省略／直前の値を保持）。コンシューマーは、レバーサーがつねに`{-1, 0, 1}`のいずれかであると仮定してよいものとします。
+注意：`reverser` は `-1 = 後進、0 = 中立、1 = 前進` という規約のintです。TRAIN CREWはこの範囲外の値をネイティブに出力することがあります（例：`-2` は実車の逆転器には存在しないブレーキ優先セレクターの切り替え）。Rudolfのアダプターは、こうした非標準の値をそのまま通すのではなく、最も近い本来の逆転器位置へクランプしなければなりません（MUST。または省略／直前の値を保持）。コンシューマーは、レバーサー位置がつねに `{-1, 0, 1}` のいずれかであると仮定してよいものとします（MAY）。
 
 ### 5.6 `doors`
 
@@ -386,84 +472,97 @@ const distanceToNext =
     { "carNo": 1, "sideOpened": 0 },
     { "carNo": 2, "sideOpened": 0 },
     { "carNo": 3, "sideOpened": 1 }, // この車両は右側が開いている
-    { "carNo": 4, "sideOpened": 3 }, // 開いているがどちら側か不明（例：TRAIN CREW）
+    { "carNo": 4, "sideOpened": 3 }, // 開扉中だが側別不明（例：TRAIN CREW）
     // ...
   ],
 }
 ```
 
-`sideOpened`は`int | null`です。規約は`stations.list[].doorSide`に準じますが、「開いているがどちら側か不明」を表す正の値（`3`）が加わり、`null`は仕様全体で共通の「値なし」の意味（§3.1）に限定されます。
+`sideOpened` は `int | null` 型です。規約は `stations.list[].doorSide` に準じますが、「開扉中だが左右不明」を表す正の値（`3`）が加わり、`null` は仕様共通の「値なし」の意味（§3.1）に限定されます。
 
-- `-1` = 左側が開
-- `0` = 閉（この車両のすべてのドアが閉：既知の閉状態）
-- `1` = 右側が開
-- `2` = 両側が開
-- `3` = 開いているがどちら側か不明（ドアが開いているのは分かるが左右を区別できない）
-- `null` = この車両のドア値が存在しない（仕様§3.1）
+- `-1` = 左側開扉
+- `0` = 閉扉（この車両のすべてのドアが閉じていることが確定している状態）
+- `1` = 右側開扉
+- `2` = 両側開扉
+- `3` = 開扉中（側別不明：ドアが開いていることは把握できるが左右を区別できない場合）
+- `null` = 車両ごとのドア値が存在しない（仕様§3.1）
 
 補足：
 
-- `allClosed`（列車単位のbool）は、第一級のフィールドとして維持されます：両シミュレーターがネイティブに提供し（`TC TrainState.AllClose`、`BVE DoorSet.AreAllClosed`）、HMIにとって「発車して安全か？」を判断する要となる指標です。
-- TCは車両ごとに1つのboolしか持ちません（左右の区別なし）：TCアダプターは、閉のとき`0`、開のとき`3`（開いているがどちら側か不明）を出力します（左右をネイティブに判定できないため）。BVEアダプターは、実際の左右データ（`-1`／`1`／`2`）を出力します。
+- `allClosed`（列車全体の閉扉状態を示すbool）は重要な指標として維持されます：両シミュレーターがネイティブに提供しており（`TC TrainState.AllClose`、`BVE DoorSet.AreAllClosed`）、HMIにおいて「出発可能か」を判断する要となるインジケーターです。
+- TRAIN CREWは車両ごとに1つの真偽値（bool）しか持ちません（左右の区別なし）：TCアダプターは、閉扉時に `0` を、開扉時に `3`（開扉中・側別不明）を出力します（ネイティブで側別判定が不可能なため）。BVEアダプターは、実際の側別データ（`-1`／`1`／`2`）を出力します。
 
 ### 5.7 `lamps`
 
+表示灯（ランプ）には、主に単純な状態インジケーターを目的としたデータが格納されます。最大512スロットが利用可能で、そのうち128スロットには定義済みの意味があるか、予約されています。プロデューサーは `vocabularies` を使用してさらに多くの表示灯を定義できます（MAY）。コンシューマーはインデックスを使用して表示灯にアクセスし、`vocabularies` を使用して名前からインデックスへ変換できます。
+
 ```jsonc
 {
-  "values": {
-    "doorClose": 1,
-    "atsReady": 1,
-    "atsBrakeApply": 0,
-    "regenerative": 1,
-    "pilot": 1,
-    // シミュレーター／車両固有のキーも自由に使用可
-  },
+  "values": [
+    1, 1, 0, 0, // ... 合計512個の値
+  ],
 }
 ```
 
 **状態の規約：**
 
-- `0` = 消灯
-- `1` = 点灯
-- `2`以上 = 車両固有の別状態（点滅、減光、多色など）。UIはこれらを解釈してもしなくてもよい。0／1しか知らない基本的なHMIは、0以外をすべて真として扱うべきです。
+- `0` = 消灯 (off)
+- `1` = 点灯 (on)
+- `2`以上 = 車両固有の代替状態（点滅、減光、多色など）。UIはこれらを解釈してもしなくても構いません（MAY）。0／1のみに対応するシンプルなHMIは、0以外をすべて「点灯（真）」として扱うべきです（SHOULD）。
 
-**デフォルト語彙**（コンシューマーが知っておくべきもの）：`doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, pilot, ato`。
+**デフォルト語彙**（コンシューマーが事前に知っておくべきキー）：`doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, ato`。
 
-**BVE固有：** `AtsPanelArray[1024]`（車両作者の慣習）は、出力前に`SimulatorProfile.vocabularies.lamps.bveIndexToKey`によって名前付きキーへマッピングされます。生の配列は、高度なコンシューマー（車両プラグインごとのデバッガーなど）向けに、`extensions["bve:atsPanelArray"]`にも追加で現れることがあります。
+| インデックス | 名前 | 意味 |
+| :--- | :--- | :--- |
+| 0 | `doorClose` | 全てのドアが閉まっている一般的な状態（戸閉）。 |
+| 1 | `atsReady` | ATS正常作動中（ATS投入／正常）。 |
+| 2 | `atsBrakeApply` | ATSブレーキ動作中。 |
+| 3 | `atsOpen` | ATS開放（無効化）。 |
+| 4 | `regenerative` | 回生ブレーキ作動中。 |
+| 5 | `ebTimer` | EB装置（警報／デッドマン）警告中。 |
+| 6 | `emergencyBrake` | 非常ブレーキ作動中。 |
+| 7 | `overload` | 電気的過負荷・過電流障害（過負荷）。 |
+| 8 | `ato` | 自動列車運転装置（ATO）。 |
+| 9 | `snowBrake` | 耐雪ブレーキ作動中。 |
+| 10 | `wheelSlip` | 空転・滑走。 |
+| 11..127 | (null) | 予約領域。 |
+| 128..511 | (null) | プロデューサーが自由に定義可能（MAY）。 |
+
+**BVE固有：** 車両プラグインデバッガー等の高度なコンシューマー向けに、1024個の整数からなる生の配列が `extensions["bve:atsPanelArray"]` に提供される場合があります（MAY）。
 
 ### 5.8 `ats`
 
 ```jsonc
 {
-  "class": "ATS-P", // string | null：TCのATS_Class／BVE：ファミリーごとのプロファイルから（v1：通常はnull）
-  "speed": -1, // number | null：現在のATS速度制限。-1 = フリー（無制限）／null = 表示なし／それ以外はkm/h
-  "state": "P接近", // string | null：TCのATS_State（リッチ）／BVE v1：'EB' またはnull
-  "richState": null, // { code: string[], name: string[], severity: number[], type: AtsRichStateType[] } | null：並列配列。インデックスN = N番目の有効な状態
+  "class": "ATS-P", // string | null：TCのATS_Class／BVE：ファミリーごとのプロファイルから（v1では通常null）
+  "speed": -1, // number | null：現在のATS照査速度。-1 = 照査なし（無制限）／null = 表示器消灯／それ以外はkm/h数値
+  "state": "P接近", // string | null：TCのATS_State（リッチ文字列）／BVE v1：'EB' またはnull
+  "richState": null, // AtsRichState[] | null：現在アクティブなATS状態オブジェクトの配列
 }
 ```
 
-`ats.speed`の規約：`-1` = フリー（無制限／ATSが上限を課していない）、`null` = 表示ブランク（表示する値がない）、それ以外の数値 = 課されている速度上限（km/h）。これは、TCの「F」をマジックナンバー`300`に対応させるハックや、以前の`'free'`という文字列センチネルを置き換えるものです。すべての値が数値（またはnull）になったため、コンシューマーはユニオン型を扱う必要がありません。
+`ats.speed` の規約：`-1` は照査なし（無制限／ATSが上限を課していない状態）、`null` は表示器消灯（表示する値がない状態）、それ以外の数値は課されている照査速度（km/h）を表します。これは、TRAIN CREWにおける "F"（照査なし）をマジックナンバー `300` にマッピングするハックや、以前の `'free'` という文字列センチネルを置き換えるものです。すべての値が数値（またはnull）となったため、コンシューマー側でユニオン型の処理を行う必要がなくなりました。
 
-**`richState`の構造：** 非nullのとき、`richState`は`code`、`name`、`severity`、`type`という4つの並列配列を持ちます。4つすべてにわたるインデックスNは、同時に有効なN番目のATS状態を表します。`code`はシミュレーターの生の自由形式文字列（例：`"P_APPROACH"`）、`name`は表示ラベル（例：`"P接近"`）、`severity`は`0`（情報）／`1`（警告）／`2`（重大）で、`2`を超える値はシミュレーター・車両固有のカスタム重大度に予約されています。`type`は下記の語彙による機械可読なカテゴリーです。
+**`richState` の構造：** 非nullのとき、`richState` は `AtsRichState` オブジェクトの配列を持ちます。各 `AtsRichState` オブジェクトは現在アクティブなATS状態を表し、`code`、`name`、`severity`、および `type` の各フィールドを含みます。`code` はシミュレーターの生の自由形式文字列（例：`"P_APPROACH"`）、`name` は表示ラベル（例：`"P接近"`）、`severity` は `0`（情報）／`1`（警告）／`2`（重大）で、`2` を超える値はシミュレーター・車両固有のカスタム重大度に予約されています。`type` は以下の語彙による機械可読なカテゴリーです。
 
-**`AtsRichStateType`の語彙：**
+**`AtsRichStateType` 語彙：**
 
-| 値              | 日本語での呼称         | 意味                                                                                                                    |
-| --------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `SpeedCheck`    | 速度照査               | 平坦で連続的な上限速度の照査。低下パターンは作動していない。ATSが固定の速度制限を課しているときのデフォルトの走行状態。 |
-| `SignalP`       | 信号パターン           | 制限現示または停止現示の信号（閉塞・場内・出発信号）に対して課される低下パターン。                                      |
-| `CurveP`        | C信号（京急など）      | 曲線または分岐器の速度制限に対して課される低下パターン。                                                                |
-| `TerminalP`     | 終端パターン           | 線路終端、またはオーバーラン注意の側線進入を防護する低下パターン。                                                      |
-| `PApproach`     | P接近                  | 低下パターンに接近しているという警告。パターンはまだ確立していない。                                                    |
-| `AckPending`    | 確認扱い               | チャイムが鳴動中。非常ブレーキ動作前の運転士の確認を待っている。ATS-Sでよく見られる。                                   |
-| `BApplication`  | 常用ブレーキ動作       | システムによる常用ブレーキの動作（非常用ではない）。                                                                    |
-| `EbApplication` | 非常ブレーキ動作       | システムによる非常ブレーキの動作。                                                                                      |
-| `StopP`         | 停車パターン・停通防止 | 駅でのオーバーランや信号の誤通過を防止する低下パターン。                                                                |
-| `NotchCut`      | ノッチカット           | システムによって強制される力行のカット。                                                                                |
-| `BIsolated`     | 保安装置開放           | 運転士によって保安装置がカットアウト（開放）された状態。                                                                |
-| `Failure`       | 故障                   | 保安装置が報告する障害またはエラー状態。                                                                                |
-| `ModeSelect`    | ATS/ATC切替            | 保安システムの切り替え通知（ATS／ATCの切替、路線ルールセットの切替、または車庫・試験モードの起動）。                    |
-| `Other`         | -                      | 上記に該当しない、分類外またはシミュレーター固有の状態。                                                                |
+| 値 | 日本語表現 | 意味 |
+| --- | --- | --- |
+| `SpeedCheck` | 速度照査 | 平坦かつ一定の上限速度チェック。降下パターンは作動していない状態。ATSが固定の制限速度を課すデフォルトの巡航状態。 |
+| `SignalP` | 信号パターン | 制限現示または停止現示の信号（閉塞・場内・出発信号）に対して課される降下パターン。 |
+| `CurveP` | C信号（京急など） | 曲線または分岐器の速度制限に対して課される降下パターン。 |
+| `TerminalP` | 終端パターン | 線路終端、または過走防止の側線進入を防護する降下パターン。 |
+| `PApproach` | P接近 | 降下パターンに接近していることの警告。パターン自体はまだ確立していない状態。 |
+| `AckPending` | 確認扱い | 確認チャイム鳴動中。非常ブレーキ動作前に運転士の確認操作を待っている状態。ATS-S等で一般的。 |
+| `BApplication` | 常用ブレーキ動作 | システムによる常用ブレーキの動作（非常ブレーキではない）。 |
+| `EbApplication` | 非常ブレーキ動作 | システムによる非常ブレーキの動作。 |
+| `StopP` | 停車パターン・停通防止 | 駅でのオーバーラン（過走）や信号の誤通過を防止する降下パターン。 |
+| `NotchCut` | ノッチカット | システムによって力行（牽引力）がカットオフされている状態。 |
+| `BIsolated` | 保安装置開放 | 運転士によって保安装置が開放・遮断された状態。 |
+| `Failure` | 故障 | 保安装置から報告された障害またはエラー状態。 |
+| `ModeSelect` | ATS/ATC切替 | 保安システムの切り替え通知（ATS／ATC切替、路線ルールセットの切替、または車両基地・試験モードの起動）。 |
+| `Other` | - | 上記に該当しない、未分類またはシミュレーター固有の状態。 |
 
 ### 5.9 `signals`
 
@@ -471,15 +570,15 @@ const distanceToNext =
 {
   "list": [
     {
-      "name": "三田場内", // string | null：TCはネイティブ／BVE：合成した "SecXXXm"
-      "type": "Home", // 'Block' | 'Distant' | 'CallOn' | 'Shunt' | 'Home' | 'Departure' | null
-      "phase": 3, // number | null：語彙付きのint（下記）。ここでは3 = Y
+      "name": "三田場内", // string | null：TCはネイティブ値／BVE：合成した "SecXXXm"
+      "type": "Home", // 'Block' (閉塞) | 'Distant' (遠方) | 'CallOn' (誘導) | 'Shunt' (入換) | 'Home' (場内) | 'Departure' (出発) | null
+      "phase": 3, // number | null：語彙に基づくint（下記）。ここでは3 = 注意(Y)
       "distance": 412, // メートル
       "transponders": [
         {
           "category": "Pattern", // 下記の語彙を参照。null = 未分類
-          "code": 1003, // number | null：シミュレーターネイティブの地上子タイプコード（BVEのBeacon.Type）。公開されない場合はnull
-          "speedLimit": 65, // number | null：この地上子が課す速度制限（km/h、該当する場合）
+          "code": 1003, // number | null：シミュレーターネイティブの地上子タイプコード（BVEのBeacon.Type）。取得不能時はnull
+          "speedLimit": 65, // number | null：この地上子が課す制限速度（km/h、該当する場合）
           "distance": 412, // メートル。負値 = すでに通過済み
         },
       ],
@@ -488,145 +587,145 @@ const distanceToNext =
 }
 ```
 
-`list`は近い順（`distance`の昇順）に並びます。したがって`list[0]`は、列車の前方で最も近い信号です。
+`list` は**最寄り順**（`distance` の昇順）にソートされます。したがって `list[0]` は列車前方で最も近い信号機を表します。
 
-**デフォルトの地上子カテゴリー語彙：**
+**デフォルトの地上子（トランスポンダ）カテゴリー語彙：**
 
-| カテゴリー | 意味                                                                                |
-| ---------- | ----------------------------------------------------------------------------------- |
-| `Pattern`  | パターン発生の地上子（ATS-P／ATS-Pnのパターン。速度制限は前方の信号現示から導出）。 |
-| `Signal`   | 信号の地上子（ATS-S、SN、SW。R／Y／Gの情報を運転台へ伝える）。                      |
-| `TASC`     | TASC／停止位置マーカー（ホーム合わせのためにTASCが読み取る）。                      |
-| `Other`    | 認識はされるが、特定のカテゴリーに当てはまらない。                                  |
-| `null`     | 未分類／不明。                                                                      |
+| カテゴリー | 意味 |
+| --- | --- |
+| `Pattern` | パターン発生地上子（ATS-P／ATS-Pnパターン。制限速度は前方の信号現示から導出）。 |
+| `Signal` | 信号地上子（ATS-S、SN、SW等。停止/注意/進行の現示情報を運転台へ伝送）。 |
+| `TASC` | TASC／定位置停止マーカー（ホーム位置合わせのためにTASCが読み取る）。 |
+| `Other` | 認識されているが、特定のカテゴリーに当てはまらない地上子。 |
+| `null` | 未分類／不明。 |
 
-`category`は、HMIのUIが描画時に分岐（switch-case）する対象です。`code`はシミュレーターネイティブのint（例：BVEの`Beacon.Type`）で、高度なコンシューマーが完全一致で参照できるようそのまま保持されます。シミュレーターや路線の作者が意味を登録している場合、`SimulatorProfile.vocabularies.transponders`が`code`を人間可読な文字列へマッピングします。分類できないアダプターは、推測するのではなく`category: null`を出力しなければなりません。推論は、路線固有の知識を持つコンシューマーに委ねます。
+`category` は、HMIのUIが描画時に条件分岐（switch-case）する対象です。`code` はシミュレーターネイティブの整数値（例：BVEの `Beacon.Type`）であり、高度なコンシューマーが完全一致によるルックアップを行えるようそのまま保持されます。シミュレーターや路線の作者が地上子の意味を定義している場合、`SimulatorProfile.vocabularies.transponders` が `code` を人間可読な文字列へマッピングします。分類できないアダプターは、推測で割り当てるのではなく `category: null` を出力しなければなりません（MUST）。推論処理は、路線固有の知識を持つコンシューマー側に委ねられます。
 
 **デフォルトの信号現示語彙：**
 
-| インデックス | コード                 | 日本語      | 意味                                                                  |
-| ------------ | ---------------------- | ----------- | --------------------------------------------------------------------- |
-| 0            | :                      | :           | 無効／故障／信号情報なし（意図的な「停止」現示であるRとは区別される） |
-| 1            | R                      | 停止        | 停止                                                                  |
-| 2            | YY                     | 警戒        | 警戒（約25 km/h）                                                     |
-| 3            | Y                      | 注意        | 注意（約45 km/h）                                                     |
-| 4            | YG                     | 減速        | 減速（約65 km/h）                                                     |
-| 5            | YGF                    | 抑速/YG点滅 | YG点滅／抑速（京急・京成、約75〜105 km/h）                            |
-| 6            | G                      | 進行        | 進行（線路最高速度）                                                  |
-| 7            | GG                     | 高速進行    | 高速進行（北越急行、新幹線）                                          |
-| 8+           | (sim/vehicle-specific) |             | SimulatorProfile.vocabularies.signalPhaseに従う                       |
+| インデックス | コード | 日本語 | 意味 |
+| --- | --- | --- | --- |
+| 0 | : | : | 無効／故障／信号情報なし（明確な意図を持った「停止」指示であるR現示とは区別されます） |
+| 1 | R | 停止 | 停止現示 |
+| 2 | YY | 警戒 | 警戒現示（約25 km/h制限） |
+| 3 | Y | 注意 | 注意現示（約45 km/h制限） |
+| 4 | YG | 減速 | 減速現示（約65 km/h制限） |
+| 5 | YGF | 抑速/YG点滅 | YG点滅／抑速現示（京急・京成等、約75〜105 km/h制限） |
+| 6 | G | 進行 | 進行現示（線路最高速度） |
+| 7 | GG | 高速進行 | 高速進行現示（北越急行、新幹線等） |
+| 8+ | (sim/vehicle-specific) | | `SimulatorProfile.vocabularies.signalPhase` に準拠 |
 
-インデックス設計の根拠：`0`は「無効／不明／信号情報なし」のために予約されています。これにより、コンシューマーは機能していない信号と、意図的なR現示（それは指示の不在ではなく、実際の指示です）を区別できます。進行順に並んだ範囲`1..7`の中では、インデックスは許容度が高くなるほど大きくなります。各上位の数値は前の数値と同等以上に許容的であり、YGFはYG（65 km/h）とG（線路最高速度）の間に正しく位置づけられます。YGFを使用する私鉄では75〜105 km/hを許容するためです。
+インデックス設計の根拠：`0` は「無効／不明／信号情報なし」のために予約されており、これによりコンシューマーは「機能していない信号」と、明確な指示である「R（停止）現示」を区別できます。進行が許容される `1..7` の範囲内では、インデックスが大きくなるにつれて許容度（制限速度）が高くなります。各上位の数値は前の数値と同等以上の許容度を持ち、YGF（75〜105 km/h）は私鉄での運用に合わせてYG（65 km/h）とG（線路最高速度）の間に正しく配置されています。
 
-BVEアダプターは、出力時に`Section.CurrentSignalIndex`へ`+1`しなければなりません（BVEネイティブの`0=R`がRudolfの`1=R`になる、など）。15路線のコーパス調査によりBVEネイティブのインデックス0〜4が検証されており、これらはRudolfへの変換後1〜5になります。デフォルトと異なる意味を使う路線（例：BVEネイティブの`4`をGではなくYGFの意味で出力する路線）は、`SimulatorProfile.vocabularies.signalPhase`によって上書きします。
+BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を加算しなければなりません（MUST。BVEネイティブの `0=R` がRudolfの `1=R` に変換されます）。15路線のコーパス調査によりBVEネイティブのインデックス 0〜4 が検証されており、これらはRudolfへの変換後 1〜5 に対応します。デフォルトと異なる意味を使用する路線（例：BVEネイティブの `4` をGではなくYGFの意味で出力する路線）は、`SimulatorProfile.vocabularies.signalPhase` によって上書きします。
 
-**デフォルトの信号現示速度テーブル：**
+**デフォルトの信号現示制限速度テーブル：**
 
-| 現示インデックス |    デフォルト km/h | 備考                                                        |
-| ---------------: | -----------------: | ----------------------------------------------------------- |
-|                0 |               `-1` | 無効／不明。表示するキャップなし                            |
-|                1 |                `0` | R（停止）                                                   |
-|                2 |               `25` | YY（〜25 km/h）                                             |
-|                3 |               `45` | Y（〜45 km/h）                                              |
-|                4 |               `65` | YG（〜65 km/h）                                             |
-|                5 |               `90` | YGF（75〜105 km/hの中央値）                                 |
-|                6 |               `-1` | G（キャップなし。線路最高速度）                             |
-|                7 |               `-1` | GG（キャップなし。高速進行）                                |
-|               8+ | （デフォルトなし） | プロデューサーが`vocabularies.signalPhaseSpeed`を通じて公開 |
+| 現示インデックス | デフォルト km/h | 備考 |
+| ---: | ---: | --- |
+| 0 | `-1` | 無効／不明。表示する制限値なし |
+| 1 | `0` | R（停止） |
+| 2 | `25` | YY（約25 km/h） |
+| 3 | `45` | Y（約45 km/h） |
+| 4 | `65` | YG（約65 km/h） |
+| 5 | `90` | YGF（75〜105 km/hの中央値） |
+| 6 | `-1` | G（固有の制限なし。線路最高速度） |
+| 7 | `-1` | GG（固有の制限なし。高速進行） |
+| 8+ | （デフォルトなし） | プロデューサーが `vocabularies.signalPhaseSpeed` を通じて公開 |
 
-**`vocabularies.signalPhaseSpeed`の値の規約：**
+**`vocabularies.signalPhaseSpeed` の値の規約：**
 
-- `n ≥ 0` — その現示が課す速度キャップ（km/h）。
-- `-1` — 無制限（キャップなし。線路最高速度、または路線定義の上限速度）。
-- `null` — 不明（現示は存在するが、速度値は得られない）。
+- `n ≥ 0` — その現示が課す制限速度（km/h）。
+- `-1` — 無制限（現示固有の制限なし。線路最高速度または路線定義の上限速度）。
+- `null` — 不明（現示は存在するが、速度値が得られない）。
 
-コンシューマーは`vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]`によって実効的な現示速度を求めます。`?? defaults[phase]`のフォールバックは、明示的な`null`値ではなく*欠落キー*に対してのみ発火します。
+コンシューマーは `vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]` によって実効的な現示制限速度を求めます。`?? defaults[phase]` のフォールバックは、明示的な `null` 値ではなく*欠落キー*に対してのみ適用されます。
 
-### 5.10 `speedLimit`
+### 5.10 `speedLimits`
 
 ```jsonc
 {
   "current": 90, // km/h
   "currentType": "SpeedLimit", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
   "next": [
-    // Array<{ limit, distance, type }> | null —— 今後の変化。近い順。判明していなければnull。
+    // Array<{ limit, distance, type }> | null —— 前方の速度制限変化（最寄り順）。判明していなければnull。
     {
       "limit": 65,
       "distance": 412,
       "type": "Signal", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
     },
-    // ...プロデューサーが把握していれば、さらに先の変化も
+    // ...プロデューサーが把握していれば、さらに先の変化も順次格納
   ],
 }
 ```
 
-`type`／`currentType`の語彙：
+`type`／`currentType` の語彙：
 
-- `'SpeedLimit'`：路線に掲示された基本の速度制限（この地点の恒久的な土木上の制限）
-- `'Signal'`：前方の信号現示によって課される制限（例：前方のY現示から導出されるATS-Pパターン）
-- `'Restriction'`：一時的または運転上の制限（曲線制限、天候による徐行、工事区間、駅進入制限、特別イベントの徐行）
-- `null`：種別が不明または未分類（シミュレーターは制限値を持つが、その由来は持たない）
+- `'SpeedLimit'`：路線の基本制限速度（その地点における恒久的な土木構造上の制限速度）
+- `'Signal'`：前方の信号現示によって課される制限（例：前方Y信号から派生したATS-Pパターン）
+- `'Restriction'`：一時的または運転上の制限（曲線制限、気象による徐行命令、工事区間、駅進入制限、特別イベント徐行など）
+- `null`：種別が不明または未分類（シミュレーターは制限速度値を持つが、その由来・理由が不明な場合）
 
-**`next`の順序と完全性：** `next`は今後の速度制限変化の配列で、近い順（`distance`の昇順）に並びます。したがって`next[0]`は、前方で最も近い変化です。今後の変化がシミュレーターに判明していないときは`null`になります —— 空配列にはなりません。直近の次の変化しか把握しないプロデューサーは要素1つの配列を出力し、前方の全系列を把握するプロデューサーは今後のすべての変化を出力します。プロデューサーがどちらを行うかは`SimulatorProfile.capabilities['speedLimit.next']`で宣言されます：`'full'`（今後のすべての変化を列挙）｜`'single'`（直近の次のみ）｜`false`／省略（非対応）。
+**`next` の順序と完全性：** `next` は前方の速度制限変化の配列であり、**最寄り順**（`distance` の昇順）に並びます。したがって `next[0]` は前方で最も近い速度制限変化を表します。前方の変化がシミュレーター側で判明していないときは `null` となり、空配列にはなりません。直近の1件のみを把握するプロデューサーは要素数1の配列を出力し、前方の全系列を把握するプロデューサーは今後のすべての変化を出力します。プロデューサーがどちらの動作を行うかは `SimulatorProfile.capabilities['speedLimit.next']` で宣言されます：`'full'`（今後のすべての変化を列挙）｜`'single'`（直近の1件のみ）｜`false`／省略（非対応）。
 
 ### 5.11 `cars`
 
-車両ごとの**動的**状態です。車両ごとの静的データ（model、hasMotor/Cab/Pantograph、cabDirection、pantographType、pantographDirection、length）は`SimulatorProfile.vehicle.cars`にあり、フレームごとには重複させません。
+車両ごとの**動的（DYNAMIC）**状態です。車両ごとの静的データ（形式モデル、モーター/運転台/パンタグラフの有無、運転台の向き、パンタグラフタイプ、パンタグラフの向き、車両長）は `SimulatorProfile.vehicle.cars` に格納され、毎フレーム重複して送信されることはありません。
 
 ```jsonc
 {
   "list": [
     {
       "carNo": 1,
-      "bcPressure": 307.4, // kPa | null：TCは車両ごとにネイティブ／BVE：[0] からブロードキャスト
-      "amperage": 124, // A | null：TCは車両ごとにネイティブ／BVE：[0] からブロードキャスト
-      "occupancyRate": null, // 乗車率（100% を超えることもある）| null：TCはネイティブ／BVE：null
+      "bcPressure": 307.4, // kPa | null：TCは車両ごとにネイティブ値／BVEは[0]両目の値を全体にブロードキャスト
+      "amperage": 124, // A | null：TCは車両ごとにネイティブ値／BVEは[0]両目の値を全体にブロードキャスト
+      "occupancyRate": null, // 乗車率（100%を超える場合あり）| null：TCはネイティブ値／BVEはnull
     },
     // ...
   ],
 }
 ```
 
-車両ごとの物理量が本物かどうかは`SimulatorProfile.capabilities['physics.perCar']`で宣言されます：`'true'`｜`'broadcast'`｜`'unavailable'`。
+車両ごとの物理演算データの正確性は `SimulatorProfile.capabilities['physics.perCar']` で宣言されます：`'true'`｜`'broadcast'`｜`'unavailable'`。
 
 ### 5.12 `switches`
 
 ```jsonc
 {
-  "hornAir": false,
-  "hornElectric": false,
-  "buzzerDriver": false, // 運転士が発信（車掌へ）
-  "buzzerConductor": false, // 車掌が発信（運転士へ）
-  "headlights": false, // bool：前照灯が点灯しているときtrue（ロービーム／ハイビームの区別は`highBeam`を使用）
-  "highBeam": false,
-  "wiper": null, // 'Off' | 'Intermittent' | 'Low' | 'High' | null
+  "hornAir": false, // 空気笛
+  "hornElectric": false, // 電気笛
+  "buzzerDriver": false, // 運転士発信の合図ブザー（車掌宛て）
+  "buzzerConductor": false, // 車掌発信の合図ブザー（運転士宛て）
+  "headlights": false, // 前照灯点灯状態（ロー/ハイビームの識別には `highBeam` を使用）
+  "highBeam": false, // 前照灯ハイビーム
+  "wiper": null, // 'Off' | 'Intermittent' (間欠) | 'Low' | 'High' | null
 }
 ```
 
 ### 5.13 `gameState`
 
-シミュレーター／ゲームのメタ状態です。列車の状態ではありません。
+シミュレーター／ゲーム自体のメタ状態であり、列車の状態ではありません。
 
 ```jsonc
 {
   "screen": "MainGame", // 'MainGame' | 'Pause' | 'Loading' | 'Menu' | 'Result' | 'Title' | 'NotRunning' | 'Other'
-  "crewRole": "Driver", // 'Driver' | 'Conductor' | 'Both' | 'Others' | null
-  "driveMode": "Scored", // 'Scored' | 'Unscored' | 'Other' | null
-  "isOneman": false, // TCはネイティブ／BVE：タイトルから解析、なければfalseをデフォルト
+  "crewRole": "Driver", // 'Driver' (運転士) | 'Conductor' (車掌) | 'Both' | 'Others' | null
+  "driveMode": "Scored", // 'Scored' (評価あり運転) | 'Unscored' (評価なし/フリー運転) | 'Other' | null
+  "isOneman": false, // ワンマン運転かどうか。TCはネイティブ値／BVEはタイトル解析またはデフォルトfalse
 }
 ```
 
 ### 5.14 拡張（Extensions）
 
-拡張は`extensions.<namespace>:<concern>`の下に置かれます。namespaceはシミュレーターID（`bve`、`traincrew`）またはベンダーIDです。concernは、そのブロックが何を含むかを表します。
+拡張データは `extensions.<namespace>:<concern>` の下に配置されます。名前空間（namespace）にはシミュレーターID（`bve`、`traincrew`）またはベンダーIDが使用され、`concern` にはブロックに含まれる内容を指定します。
 
 規約：
 
-- 各拡張は、独自の`v`（セマンティックバージョン）を持つ型付きオブジェクトです
-- コンシューマーは、未知の拡張を無視してもよい
-- プロデューサーは、コアセクションに収まるものに拡張を使うべきではありません
+- 各拡張は、独自の `v`（セマンティックバージョン）を持つ型付きオブジェクトです。
+- コンシューマーは、未知の拡張を無視して構いません（MAY）。
+- プロデューサーは、コアセクションに収まる内容に対して拡張機能を使うべきではありません（SHOULD NOT）。
 
-例（Rudolfコアではなく、アダプター作者が定義するもの）：
+定義例（アダプター作成者によって定義されるものであり、Rudolfコア仕様の一部ではありません）：
 
 ```jsonc
 "bve:beaconRing": {
@@ -636,7 +735,7 @@ BVEアダプターは、出力時に`Section.CurrentSignalIndex`へ`+1`しなけ
 }
 
 "bve:atsPanelArray": {
-  "raw": [0, 0, 1, 0, 1, /* ... 1019 more ... */]
+  "raw": [0, 0, 1, 0, 1, /* ... ほかに1019個の値 ... */]
 }
 
 "traincrew:ato": {
@@ -648,15 +747,15 @@ BVEアダプターは、出力時に`Section.CurrentSignalIndex`へ`+1`しなけ
 
 ## 6. InputCommand
 
-コンシューマー → シミュレーター。1つのInputCommandドキュメントにつき1つのコマンドです（必要であれば、バッチ処理は将来の明示的な拡張とします）。コマンドを送る側は、SimulatorProfile.capabilitiesがサポートを宣言しているコマンドのみを送信すべきです。
+コンシューマーからシミュレーター（consumer → sim）への通信。1つの `InputCommand` ドキュメントにつき1つのコマンドが格納されます（バッチ処理は、将来的に必要に応じて明示的な拡張として定義されます）。コマンド送信側は、`SimulatorProfile.capabilities` でサポートが宣言されているコマンドのみを送信すべきです（SHOULD）。
 
 ```jsonc
 {
   "schemaVersion": "1.0",
   "kind": "InputCommand",
-  "scenarioId": "petrichor-e131-evening-2026-06-25T14:23:00Z",
+  "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-06-25T14:23:17.350Z",
-  "sequenceNumber": 1042, // コンシューマーごとに単調増加。順序付け／冪等性のため
+  "sequenceNumber": 1042, // long：コンシューマーごとに単調増加する値（順序制御および冪等性のため）
   "command": {
     "kind": "SetNotch",
     "value": -2,
@@ -666,78 +765,78 @@ BVEアダプターは、出力時に`Section.CurrentSignalIndex`へ`+1`しなけ
 
 ### 6.1 コマンドの種類
 
-すべてのコマンドは`command.kind`によって判別されます。一覧：
+すべてのコマンドは `command.kind` によって判別されます。一覧：
 
-| 種別            | ペイロード                                        | 意味                                                                                                                                                                                                                                                                              |
-| --------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int, relative?: bool }`                 | 統合ノッチ。`relative`（既定は`false`）= 絶対値：valueは統合ノッチ（0=N、+n=Pn、-1=抑速、-2…=B1…）。`relative: true` = 符号付きのステップ差分。いずれの場合も、`value <= -100`（センチネル`EB = -100`）は非常で、車両に依存せず、従来のハードコードされた -8 に取って代わります。 |
-| `SetPowerNotch` | `{ value: int }`                                  | 力行のみの正の整数。                                                                                                                                                                                                                                                              |
-| `SetBrakeNotch` | `{ value: int }`                                  | ブレーキのみの正の整数。                                                                                                                                                                                                                                                          |
-| `SetBrakeSAP`   | `{ kPa: double }`                                 | 電磁直通ブレーキのSAP圧力目標。0〜400 = 常用、410 = 非常。                                                                                                                                                                                                                        |
-| `SetReverser`   | `{ value: int }`                                  | レバーサー位置。`-1` = 後進、`0` = 中立、`1` = 前進。この範囲外の値は拒否しなければなりません。                                                                                                                                                                                   |
-| `SetButton`     | `{ action: string, state: bool }`                 | 汎用ボタン。`action`は`VehicleAction`（§6.2）または`GameAction`（§6.3）の名前、あるいはカスタムアクションの文字列です。カスタム／仕様外のアクションは検証なしのパススルーで、`capabilities['input.button.<action>']`によってゲートされます。                                      |
-| `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | ワイパー位置。                                                                                                                                                                                                                                                                    |
-| `SetAtoNotch`   | `{ value: int }`                                  | ATOのノッチ提案。TCのセマンティクスに従う：notch > 0のときは手動ノッチがNの場合のみ適用。notch < 0のときはmax(手動, ato) を適用。                                                                                                                                                 |
-| `SetDeadman`    | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | チャンネルごとのデッドマンスイッチの状態。                                                                                                                                                                                                                                        |
+| 種別 | ペイロード | 意味・動作 |
+| --- | --- | --- |
+| `SetNotch` | `{ value: int, relative?: bool }` | 統合ノッチ（総括ノッチ）。`relative`（デフォルト `false`）= 絶対指定：valueは統合ノッチ値（0=N、+n=Pn、-1=抑速、-2…=B1…）。`relative: true` = 符号付きステップ差分指定。いずれの場合も、`value <= -100`（センチネル定数 `EB = -100`）は非常ブレーキを表し、車両形式に依存せず、従来のハードコードされた -8 に取って代わります。 |
+| `SetPowerNotch` | `{ value: int }` | 力行専用ノッチ。正の整数。 |
+| `SetBrakeNotch` | `{ value: int }` | ブレーキ専用ノッチ。正の整数。 |
+| `SetBrakeSAP` | `{ kPa: double }` | 電磁直通ブレーキ（SAP）の目標圧力値。0〜400 = 常用ブレーキ、410 = 非常ブレーキ。 |
+| `SetReverser` | `{ value: int }` | レバーサー（逆転器）位置。`-1` = 後進、`0` = 中立、`1` = 前進。この範囲外の値は拒否されなければなりません（MUST）。 |
+| `SetButton` | `{ action: string, state: bool }` | 汎用ボタン操作。`action` は `VehicleAction`（§6.2）または `GameAction`（§6.3）の名前、あるいはカスタムアクション文字列です。カスタム／仕様外のアクションは検証なしのパススルーとして扱われ、`capabilities['input.button.<action>']` によって有効化されます。 |
+| `SetWiper` | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | ワイパー位置。 |
+| `SetAtoNotch` | `{ value: int }` | ATO推奨ノッチ値。TRAIN CREWの仕様：notch > 0 のときは手動ノッチがNの場合のみ適用。notch < 0 のときは手動とATOのうち大きい方のブレーキ力を適用。 |
+| `SetDeadman` | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | 方式ごとのデッドマンスイッチ操作状態。 |
 
-プロデューサーは、そのように記述されたフィールドを設定しなければなりません。OPTIONALなフィールドは、コマンドごとに文書化された`default behavior`（デフォルトの挙動）に従います。
+必須として記述されたフィールドは必ず設定しなければなりません（MUST）。省略可能なフィールド（OPTIONAL）は、コマンドごとに文書化されたデフォルト動作が適用されます。
 
-> **`SetNotch`の非常センチネル。** 予約された定数`EB = -100`（`value <= -100`のすべて）は、`relative`にかかわらず非常を要求します。生のリテラルよりこの定数を優先してください。車両に依存せず、従来のハードコードされた`-8`に取って代わります。
+> **`SetNotch` の非常ブレーキセンチネル**：予約された定数 `EB = -100`（`value <= -100` のすべて）は、`relative` の指定にかかわらず非常ブレーキを要求します。生のリテラル値よりもこの定数の使用を推奨します。これは車両形式に依存せず、従来のハードコードされた `-8` に取って代わるものです。
 >
-> **カスタム`SetButton`アクション。** `VehicleAction`（§6.2）と`GameAction`（§6.3）は、そのメンバーが`action`文字列にシリアライズされる仕様上の語彙です。この語彙の外にあるアクションは、専用のカスタムアクションメソッドを通じて同じ文字列フィールドを流れ、検証なしのパススルーとなります。シミュレーターは`capabilities['input.button.<action>']`で対応を宣言します。
+> **カスタム `SetButton` アクション**：`VehicleAction`（§6.2）および `GameAction`（§6.3）は、そのメンバー名がそのまま `action` 文字列にシリアライズされる仕様上の語彙です。この語彙に含まれないアクションは、同一の文字列フィールドを介してカスタムアクションとして扱われ、シミュレーター側は `capabilities['input.button.<action>']` で対応を宣言します。
 
-### 6.2 VehicleAction列挙型
+### 6.2 VehicleAction 列挙型
 
-`SetButton`で使用する、物理的な運転台／車両の操作です。語彙はTRAIN CREW SDKに由来し、より整理された命名になっています。各エントリーには既知の意味があります。すべてのシミュレーターが対応しているとは限らないため、`SimulatorProfile.capabilities['input.button.<action>']`を確認してください。ノッチはボタンアクションではなくなりました。`SetNotch`（§6.1）を使用してください。旧`InputAction`からの改名：`Broadcast` → `InCarBroadcast`、`LightLow` → `HeadLightLow`。
+`SetButton` で使用する、物理的な運転台・車両機器の操作です。語彙はTRAIN CREW SDKをベースに、より整理された命名体系へ改められています。各エントリには定義されたセマンティクス（意味）がありますが、すべてのシミュレーターが全項目に対応しているとは限りません。詳細は `SimulatorProfile.capabilities['input.button.<action>']` を確認してください。ノッチ操作はボタンアクションではなくなり、`SetNotch`（§6.1）を使用します。旧 `InputAction` からの改名：`Broadcast` → `InCarBroadcast`、`LightLow` → `HeadLightLow`。
 
-- `EBReset`：EB／デッドマン警報を復帰させる（EB復帰）
-- `GradientStart`：勾配起動／転動防止スイッチを作動させる（勾配起動スイッチ）
+- `EBReset`：EB／デッドマン警報のリセット（EB復帰）
+- `GradientStart`：勾配起動スイッチの作動（転動防止）
 - `SafetyBrake`：保安ブレーキスイッチ（保安ブレーキ）
 - `SnowBrake`：耐雪ブレーキスイッチ（耐雪ブレーキ）
-- `HornAir`：空気笛を鳴らす（空気笛）
-- `HornElectric`：電気笛を鳴らす（電気笛）
-- `Buzzer`：合図ブザーを押す（合図ブザー）
-- `BoardingPrompt`：乗降促進ブザー（乗降促進）
-- `InCarBroadcast`：車内放送／PA（車内放送） — 旧`Broadcast`
-- `DoorOpenLeft`：左側の客用ドアを開く（左ドア開）
-- `DoorCloseLeft`：左側の客用ドアを閉じる（左ドア閉）
-- `DoorOpenRight`：右側の客用ドアを開く（右ドア開）
-- `DoorCloseRight`：右側の客用ドアを閉じる（右ドア閉）
+- `HornAir`：空気笛の吹鳴（空気笛）
+- `HornElectric`：電気笛の吹鳴（電気笛）
+- `Buzzer`：連絡ブザーの鳴動（合図ブザー）
+- `BoardingPrompt`：乗降促進ブザー／放送の作動（乗降促進）
+- `InCarBroadcast`：車内放送／PAの再生（車内放送） — 旧 `Broadcast`
+- `DoorOpenLeft`：左側客用ドアを開く（左ドア開）
+- `DoorCloseLeft`：左側客用ドアを閉じる（左ドア閉）
+- `DoorOpenRight`：右側客用ドアを開く（右ドア開）
+- `DoorCloseRight`：右側客用ドアを閉じる（右ドア閉）
 - `DoorReopen`：閉扉中断後の再開閉スイッチ（再開閉SW）
 - `DoorKey`：ドアスイッチ鍵の操作（ドアスイッチ鍵）
-- `PartialDoor`：3/4ドア部分開スイッチ（3/4閉スイッチ）
+- `PartialDoor`：3/4ドア一部締切スイッチ（3/4閉スイッチ）
 - `DoorCut`：ドアカットスイッチ（ドアカットSW）
-- `HeadLightLow`：前照灯の減光／ロービーム（前灯減光） — 旧`LightLow`
+- `HeadLightLow`：前照灯の減光／ロービーム（前灯減光） — 旧 `LightLow`
 - `HeadLight`：前照灯スイッチ（前照灯SW）
 - `CabinLight`：客室灯スイッチ（客室灯SW）
 - `CrewRoomLight`：乗務員室灯スイッチ（乗務員室灯SW）
 - `InstrumentLight`：計器灯スイッチ（計器灯SW）
 
-### 6.3 GameAction列挙型
+### 6.3 GameAction 列挙型
 
-`SetButton`で使用する、カメラ／視点／UI／シミュレーターメタのアクションです。これらは省略可能です。コンシューマーは、いずれかが対応していることに依存すべきではありません。`SimulatorProfile.capabilities['input.button.<action>']`を確認してください。
+`SetButton` で使用する、カメラ／視点／UI／シミュレーターメタ操作のアクションです。これらは省略可能であり（OPTIONAL）、コンシューマーはこれらがサポートされていることに依存すべきではありません（SHOULD NOT）。`SimulatorProfile.capabilities['input.button.<action>']` を確認してください。
 
-**カメラ／視点：**
+**カメラ／視点操作：**
 
-- `ExteriorView`：外部／外観視点を切り替える（外部視点切替）
-- `DriverAlternateView`：運転士の別視点
+- `ExteriorView`：外部視点への切り替え（外部視点切替）
+- `DriverAlternateView`：運転士の別視点切り替え
 - `ConductorAlternateView`：車掌の後方確認視点（後方確認）
-- `LeftWindowView`：左の窓から見る
-- `RightWindowView`：右の窓から見る
+- `LeftWindowView`：左側窓からの眺望視点
+- `RightWindowView`：右側窓からの眺望視点
 
-**シミュレーターUI／メタ：**
+**シミュレーターUI／メタ操作：**
 
-- `TogglePauseMenu`：ポーズメニューを切り替える
-- `ToggleDiagramDisplay`：スタフ／時刻表の表示を切り替える（スタフ表示）
-- `ToggleGUI`：ゲーム内UIを切り替える（画面表示）
-- `ToggleCrewDoor`：乗務員ドアを切り替える
-- `ToggleCrewWindow`：乗務員窓を切り替える
+- `TogglePauseMenu`：ポーズメニューの表示切替
+- `ToggleDiagramDisplay`：スタフ／時刻表の表示切替（スタフ表示）
+- `ToggleGUI`：ゲーム内UIの表示切替（画面表示）
+- `ToggleCrewDoor`：乗務員室ドアの開閉切替
+- `ToggleCrewWindow`：乗務員室窓の開閉切替
 
-## 7. ワイヤー転送
+## 7. 通信トランスポート
 
-Rudolfはドキュメントの形状を定義しますが、**転送方式には依存しません**。
+Rudolfはドキュメントのデータ構造を定義しますが、**トランスポート方式には依存しません**。
 
-推奨される転送方式：
+推奨されるトランスポートバインディング：
 
 - HTTP
 - WebSocket／Socket.IO
@@ -1266,7 +1365,7 @@ Rudolfはドキュメントの形状を定義しますが、**転送方式には
 { "schemaVersion": "1.0", "kind": "InputCommand", "scenarioId": "...", "sentAt": "...", "sequenceNumber": 1043,
   "command": { "kind": "SetButton", "action": "HornAir", "state": true } }
 
-// 空笛を放す
+// 空笛を離す
 { "schemaVersion": "1.0", "kind": "InputCommand", "scenarioId": "...", "sentAt": "...", "sequenceNumber": 1044,
   "command": { "kind": "SetButton", "action": "HornAir", "state": false } }
 ```

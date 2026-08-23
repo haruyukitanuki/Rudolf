@@ -1,4 +1,4 @@
-﻿# Specifications for Rudolf
+# Specifications for Rudolf
 
 **English** | [日本語](./rudolf-spec.ja.md)
 
@@ -59,11 +59,11 @@ If the field has the unit of **%** (percent) or **‰** (permille), it means tha
 
 #### Raw Values
 
-Producers SHOULD emit raw values that preserve all physical information from the sim. Data fidelity should be preserved and that values MUST NOT be transformed, clamped, or otherwise modified in a way that loses detail. The sim's physical gauge limitations (e.g., a needle that only moves in one direction) are a display concern for the consumer, not a reason to distort the data layer.
+Producers SHOULD emit raw values that preserve all physical information from the sim. Data fidelity MUST be preserved; values MUST NOT be transformed, clamped, or otherwise modified in a way that loses detail. The sim's physical gauge limitations (e.g., a needle that only moves in one direction) are a display concern for the consumer, not a reason to distort the data layer.
 
-As an illustration, `physics.current` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Do not emit `Math.Abs(current)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
+As an illustration, `physics.current` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Producers MUST NOT emit `Math.Abs(current)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
 
-Similarly, do NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is absolutely neccessary for data type safety.
+Similarly, producers MUST NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is strictly necessary for data-type safety.
 
 #### Nullables
 
@@ -91,14 +91,14 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 ### 3.3 Extensibility
 
 - **Extension blocks:** `extensions.<sim>:<concern>` namespacing. Examples: `bve:beaconRing`, `bve:atsPanelArray`. Third parties can author their own blocks freely.
-- **Vocabularies:** Default vocabularies (signal phases, signal-phase speeds, lamp keys, transponder type meanings) are published in this spec. SimulatorProfile.vocabularies may override per-scenario.
+- **Vocabularies:** Default vocabularies (signal phases, signal-phase speeds, lamp keys, transponder type meanings) are published in this spec. `SimulatorProfile.vocabularies` MAY override per-scenario.
 
 ## 4. SimulatorProfile
 
 Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId` and `sequence`.
 
 - `scenarioId` is only changed when a new drive is started.
-- `sequence` (type `long`) is incremented when data is changed within a drive (e.g., due to coupling and decoupling, signal speed limit changes on different track sections).
+- `sequence` (type `long`) is incremented when data changes mid-drive (e.g. coupling/uncoupling, signal-aspect speed overrides for a different track section).
 
 ```json
 {
@@ -231,21 +231,21 @@ Static control-hardware description for the vehicle, distinct from the top-level
 ### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
 
 - `name`: human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
-- `model`: vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it should be in `series-subseries` format; romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
-- `operator`: operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). For maximum compatibility, refer to Japanese Wikipedia for the full operator name (not group) and TitleCase it.
+- `model`: vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it SHOULD be in `series-subseries` format; producers SHOULD romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
+- `operator`: operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). To maximize compatibility, producers SHOULD refer to Japanese Wikipedia for the full official operator name (not group) and TitleCase it.
 
 ### 4.3 `capabilities`
 
-This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are optional; an undefined key must be treated as unsupported.
+This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are OPTIONAL; an undefined key MUST be treated as unsupported.
 
 #### 4.3.1 OutputDataFrame Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
-| `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string must be provided by the producer (see §5.1). |
+| `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string MUST be provided by the producer (see §5.1). |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
-| `physics.perCar` | One of {`True`, `Broadcast`, `Unavailable`}. | Per-car physics availability. If `True`, `DataFrame.cars` contains data for all cars. If `Broadcast`, data for only the first car is present, and consumers must broadcast from the first index. If `Unavailable`, no per-car data is provided in `DataFrame.cars`. |
+| `physics.perCar` | One of {`True`, `Broadcast`, `Unavailable`}. | Per-car physics availability. If `True`, `DataFrame.cars` contains data for all cars. If `Broadcast`, data for only the first car is present, and consumers MUST broadcast from the first index. If `Unavailable`, no per-car data is provided in `DataFrame.cars`. |
 | `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
@@ -267,7 +267,7 @@ This section provides information on how certain data fields are populated in th
 | `input.command.*` | `bool` | `*` is a command type specified in §6.1. |
 | `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
 
-#### 4.4 `vocabularies`
+### 4.4 `vocabularies`
 
 Sim-specific overrides as a list of key-value pairs.
 
@@ -292,9 +292,9 @@ An example of the `signalPhaseSpeed` section is shown below:
 
 **Note:**
 
-- Producers are free to add new values in all `vocabularies` and override default values in `signalPhaseSpeed`.
+- Producers MAY add new values in all `vocabularies` and override default values in `signalPhaseSpeed`.
 - For interoperability, the existing names in `lamps`, `signalPhase`, and `transponders` MUST NOT be changed.
-- When any `vocabularies` are changed within a scenario, the `scenarioId` must also be refreshed to prompt the consumer to reload them.
+- When any `vocabularies` are changed within a scenario, the `scenarioId` MUST also be refreshed to prompt the consumer to reload them.
 
 ## 5. OutputDataFrame
 
@@ -371,7 +371,7 @@ Sent per-frame (~4 Hz typical, sim may emit faster or slower). Every core sectio
 
 ### 5.2 `diagram`
 
-Permissive: adapters fill what the sim natively knows. Heuristic derivation is NOT prescribed; consumers may compute derived values locally if they want.
+Permissive: adapters fill what the sim natively knows. Heuristic derivation is NOT prescribed; consumers MAY compute derived values locally if desired.
 
 ```jsonc
 {
@@ -392,7 +392,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
   "list": [
     {
       "index": 0,
-      "name": "起点",
+      "name": "中京",
       "fromStartDistance": 0, // meters from scenario start; always present
       "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程);
       "doorSide": 1, // int | null: direction to open the doors (see §5.6); null if cannot be determined
@@ -410,9 +410,9 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 }
 ```
 
-`name` is the station's display name **only**, with no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
+`name` MUST be the station's display name **only**, with no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
 
-`doorSide` has the same available values as the per-car doors in §5.6. Producers may derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` should only be used if the state is impossible to determine.
+`doorSide` has the same available values as the per-car doors in §5.6. Producers MAY derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` SHOULD only be used if the state is impossible to determine.
 
 `isTimeTaken`: bool | null: timing point (採時駅); null when the sim doesn't model it. Producers that derive this heuristically SHOULD report `false` rather than `null` when time data is present but no real arrival/departure applies at this station.
 
@@ -440,7 +440,7 @@ const distanceToNext =
 
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
-- `curveRadius` and `gradient` should be exact values at the position of the lead car. Keyframe values are permitted if exact values are unavailable.
+- `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
 
 Per-car BC pressure and amperage live in `cars`.
 
@@ -493,7 +493,7 @@ Notes:
 
 ### 5.7 `lamps`
 
-Lamps store data primarily intended for simple state indicators. Up to 512 slots are available; 128 have predefined meanings or are reserved. Producers may define more lamps using `vocabularies`. Consumers can access lamps using their index, and convert from name to index using `vocabularies`.
+Lamps store data primarily intended for simple state indicators. Up to 512 slots are available; 128 have predefined meanings or are reserved. Producers MAY define more lamps using `vocabularies`. Consumers can access lamps using their index, and convert from name to index using `vocabularies`.
 
 ```jsonc
 {
@@ -507,7 +507,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 
 - `0` = off
 - `1` = on
-- `2+` = vehicle-specific alternative states (blinking, dim, multicolor, …); UI may or may not respect them. Basic HMI that only knows 0/1 SHOULD treat any nonzero as truthy.
+- `2+` = vehicle-specific alternative states (blinking, dim, multicolor, …); UI MAY or MAY NOT respect them. Basic HMI that only knows 0/1 SHOULD treat any nonzero as truthy.
 
 **Default vocabulary** (consumers should know these): `doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, ato`.
 
@@ -746,7 +746,7 @@ Examples (defined by adapter authors, not Rudolf core):
 
 ## 6. InputCommand
 
-Consumer → sim. One command per InputCommand document (batching is an explicit future extension if needed). Producers should only send commands that the SimulatorProfile.capabilities declares supported.
+Consumer → sim. One command per InputCommand document (batching is an explicit future extension if needed). Producers SHOULD only send commands that the SimulatorProfile.capabilities declares supported.
 
 ```jsonc
 {
