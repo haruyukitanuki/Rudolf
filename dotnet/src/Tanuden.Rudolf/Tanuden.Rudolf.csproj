@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Tanuden.Rudolf</PackageId>
-    <Version>0.2.0</Version>
+    <Version>1.0.0</Version>
     <Description>Type definitions for the RUDOLF (Railway Unified Display Object Link Format) wire schema.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>rudolf;trainsim;bve;traincrew;tims;mon;japanese-rail</PackageTags>

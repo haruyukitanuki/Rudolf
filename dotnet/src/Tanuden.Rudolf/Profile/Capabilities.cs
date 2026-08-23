@@ -13,10 +13,11 @@ namespace Tanuden.Rudolf.Profile;
 public class Capabilities : Dictionary<string, JsonElement>
 {
   /// <summary>
-  ///   Create a new Capabilities section with definitions for default values.
+  ///   Create a new empty Capabilities section.
   /// </summary>
   public Capabilities()
   {
+    /*
     this.Add("time.dateKnown", JsonSerializer.SerializeToElement(false));
     this.Add("physics.gradient", JsonSerializer.SerializeToElement(false));
     this.Add("physics.curveRadius", JsonSerializer.SerializeToElement(false));
@@ -35,5 +36,6 @@ public class Capabilities : Dictionary<string, JsonElement>
     this.Add("input.command.setWiper", JsonSerializer.SerializeToElement(false));
     this.Add("input.command.setAtoNotch", JsonSerializer.SerializeToElement(false));
     this.Add("input.command.setDeadman", JsonSerializer.SerializeToElement(false));
+    */
   }
 }
