@@ -79,7 +79,7 @@ JSONにフィールド自体が存在しない（省略されている）場合�
 ### 3.2 ドキュメント構造
 
 ```
-SimulatorProfile = { schemaVersion, kind, scenarioId, sentAt, sim, scenario, vehicle, capabilities, vocabularies }
+SimulatorProfile = { schemaVersion, kind, scenarioId, sentAt, sequence, sim, scenario, vehicle, capabilities, vocabularies }
 
 OutputDataFrame = { schemaVersion, kind, scenarioId, sentAt,
                 time, diagram, stations, physics, controllers, doors,
@@ -194,10 +194,10 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     "physics.gradient": true,
     "physics.curveRadius": false,
     "physics.perCar": "True",
-    "ats.richState": "true",
+    "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
-    "signal.next": "Single",
+    "signals.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -270,7 +270,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ### 4.4 `vocabularies`
 
-キーと値のペアによるシミュレーター固有の上書き設定です。
+キーと値のペアによるシミュレーター固有の上書き設定です。各セクションはnull許容です：`null` は上書きが適用されず、コンシューマーが本仕様に定義されたデフォルト値へフォールバックすることを意味します。
 
 | セクション | 変更対象 | キー | 値 |
 | :--- | :--- | :--- | :--- |
@@ -364,7 +364,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ```jsonc
 {
-  "sim": "10:34:22", // dateKnown=falseのときは "HH:MM:SS" 形式の時刻文字列、trueのときはISO日時文字列
+  "sim": "10:34:22", // time.dateKnown capabilityがfalseのときは "HH:MM:SS" 形式の時刻文字列、trueのときはISO日時文字列
   "elapsed": 412.5, // シナリオ開始からの経過秒数（単調増加）
   "tick": 1650, // フレームカウンター。出力ごとにインクリメント
 }
@@ -396,7 +396,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
       "name": "中京",
       "fromStartDistance": 0, // シナリオ開始地点からのメートル数（必須）
       "absoluteDistance": 35403.2, // meters | null：絶対キロ程
-      "doorSide": 1, // int | null：開扉方向（§5.6参照）。判定不能な場合はnull
+      "doorSide": 1, // int：開扉方向（§5.6参照）。左右判定不能時は3
       "stopType": "PassengerStop", // 'PassengerStop' (客扱い) | 'OperationStop' (運転停車) | 'Passing' (通過) | null
       "arrival": null,
       "departure": "10:00:00",
@@ -413,7 +413,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 `name` は駅の表示名**のみ**でなければならず（MUST）、駅ナンバリングや駅コードを含めてはなりません（MUST NOT。例：`"品川"`。`"KK01 品川"`、`"品川(JK20)"`、`"KK01"` などは不可）。他のすべての文字列と同様に、`\u` エスケープシーケンスを使用しないリテラルUTF-8として出力されます（§3.1「文字列エンコーディング」参照）。
 
-`doorSide` は §5.6 の車両ごとのドアと同じ定義値を使用します。プロデューサーは、たとえ 0（閉扉）と 3（開扉・側別不明）に限定される場合でも、ヒューリスティックにこれを導出して構いません（MAY）。`null` は状態の判定が不可能な場合にのみ使用すべきです（SHOULD）。
+`doorSide` は §5.6 の車両ごとのドアと共有される `SideOpened` 整数規約を使用し、決して `null` にはなりません：左右の側を判定できないプロデューサーは `3`（開扉・側別不明）を出力しなければなりません（MUST）。プロデューサーは、たとえ `0`（閉扉）と `3` に限定される場合でも、ヒューリスティックにこれを導出して構いません（MAY）。
 
 `isTimeTaken`：採時駅かどうか（bool | null）。シミュレーターが対応していない場合は `null` です。ヒューリスティックに導出するプロデューサーは、時刻データが存在するものの有効な着・発時刻が適用されない駅に対しては、`null` ではなく `false` を出力すべきです（SHOULD）。
 
@@ -478,7 +478,7 @@ const distanceToNext =
 }
 ```
 
-`sideOpened` は `int | null` 型です。規約は `stations.list[].doorSide` に準じますが、「開扉中だが左右不明」を表す正の値（`3`）が加わり、`null` は仕様共通の「値なし」の意味（§3.1）に限定されます。
+`sideOpened` は `int | null` 型です。`stations.list[].doorSide` と同一の `SideOpened` 値空間（`3` = 開扉・側別不明を含む）を使用しますが、`doorSide` とは異なり `null` になる場合があり、仕様共通の「値なし」の意味（§3.1）に予約されています：
 
 - `-1` = 左側開扉
 - `0` = 閉扉（この車両のすべてのドアが閉じていることが確定している状態）
@@ -510,7 +510,7 @@ const distanceToNext =
 - `1` = 点灯 (on)
 - `2`以上 = 車両固有の代替状態（点滅、減光、多色など）。UIはこれらを解釈してもしなくても構いません（MAY）。0／1のみに対応するシンプルなHMIは、0以外をすべて「点灯（真）」として扱うべきです（SHOULD）。
 
-**デフォルト語彙**（コンシューマーが事前に知っておくべきキー）：`doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, ato`。
+**デフォルト語彙**（コンシューマーが事前に知っておくべきキー）：`doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, ato, snowBrake, wheelSlip`。
 
 | インデックス | 名前 | 意味 |
 | :--- | :--- | :--- |
@@ -537,13 +537,13 @@ const distanceToNext =
   "class": "ATS-P", // string | null：TCのATS_Class／BVE：ファミリーごとのプロファイルから（v1では通常null）
   "speed": -1, // number | null：現在のATS照査速度。-1 = 照査なし（無制限）／null = 表示器消灯／それ以外はkm/h数値
   "state": "P接近", // string | null：TCのATS_State（リッチ文字列）／BVE v1：'EB' またはnull
-  "richState": null, // AtsRichState[] | null：現在アクティブなATS状態オブジェクトの配列
+  "richState": [], // AtsRichState[]：現在アクティブなATS状態オブジェクトの配列
 }
 ```
 
 `ats.speed` の規約：`-1` は照査なし（無制限／ATSが上限を課していない状態）、`null` は表示器消灯（表示する値がない状態）、それ以外の数値は課されている照査速度（km/h）を表します。これは、TRAIN CREWにおける "F"（照査なし）をマジックナンバー `300` にマッピングするハックや、以前の `'free'` という文字列センチネルを置き換えるものです。すべての値が数値（またはnull）となったため、コンシューマー側でユニオン型の処理を行う必要がなくなりました。
 
-**`richState` の構造：** 非nullのとき、`richState` は `AtsRichState` オブジェクトの配列を持ちます。各 `AtsRichState` オブジェクトは現在アクティブなATS状態を表し、`code`、`name`、`severity`、および `type` の各フィールドを含みます。`code` はシミュレーターの生の自由形式文字列（例：`"P_APPROACH"`）、`name` は表示ラベル（例：`"P接近"`）、`severity` は `0`（情報）／`1`（警告）／`2`（重大）で、`2` を超える値はシミュレーター・車両固有のカスタム重大度に予約されています。`type` は以下の語彙による機械可読なカテゴリーです。
+**`richState` の構造：** `richState` は `AtsRichState` オブジェクトの配列を持ちます。各 `AtsRichState` オブジェクトは現在アクティブなATS状態を表し、`code`、`name`、`severity`、および `type` の各フィールドを含みます。`code` はシミュレーターの生の自由形式文字列（例：`"P_APPROACH"`）、`name` は表示ラベル（例：`"P接近"`）、`severity` は `0`（情報）／`1`（警告）／`2`（重大）で、`2` を超える値はシミュレーター・車両固有のカスタム重大度に予約されています。`type` は以下の語彙による機械可読なカテゴリーです。
 
 **`AtsRichStateType` 語彙：**
 
@@ -645,12 +645,12 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 
 ```jsonc
 {
-  "current": 90, // km/h
+  "current": 90, // km/h; -1 = 制限なし（無制限区間）
   "currentType": "SpeedLimit", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
   "next": [
     // Array<{ limit, distance, type }> | null —— 前方の速度制限変化（最寄り順）。判明していなければnull。
     {
-      "limit": 65,
+      "limit": 65, // km/h; -1 = 制限なし（無制限区間）
       "distance": 412,
       "type": "Signal", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
     },
@@ -666,7 +666,7 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 - `'Restriction'`：一時的または運転上の制限（曲線制限、気象による徐行命令、工事区間、駅進入制限、特別イベント徐行など）
 - `null`：種別が不明または未分類（シミュレーターは制限速度値を持つが、その由来・理由が不明な場合）
 
-**`next` の順序と完全性：** `next` は前方の速度制限変化の配列であり、**最寄り順**（`distance` の昇順）に並びます。したがって `next[0]` は前方で最も近い速度制限変化を表します。前方の変化がシミュレーター側で判明していないときは `null` となり、空配列にはなりません。直近の1件のみを把握するプロデューサーは要素数1の配列を出力し、前方の全系列を把握するプロデューサーは今後のすべての変化を出力します。プロデューサーがどちらの動作を行うかは `SimulatorProfile.capabilities['speedLimit.next']` で宣言されます：`'full'`（今後のすべての変化を列挙）｜`'single'`（直近の1件のみ）｜`false`／省略（非対応）。
+**`next` の順序と完全性：** `next` は前方の速度制限変化の配列であり、**最寄り順**（`distance` の昇順）に並びます。したがって `next[0]` は前方で最も近い速度制限変化を表します。前方の変化がシミュレーター側で判明していないときは `null` となり、空配列にはなりません。直近の1件のみを把握するプロデューサーは要素数1の配列を出力し、前方の全系列を把握するプロデューサーは今後のすべての変化を出力します。プロデューサーがどちらの動作を行うかは `SimulatorProfile.capabilities['speedLimits.next']` において `NextItemArrayType` の値（§4.3.1）として宣言されます：`Single` = 直近の1件のみ、`MultiDynamic`／`MultiStatic` = 前方の全系列、`None` または省略 = 非対応。
 
 ### 5.11 `cars`
 
@@ -787,7 +787,7 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 
 ### 6.2 VehicleAction 列挙型
 
-`SetButton` で使用する、物理的な運転台・車両機器の操作です。語彙はTRAIN CREW SDKをベースに、より整理された命名体系へ改められています。各エントリには定義されたセマンティクス（意味）がありますが、すべてのシミュレーターが全項目に対応しているとは限りません。詳細は `SimulatorProfile.capabilities['input.button.<action>']` を確認してください。ノッチ操作はボタンアクションではなくなり、`SetNotch`（§6.1）を使用します。旧 `InputAction` からの改名：`Broadcast` → `InCarBroadcast`、`LightLow` → `HeadLightLow`。
+`SetButton` で使用する、物理的な運転台・車両機器の操作です。語彙はTRAIN CREW SDKをベースに、より整理された命名体系へ改められています。各エントリには定義されたセマンティクス（意味）がありますが、すべてのシミュレーターが全項目に対応しているとは限りません。詳細は `SimulatorProfile.capabilities['input.button.<action>']` を確認してください。ノッチ操作はボタンアクションではなくなり、`SetNotch`（§6.1）を使用します。旧 `InputAction` からの改名：`Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`。
 
 - `EBReset`：EB／デッドマン警報のリセット（EB復帰）
 - `GradientStart`：勾配起動スイッチの作動（転動防止）
@@ -852,6 +852,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
   "kind": "SimulatorProfile",
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:18:18.3444612+00:00",
+  "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
     "version": "",
@@ -935,9 +936,9 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
   },
   "capabilities": {
     "physics.gradient": true,
-    "physics.perCar": "true",
-    "ats.richState": "rich",
-    "speedLimit.next": "single",
+    "physics.perCar": "True",
+    "ats.richState": true,
+    "speedLimits.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -967,7 +968,6 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
   "sentAt": "2026-07-02T20:19:26.6283871+00:00",
   "time": {
     "sim": "07:51:50",
-    "dateKnown": false,
     "elapsed": 28310.468,
     "tick": 639186203666283802
   },
@@ -1209,6 +1209,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "speed": 55.36149978637695,
     "fromStartDistance": 3703.76904296875,
     "absoluteDistance": 19408.52734375,
+    "curveRadius": null,
     "gradient": -1.9993319511413574,
     "mrPressure": 695.1132202148438
   },
@@ -1242,22 +1243,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     ]
   },
   "lamps": {
-    "values": {
-      "doorClose": 1,
-      "atsReady": 1,
-      "atsBrakeApply": 0,
-      "atsOpen": 0,
-      "regenerative": 0,
-      "ebTimer": 0,
-      "emergencyBrake": 0,
-      "overload": 0
-    }
+    "values": [1, 1, 0, 0, /* ... 合計512個の値 */]
   },
   "ats": {
     "class": "普通",
     "speed": 110,
     "state": null,
-    "richState": null
+    "richState": []
   },
   "signals": {
     "list": [
@@ -1289,7 +1281,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       }
     ]
   },
-  "speedLimit": {
+  "speedLimits": {
     "current": 100,
     "currentType": "SpeedLimit",
     "next": null
