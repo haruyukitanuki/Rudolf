@@ -46,6 +46,7 @@ public class CommandJsonConverter : JsonConverter<Command>
         writer.WriteStartObject();
         writer.WriteString("kind", "SetNotch");
         writer.WriteNumber("value", c.Value);
+        writer.WriteBoolean("relative", c.Relative);
         writer.WriteEndObject();
         break;
       case SetPowerNotchCommand c:

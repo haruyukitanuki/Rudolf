@@ -16,7 +16,7 @@ public class SpeedLimits
   ///   Upcoming speed-limit changes ahead of the train, ordered nearest-first (ascending
   ///   <see cref="SpeedLimitNext.Distance" />), so <c>Next[0]</c> is the closest change. Producers that
   ///   only know the immediate next change emit a single-element list; producers that know the full
-  ///   forward sequence emit them all (see <c>capabilities['speedLimit.next']</c>). <c>null</c> when no
+  ///   forward sequence emit them all (see <c>capabilities['speedLimits.next']</c>). <c>null</c> when no
   ///   upcoming change is known.
   /// </summary>
   public List<SpeedLimitNext>? Next;

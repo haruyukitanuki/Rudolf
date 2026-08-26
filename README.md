@@ -48,8 +48,6 @@ If one does not exist for the simulator you are working on, you can always write
 
 The canonical spec lives at [`spec/rudolf-spec.md`](./spec/rudolf-spec.md).
 
-For migrations, please refer to [`docs/opentetsu-rudolf-migration.md`](./docs/opentetsu-rudolf-migration.md) for rough field equivilents.
-
 ## R-rudolf?
 
 It was supposed to be RUDF but I kept reading it as _Rudolf_ when it gets katakana'ifed.

@@ -78,11 +78,11 @@ All documents carry a single `schemaVersion` at the envelope level. A breaking c
 ### 3.2 Document structure
 
 ```
-SimulatorProfile = { schemaVersion, kind, scenarioId, sentAt, sim, scenario, vehicle, capabilities, vocabularies }
+SimulatorProfile = { schemaVersion, kind, scenarioId, sentAt, sequence, sim, scenario, vehicle, capabilities, vocabularies }
 
 OutputDataFrame = { schemaVersion, kind, scenarioId, sentAt,
                 time, diagram, stations, physics, controllers, doors,
-                lamps, ats, signals, speedLimit, cars, switches, gameState,
+                lamps, ats, signals, speedLimits, cars, switches, gameState,
                 extensions? }
 
 InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, command }
@@ -193,10 +193,10 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "physics.gradient": true,
     "physics.curveRadius": false,
     "physics.perCar": "True",
-    "ats.richState": "true",
+    "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
-    "signal.next": "Single",
+    "signals.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -269,7 +269,7 @@ This section provides information on how certain data fields are populated in th
 
 ### 4.4 `vocabularies`
 
-Sim-specific overrides as a list of key-value pairs.
+Sim-specific overrides as a list of key-value pairs. Each section is nullable: `null` means no overrides apply and consumers fall back to the defaults published in this spec.
 
 | Section | Target to Modify | Keys | Values |
 | :--- | :--- | :--- | :--- |
@@ -363,7 +363,7 @@ Sent per-frame (~10 Hz / 100 ms typical, sim MAY emit faster or slower). Every c
 
 ```jsonc
 {
-  "sim": "10:34:22", // "HH:MM:SS" bare time when dateKnown=false; ISO datetime when true
+  "sim": "10:34:22", // "HH:MM:SS" when the time.dateKnown capability is false; ISO datetime when true
   "elapsed": 412.5, // seconds since scenario start; monotonic
   "tick": 1650, // frame counter; increments each emit
 }
@@ -395,7 +395,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
       "name": "中京",
       "fromStartDistance": 0, // meters from scenario start; always present
       "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程);
-      "doorSide": 1, // int | null: direction to open the doors (see §5.6); null if cannot be determined
+      "doorSide": 1, // int: direction the doors open (see §5.6); 3 when the side cannot be determined
       "stopType": "PassengerStop", // 'PassengerStop' | 'OperationStop' | 'Passing' | null
       "arrival": null,
       "departure": "10:00:00",
@@ -412,7 +412,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `name` MUST be the station's display name **only**, with no station codes or numbering (e.g. `"品川"`, never `"KK01 品川"`, `"品川(JK20)"`, or `"KK01"`). Like all strings it is emitted as literal UTF-8 with no `\u` escape sequences (see the String encoding note in §3.1).
 
-`doorSide` has the same available values as the per-car doors in §5.6. Producers MAY derive this heuristically, even if limited to 0 (closed) and 3 (unknown side open). `null` SHOULD only be used if the state is impossible to determine.
+`doorSide` uses the `SideOpened` int convention shared with the per-car doors in §5.6 and is never `null`: producers that cannot determine the side MUST emit `3` (open, side unknown). Producers MAY derive this heuristically, even if limited to `0` (closed) and `3`.
 
 `isTimeTaken`: bool | null: timing point (採時駅); null when the sim doesn't model it. Producers that derive this heuristically SHOULD report `false` rather than `null` when time data is present but no real arrival/departure applies at this station.
 
@@ -477,7 +477,7 @@ Note: `reverser` is an int with convention `-1 = Reverse, 0 = Neutral, 1 = Forwa
 }
 ```
 
-`sideOpened` is `int | null`. Convention mirrors `stations.list[].doorSide` but adds a positive value (`3`) for "open, side unknown," and reserves `null` for the spec-wide "no value" meaning (§3.1):
+`sideOpened` is `int | null`. It uses the same `SideOpened` value space as `stations.list[].doorSide` (including `3` = open, side unknown), but unlike `doorSide` it may be `null`, reserved for the spec-wide "no value" meaning (§3.1):
 
 - `-1` = Left side open
 - `0` = Closed (all doors on this car are shut: known closed state)
@@ -509,7 +509,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 - `1` = on
 - `2+` = vehicle-specific alternative states (blinking, dim, multicolor, …); UI MAY or MAY NOT respect them. Basic HMI that only knows 0/1 SHOULD treat any nonzero as truthy.
 
-**Default vocabulary** (consumers should know these): `doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, ato`.
+**Default vocabulary** (consumers should know these): `doorClose, atsReady, atsBrakeApply, atsOpen, regenerative, ebTimer, emergencyBrake, overload, ato, snowBrake, wheelSlip`.
 
 | Index | Name | Meaning |
 | :--- | :--- | :--- |
@@ -536,13 +536,13 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
   "class": "ATS-P", // string | null : TC ATS_Class; BVE: from per-family-profile (v1: usually null)
   "speed": -1, // number | null : current ATS speed limit. -1 = free (unlimited); null = blank display; otherwise km/h
   "state": "P接近", // string | null : TC ATS_State (rich); BVE v1: 'EB' or null
-  "richState": null, // AtsRichState[] | null : parallel arrays, index N = Nth active state
+  "richState": [], // AtsRichState[]: one object per currently active ATS state
 }
 ```
 
 `ats.speed` convention: `-1` = free (unlimited/ATS not asserting any cap), `null` = display blank (no value to show), any other number = the asserted speed cap in km/h. This replaces TC's "F"-mapped-to-magic-`300` hack and the previous `'free'` string sentinel: all values are now numeric (or null), so consumers don't need union-type handling.
 
-**`richState` structure:** When non-null, `richState` carries an array of `AtsRichState` objects. Each `AtsRichState` object represents a currently active ATS state, including the fields `code`, `name`, `severity`, and `type`. `code` is the sim's raw free-form string (e.g. `"P_APPROACH"`); `name` is the display label (e.g. `"P接近"`); `severity` is `0` (info) / `1` (warning) / `2` (critical), with values above `2` reserved for sim/vehicle-specific custom severities; `type` is the machine-readable category from the vocabulary below.
+**`richState` structure:** `richState` carries an array of `AtsRichState` objects. Each `AtsRichState` object represents a currently active ATS state, including the fields `code`, `name`, `severity`, and `type`. `code` is the sim's raw free-form string (e.g. `"P_APPROACH"`); `name` is the display label (e.g. `"P接近"`); `severity` is `0` (info) / `1` (warning) / `2` (critical), with values above `2` reserved for sim/vehicle-specific custom severities; `type` is the machine-readable category from the vocabulary below.
 
 **`AtsRichStateType` vocabulary:**
 
@@ -644,12 +644,12 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 
 ```jsonc
 {
-  "current": 90, // km/h
+  "current": 90, // km/h; -1 = no posted limit (unlimited section)
   "currentType": "SpeedLimit", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
   "next": [
     // Array<{ limit, distance, type }> | null: upcoming changes, nearest first. null when none known.
     {
-      "limit": 65,
+      "limit": 65, // km/h; -1 = no posted limit (unlimited section)
       "distance": 412,
       "type": "Signal", // 'Signal' | 'SpeedLimit' | 'Restriction' | null
     },
@@ -665,7 +665,7 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 - `'Restriction'`: a temporary or operational restriction (curve restriction, weather-related slow order, work zone, station-approach restriction, special-event slow)
 - `null`: type unknown or unclassified (sim has the limit value but not its origin)
 
-**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimit.next']`: `'full'` (lists all upcoming changes) | `'single'` (only the immediate next) | `false`/absent (unsupported).
+**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.3.1): `Single` = only the immediate next change; `MultiDynamic`/`MultiStatic` = the full forward sequence; `None` or absent = unsupported.
 
 ### 5.11 `cars`
 
@@ -851,6 +851,7 @@ Recommended transports:
   "kind": "SimulatorProfile",
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:18:18.3444612+00:00",
+  "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
     "version": "",
@@ -934,9 +935,9 @@ Recommended transports:
   },
   "capabilities": {
     "physics.gradient": true,
-    "physics.perCar": "true",
-    "ats.richState": "rich",
-    "speedLimit.next": "single",
+    "physics.perCar": "True",
+    "ats.richState": true,
+    "speedLimits.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -966,7 +967,6 @@ Recommended transports:
   "sentAt": "2026-07-02T20:19:26.6283871+00:00",
   "time": {
     "sim": "07:51:50",
-    "dateKnown": false,
     "elapsed": 28310.468,
     "tick": 639186203666283802
   },
@@ -1208,6 +1208,7 @@ Recommended transports:
     "speed": 55.36149978637695,
     "fromStartDistance": 3703.76904296875,
     "absoluteDistance": 19408.52734375,
+    "curveRadius": null,
     "gradient": -1.9993319511413574,
     "mrPressure": 695.1132202148438
   },
@@ -1241,22 +1242,13 @@ Recommended transports:
     ]
   },
   "lamps": {
-    "values": {
-      "doorClose": 1,
-      "atsReady": 1,
-      "atsBrakeApply": 0,
-      "atsOpen": 0,
-      "regenerative": 0,
-      "ebTimer": 0,
-      "emergencyBrake": 0,
-      "overload": 0
-    }
+    "values": [1, 1, 0, 0, /* ... total 512 */]
   },
   "ats": {
     "class": "普通",
     "speed": 110,
     "state": null,
-    "richState": null
+    "richState": []
   },
   "signals": {
     "list": [
@@ -1288,7 +1280,7 @@ Recommended transports:
       }
     ]
   },
-  "speedLimit": {
+  "speedLimits": {
     "current": 100,
     "currentType": "SpeedLimit",
     "next": null

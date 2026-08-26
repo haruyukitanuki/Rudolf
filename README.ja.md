@@ -48,8 +48,6 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 
 正式な仕様は [`spec/rudolf-spec.md`](./spec/rudolf-spec.md)にあります。
 
-移行の際は、フィールドのおおまかな対応関係について [`docs/opentetsu-rudolf-migration.md`](./docs/opentetsu-rudolf-migration.md) を参照してください。
-
 ## ルドルフの名称ってなんで？
 
 本当はRUDFにするつもりだったのですが、カタカナにするとどうしても「ルドルフ」と読んでしまうんですよね。

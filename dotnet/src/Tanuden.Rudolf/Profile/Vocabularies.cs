@@ -10,7 +10,7 @@ namespace Tanuden.Rudolf.Profile;
 public class Vocabularies
 {
   /// <summary>Panel-lamp name → indexes; null when no overrides apply.</summary>
-  public Dictionary<string, int> Lamps = new Dictionary<string, int>
+  public Dictionary<string, int>? Lamps = new Dictionary<string, int>
   {
     { "doorClose", 0 },
     { "atsReady", 1 },
