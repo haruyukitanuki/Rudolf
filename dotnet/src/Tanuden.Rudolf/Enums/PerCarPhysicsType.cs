@@ -9,12 +9,12 @@ namespace Tanuden.Rudolf.Enums;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum PerCarPhysicsType
 {
-  /// <summary>Data is present for all cars.</summary>
-  True,
+  /// <summary>No per-car data is available.</summary>
+  None,
 
   /// <summary>Data is present only for the first car. Consumers must broadcast from the first index of the arrays.</summary>
-  Broadcast,
+  FirstCarOnly,
 
-  /// <summary>No per-car data is available.</summary>
-  Unavailable
+  /// <summary>Data is present for all cars.</summary>
+  All,
 }

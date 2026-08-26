@@ -192,7 +192,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "time.dateKnown": false,
     "physics.gradient": true,
     "physics.curveRadius": false,
-    "physics.perCar": "True",
+    "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
@@ -245,7 +245,7 @@ This section provides information on how certain data fields are populated in th
 | `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string MUST be provided by the producer (see §5.1). |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
-| `physics.perCar` | One of {`True`, `Broadcast`, `Unavailable`}. | Per-car physics availability. If `True`, `DataFrame.cars` contains data for all cars. If `Broadcast`, data for only the first car is present, and consumers MUST broadcast from the first index. If `Unavailable`, no per-car data is provided in `DataFrame.cars`. |
+| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `DataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
 | `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
@@ -685,7 +685,7 @@ Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabD
 }
 ```
 
-Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'true'` | `'broadcast'` | `'unavailable'`.
+Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`.
 
 ### 5.12 `switches`
 
