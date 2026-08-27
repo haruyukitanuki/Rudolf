@@ -46,7 +46,7 @@ OpenTetsuはもともと、TRAINCREW（TC）のテレメトリをWebSocket経由
 
 ## 仕様
 
-正式な仕様は [`spec/rudolf-spec.md`](./spec/rudolf-spec.md)にあります。
+正式な仕様は [`spec/rudolf-spec.md`](./spec/rudolf-spec.ja.md)にあります。
 
 ## ルドルフの名称ってなんで？
 
