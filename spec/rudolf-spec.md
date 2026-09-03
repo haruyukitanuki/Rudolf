@@ -430,11 +430,12 @@ Each `Interaction` has the following data structure (example data shown):
 ```jsonc
 {
   "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait'
-  "otherTrainNumber": "724A", // string | null
-  "otherDestination": "大手橋", // string | null
-  "otherTrack": "上り1番線", // string | null
-  "otherDepartureTime": "07:48:10", // string | null: if defined, use the same format as time.sim (spec §5.1)
-  "otherStopType": "Passing" // same possible values as in station list
+  "trainNumber": "724A", // string | null
+  "destination": "大手橋", // string | null
+  "track": "上り1番線", // string | null
+  "arrival": null, // string | null:  if defined, use the same format as time.sim (spec §5.1)
+  "departure": "07:48:10", // string | null
+  "stopType": "Passing" // same possible values as in station list
 }
 ```
 
