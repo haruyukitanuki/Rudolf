@@ -399,9 +399,14 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
       "stopType": "PassengerStop", // 'PassengerStop' | 'OperationStop' | 'Passing' | null
       "arrival": null,
       "departure": "10:00:00",
-      "stopPositionName": "下り1番線", // string | null
+      "stopPositionName": "下り1番線", // string | null: track used at a station (着発線)
+      "trackSectionName": null, // string | null: operation route (運転線路)
+      "remarks": null, // string | null: notes (usually by the driver) on timetable that do not correspond to the other fields
+      "entrySpeed": null, // double | null: reference speed in km/h
+      "exitSpeed": null, // double | null: reference speed in km/h
       "isTimeTaken": true, // bool | null: timing point (採時駅); null when sim doesn't model it
       "stopPositions": [3, 4, 6], // number[] | null: candidate stop-marker car-counts for the current direction/platform; null when unknown
+      "interactions": null // InteractionType[] | null: denotes synchronization actions with other trains at the station
     },
     // ... per station
   ],
@@ -414,7 +419,33 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `doorSide` uses the `SideOpened` int convention shared with the per-car doors in §5.6 and is never `null`: producers that cannot determine the side MUST emit `3` (open, side unknown). Producers MAY derive this heuristically, even if limited to `0` (closed) and `3`.
 
+`stopPositionName` and `trackSectionName` should be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
+
+`entrySpeed` and `exitSpeed` are speeds shown on timetables or electronic driving aids. They are usually the speed limits on switches/points.
+
 `isTimeTaken`: bool | null: timing point (採時駅); null when the sim doesn't model it. Producers that derive this heuristically SHOULD report `false` rather than `null` when time data is present but no real arrival/departure applies at this station.
+
+Each `Interaction` has the following data structure (example data shown):
+
+```jsonc
+{
+  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait'
+  "otherTrainNumber": "724A", // string | null
+  "otherDestination": "大手橋", // string | null
+  "otherTrack": "上り1番線", // string | null
+  "otherDepartureTime": "07:48:10", // string | null: if defined, use the same format as time.sim (spec §5.1)
+  "otherStopType": "Passing" // same possible values as in station list
+}
+```
+
+Interaction types are shown in the table below.
+
+| Value | JP | Meaning |
+| :--- | :--- | :--- |
+| `Connecting` | 接 | Passengers can change to another train that is already stopped at the station. |
+| `ExchangeMovement` | 交, X | Wait for a train to clear a track section ahead. Has a higher priority for display than `Connecting` and `Transfer`. |
+| `Transfer` | 連 | Passengers can change to another train that has not arrived at the station. |
+| `Wait` | 待 | Wait for a faster train to pass from behind. |
 
 Consumers derive full station records + live distance to next via lookup:
 
