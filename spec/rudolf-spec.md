@@ -267,11 +267,11 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | `length` | `double` | Length in meters, or -1 if unknown. |
 | `emptyMass` | `double` | Mass in kg, or -1 if unknown. |
 
-### 4.2 `capabilities`
+### 4.3 `capabilities`
 
 This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are OPTIONAL; an undefined key MUST be treated as unsupported.
 
-#### 4.2.1 OutputDataFrame Capabilities
+#### 4.3.1 OutputDataFrame Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
@@ -294,14 +294,14 @@ This section provides information on how certain data fields are populated in th
 | `MultiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
 | `MultiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
 
-#### 4.2.2 InputCommand Capabilities
+#### 4.3.2 InputCommand Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
 | `input.command.*` | `bool` | `*` is a command type specified in §6.1. |
 | `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
 
-### 4.3 `vocabularies`
+### 4.4 `vocabularies`
 
 Sim-specific overrides as a list of key-value pairs. Each section is nullable: `null` means no overrides apply and consumers fall back to the defaults published in this spec.
 
