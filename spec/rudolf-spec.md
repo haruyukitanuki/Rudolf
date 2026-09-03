@@ -444,11 +444,11 @@ Interaction types are shown in the table below.
 | Value | JP | Meaning |
 | :--- | :--- | :--- |
 | `Connecting` | 接 | Passengers can change to another train that is already stopped at the station. |
-| `ExchangeMovement` | 交, X | Wait for a train to clear a track section ahead. Has a higher priority for display than `Connecting` and `Transfer`. |
+| `ExchangeMovement` | 交, X | Wait for a train to clear the tracks ahead. Has a higher priority for display than `Connecting` and `Transfer`. |
 | `Transfer` | 連 | Passengers can change to another train that has not arrived at the station. |
 | `Wait` | 待 | Wait for a faster train to pass from behind. |
 
-Consumers derive full station records + live distance to next via lookup:
+Consumers may derive full station records + live distance to next via lookup:
 
 ```js
 const next =
@@ -456,6 +456,8 @@ const next =
 const distanceToNext =
   next != null ? next.fromStartDistance - physics.fromStartDistance : null;
 ```
+
+Total route distance is only guaranteed to be available when `SimulatorProfile.capabilities['stations.next']` is `MultiStatic`, 
 
 ### 5.4 `physics`
 
