@@ -137,7 +137,8 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": "Right",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": -1,
+        "emptyMass": -1
       },
       {
         "carNo": 2,
@@ -149,7 +150,8 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": -1,
+        "emptyMass": -1
       },
       {
         "carNo": 3,
@@ -161,7 +163,8 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": -1,
+        "emptyMass": -1
       },
       {
         "carNo": 4,
@@ -173,10 +176,13 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": "Left",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": -1,
+        "emptyMass": -1
       }
     ],
     "leadCar": 4,
+    "totalLength": 80,
+    "totalEmptyMass": -1,
     "capabilities": {
       "masconType": "OneHandle",
       "masconBrakeType": "Notched",
@@ -192,6 +198,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "time.dateKnown": false,
     "physics.gradient": true,
     "physics.curveRadius": false,
+    "physics.totalLoadMass": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
@@ -216,7 +223,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 }
 ```
 
-### 4.1 `vehicle.capabilities`
+#### 4.1 Vehicle Control Capabilities (`vehicle.capabilities`)
 
 Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
 
@@ -228,24 +235,51 @@ Static control-hardware description for the vehicle, distinct from the top-level
 - `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
 - `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
-### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
+### 4.2 Vehicle Information
+
+#### 4.2.1 Naming
 
 - `name`: human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
 - `model`: vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it SHOULD be in `series-subseries` format; producers SHOULD romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
 - `operator`: operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). To maximize compatibility, producers SHOULD refer to Japanese Wikipedia for the full official operator name (not group) and TitleCase it.
 
-### 4.3 `capabilities`
+#### 4.2.2 Train Static Information
+
+`leadCar` specifies which car is the front car in the scenario.
+
+`totalLength` and `totalEmptyMass` specifies total quantities, or -1 if unknown. Due to limitations of certain simulators, it is NOT guaranteed that total values are equal to the sum of per-car values.
+
+#### 4.2.3 Per-car Static Information
+
+`cars` specifies per-car details:
+
+| Key in `cars` | Value | Description |
+| :--- | :--- | :--- |
+| `carNo` | `int` | Specifies the generation order of `OutputDataFrame.cars.list[...].carNo` |
+| `model` | `string` | Similar format to `vehicle.model`. |
+| `hasDriverCab` | `bool` or `null` | |
+| `hasConductorCab` | `bool` or `null` | |
+| `hasMotor` | `bool` or `null` | |
+| `hasPantograph` | `bool` or `null` | |
+| `cabDirection` | One of {`Left`, `Right`}. | Direction on HMI screen. |
+| `pantographType` | One of {`SingleArm`, `Scissor`}. | |
+| `pantographDirection` | One of {`Left`, `Right`, `Both`}. | Direction on HMI screen. |
+| `length` | `double` | Length in meters, or -1 if unknown. |
+| `emptyMass` | `double` | Mass in kg, or -1 if unknown. |
+
+### 4.2 `capabilities`
 
 This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are OPTIONAL; an undefined key MUST be treated as unsupported.
 
-#### 4.3.1 OutputDataFrame Capabilities
+#### 4.2.1 OutputDataFrame Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
 | `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string MUST be provided by the producer (see §5.1). |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
-| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `DataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
+| `physics.totalLoadMass` | `bool` | |
+| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `SimulatorProfile.vehicle.cars` and `OutputDataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
 | `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
@@ -260,14 +294,14 @@ This section provides information on how certain data fields are populated in th
 | `MultiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
 | `MultiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
 
-#### 4.3.2 InputCommand Capabilities
+#### 4.2.2 InputCommand Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
 | `input.command.*` | `bool` | `*` is a command type specified in §6.1. |
 | `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
 
-### 4.4 `vocabularies`
+### 4.3 `vocabularies`
 
 Sim-specific overrides as a list of key-value pairs. Each section is nullable: `null` means no overrides apply and consumers fall back to the defaults published in this spec.
 
@@ -469,6 +503,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
   "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns, 0 for straights
   "gradient": null, // ‰ | null: old versions of BVEEx doesn't expose
   "mrPressure": 740.0, // kPa; train-level; always present
+  "totalLoadMass": null, // kg | null
 }
 ```
 
@@ -712,14 +747,19 @@ Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabD
       "carNo": 1,
       "bcPressure": 307.4, // kPa | null : TC native per-car; BVE: broadcast from [0]
       "amperage": 124, // A | null   : TC native per-car; BVE: broadcast from [0]
-      "occupancyRate": null, // percentage filled (may exceed 100%) | null : TC native; BVE: null
+      "occupancyRate": null, // passenger percentage filled (may exceed 100%) | null : TC native; BVE: null
+      "loadMass": null // kg | null: BVE: total passenger mass
     },
     // ...
   ],
 }
 ```
 
-Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`.
+Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`. If `FirstCarOnly`, only the first index contains data and all others are undefined, and `carNo` may not match the arrangement of the actual train.
+
+`occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
+
+`loadMass` is the per-car live load when realness is `All`, and the total live load in [0] when realness is `FirstCarOnly`. The total mass is NOT guaranteed to be the sum of all `loadMass` when realness is `FirstCarOnly`.
 
 ### 5.12 `switches`
 
