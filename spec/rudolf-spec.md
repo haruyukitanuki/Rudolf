@@ -617,7 +617,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 }
 ```
 
-`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train.
+`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['speedLimits.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it must be treated as `None`. Note that `MultiStatic` cannot be used.
 
 **Default transponder category vocabulary:**
 
@@ -696,7 +696,7 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 - `'Restriction'`: a temporary or operational restriction (curve restriction, weather-related slow order, work zone, station-approach restriction, special-event slow)
 - `null`: type unknown or unclassified (sim has the limit value but not its origin)
 
-**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.3.1): `Single` = only the immediate next change; `MultiDynamic`/`MultiStatic` = the full forward sequence; `None` or absent = unsupported.
+**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.3.1): `Single` = only the immediate next change; `MultiDynamic` = the full forward sequence; `None` or absent = unsupported. `MultiStatic` is not supported.
 
 ### 5.11 `cars`
 
