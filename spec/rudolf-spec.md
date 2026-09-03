@@ -510,6 +510,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
 - `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
+- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value. In addition, it is NOT guaranteed to be equal to the sum of per-car values.
 
 Per-car BC pressure and amperage live in `cars`.
 
@@ -748,7 +749,7 @@ Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabD
       "bcPressure": 307.4, // kPa | null : TC native per-car; BVE: broadcast from [0]
       "amperage": 124, // A | null   : TC native per-car; BVE: broadcast from [0]
       "occupancyRate": null, // passenger percentage filled (may exceed 100%) | null : TC native; BVE: null
-      "loadMass": null // kg | null: BVE: total passenger mass
+      "loadMass": null // kg | null
     },
     // ...
   ],
@@ -759,7 +760,7 @@ Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.
 
 `occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
 
-`loadMass` is the per-car live load when realness is `All`, and the total live load in [0] when realness is `FirstCarOnly`. The total mass is NOT guaranteed to be the sum of all `loadMass` when realness is `FirstCarOnly`.
+`loadMass` is the per-car live load when realness is `All`, and the total live load in [0] when realness is `FirstCarOnly`. The total mass is NOT guaranteed to be the sum of all `loadMass` when realness is `FirstCarOnly`. Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value.
 
 ### 5.12 `switches`
 
