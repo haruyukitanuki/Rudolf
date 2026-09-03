@@ -440,7 +440,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
       "exitSpeed": null, // double | null: reference speed in km/h
       "isTimeTaken": true, // bool | null: timing point (採時駅); null when sim doesn't model it
       "stopPositions": [3, 4, 6], // number[] | null: candidate stop-marker car-counts for the current direction/platform; null when unknown
-      "interactions": null // InteractionType[] | null: denotes synchronization actions with other trains at the station
+      "interactions": null // Interaction[] | null: denotes synchronization actions with other trains at the station
     },
     // ... per station
   ],
