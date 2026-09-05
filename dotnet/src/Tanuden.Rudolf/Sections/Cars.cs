@@ -27,4 +27,7 @@ public class Car
 
   /// <summary>Percentage filled (May exceed 100%).</summary>
   public double? OccupancyRate;
+
+  /// <summary>Load in kg.</summary>
+  public double? LoadMass;
 }

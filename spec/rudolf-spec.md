@@ -98,7 +98,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId` and `sequence`.
 
 - `scenarioId` is only changed when a new drive is started.
-- `sequence` (type `long`) is incremented when data changes mid-drive (e.g. coupling/uncoupling, signal-aspect speed overrides for a different track section).
+- `sequence` (type `long`) is incremented when data changes mid-drive (e.g. coupling/uncoupling, service type changes, signal-aspect speeds for a different track section).
 
 ```json
 {
@@ -137,7 +137,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": "Right",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1,
+        "length": 20,
         "emptyMass": -1
       },
       {
@@ -150,7 +150,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1,
+        "length": 20,
         "emptyMass": -1
       },
       {
@@ -163,7 +163,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1,
+        "length": 20,
         "emptyMass": -1
       },
       {
@@ -176,7 +176,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "cabDirection": "Left",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1,
+        "length": 20,
         "emptyMass": -1
       }
     ],
@@ -198,7 +198,8 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "time.dateKnown": false,
     "physics.gradient": true,
     "physics.curveRadius": false,
-    "physics.totalLoadMass": false,
+    "physics.length": true,
+    "physics.mass": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
@@ -247,7 +248,10 @@ Static control-hardware description for the vehicle, distinct from the top-level
 
 `leadCar` specifies which car is the front car in the scenario.
 
-`totalLength` and `totalEmptyMass` specifies total quantities, or -1 if unknown. Due to limitations of certain simulators, it is NOT guaranteed that total values are equal to the sum of per-car values.
+`totalLength` and `totalEmptyMass` specifies total quantities, or -1 if unknown. Note that:
+
+- Total values are equal to the sum of per-car values ONLY when the respective `physics.length` or `physics.mass` capability is `All`.
+- Freight mass MAY be included here if it cannot be excluded from car mass, but MUST be excluded from the load mass if done so.
 
 #### 4.2.3 Per-car Static Information
 
@@ -265,7 +269,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | `pantographType` | One of {`SingleArm`, `Scissor`}. | |
 | `pantographDirection` | One of {`Left`, `Right`, `Both`}. | Direction on HMI screen. |
 | `length` | `double` | Length in meters, or -1 if unknown. |
-| `emptyMass` | `double` | Mass in kg, or -1 if unknown. |
+| `emptyMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
 
 ### 4.3 `capabilities`
 
@@ -278,8 +282,9 @@ This section provides information on how certain data fields are populated in th
 | `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string MUST be provided by the producer (see §5.1). |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
-| `physics.totalLoadMass` | `bool` | |
-| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `SimulatorProfile.vehicle.cars` and `OutputDataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
+| `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
+| `physics.mass` | One of {`All`, `TotalOnly`, `None`}. | Mass detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
+| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
 | `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
@@ -510,7 +515,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
 - `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
-- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value. In addition, it is NOT guaranteed to be equal to the sum of per-car values.
+- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
 Per-car BC pressure and amperage live in `cars`.
 
@@ -760,7 +765,7 @@ Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.
 
 `occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
 
-`loadMass` is the per-car live load when realness is `All`, and the total live load in [0] when realness is `FirstCarOnly`. The total mass is NOT guaranteed to be the sum of all `loadMass` when realness is `FirstCarOnly`. Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value.
+`loadMass` is the per-car live load when `SimulatorProfile.capabilities['physics.mass']` is `All`. Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value instead of the load mass.
 
 ### 5.12 `switches`
 

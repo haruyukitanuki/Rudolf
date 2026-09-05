@@ -38,6 +38,17 @@ public class VehicleInfo
   public int LeadCar = 0;
 
   /// <summary>
+  ///   Total length of the train in meters, -1 if unknown.
+  /// </summary>
+  public double TotalLength = -1;
+
+  /// <summary>
+  ///   Total mass of the train without passengers in kg, -1 if unknown.
+  ///   Freight may be included here only if it cannot be separated from car mass.
+  /// </summary>
+  public double TotalEmptyMass = -1;
+
+  /// <summary>
   ///   Static control-hardware description (mascon layout, notch counts, holding brake, compressor
   ///   pressures). Inner fields are null when the sim has no value for them.
   /// </summary>
@@ -79,4 +90,10 @@ public class CarStaticInfo
 
   /// <summary>Car length in meters. -1 if unknown.</summary>
   public double Length = -1;
+
+  /// <summary>
+  /// Car mass without passengers in kg, -1 if unknown.
+  /// Freight may be included here only if it cannot be separated from car mass.
+  /// </summary>
+  public double EmptyMass = -1;
 }
