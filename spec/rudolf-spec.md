@@ -408,6 +408,8 @@ Sent per-frame (~10 Hz / 100 ms typical, sim MAY emit faster or slower). Every c
 }
 ```
 
+Note that a `time.sim` past 24:00:00 is NOT allowed. When the date is not provided, implementation of time-of-day rollover detection is up to the consumer.
+
 ### 5.2 `diagram`
 
 Permissive: adapters fill what the sim natively knows. Heuristic derivation is NOT prescribed; consumers MAY compute derived values locally if desired.
@@ -458,6 +460,8 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `doorSide` uses the `SideOpened` int convention shared with the per-car doors in §5.6 and is never `null`: producers that cannot determine the side MUST emit `3` (open, side unknown). Producers MAY derive this heuristically, even if limited to `0` (closed) and `3`.
 
+`arrival` and `departure` times may be written in ISO 8601 datetime or simply HH:MM:SS. Note that times past 24:00:00 are NOT allowed. When the date is not provided, implementation of time-of-day rollover detection is up to the consumer.
+
 `stopPositionName` and `trackSectionName` should be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
 
 `entrySpeed` and `exitSpeed` are speeds shown on timetables or electronic driving aids. They are usually the speed limits on switches/points.
@@ -472,7 +476,7 @@ Each `Interaction` has the following data structure (example data shown):
   "trainNumber": "724A", // string | null
   "destination": "大手橋", // string | null
   "track": "上り1番線", // string | null
-  "arrival": null, // string | null:  if defined, use the same format as time.sim (spec §5.1)
+  "arrival": null, // string | null
   "departure": "07:48:10", // string | null
   "stopType": "Passing" // same possible values as in station list
 }
