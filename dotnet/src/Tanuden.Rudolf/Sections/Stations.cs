@@ -45,14 +45,26 @@ public class Station
   /// <summary>Whether this is a passenger stop, operation-only stop, or pass.</summary>
   public StopType? StopType;
 
-  /// <summary>ISO datetime; null for first station and passing-only stops.</summary>
+  /// <summary>ISO datetime or HH:MM:SS; null for first station and passing-only stops.</summary>
   public string? Arrival;
 
-  /// <summary>ISO datetime; null for last station.</summary>
+  /// <summary>ISO datetime or HH:MM:SS; null for last station.</summary>
   public string? Departure;
 
-  /// <summary>Platform/stop position name; null when not specified.</summary>
+  /// <summary>Platform/track name (着発線); null when not specified.</summary>
   public string? StopPositionName;
+
+  /// <summary>Operating route section name (運転線路); null when not specified.</summary>
+  public string? TrackSectionName;
+
+  /// <summary>Additional notes on a timetable; null when not specified.</summary>
+  public string? Remarks;
+
+  /// <summary>Reference entry speed limit on a timetable or HMI; null when not specified.</summary>
+  public double? EntrySpeed;
+
+  /// <summary>Reference exit speed limit on a timetable or HMI; null when not specified.</summary>
+  public double? ExitSpeed;
 
   /// <summary>True when this station is a timing point (採時駅); null when the sim doesn't model it.</summary>
   public bool? IsTimeTaken;
@@ -62,4 +74,32 @@ public class Station
   ///   <c>[3, 4, 6]</c>); null when unknown.
   /// </summary>
   public int[]? StopPositions;
+
+  /// <summary>List of scheduled synchronized movements with other trains at the station.</summary>
+  public Interaction[]? Interactions = null;
+}
+
+/// <summary>A synchronized movement with another train.</summary>
+public class Interaction
+{
+  /// <summary>Type of action at the station.</summary>
+  public InteractionType InteractionType;
+
+  /// <summary>Service number of the other train.</summary>
+  public string? TrainNumber;
+
+  /// <summary>Destination of the other train.</summary>
+  public string? Destination;
+
+  /// <summary>Name of the track used by the other train.</summary>
+  public string? Track;
+
+  /// <summary>Other train arrival as ISO datetime or HH:MM:SS; null if passing or unspecified.</summary>
+  public string? Arrival;
+
+  /// <summary>Other train passing or departure as ISO datetime or HH:MM:SS; null if unspecified.</summary>
+  public string? Departure;
+
+  /// <summary>Whether this is a passenger stop, operation-only stop, or pass.</summary>
+  public StopType? StopType;
 }
