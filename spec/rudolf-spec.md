@@ -30,7 +30,7 @@ Every document carries:
 - `schemaVersion: string`: Rudolf spec version. Current version: `"1.0"`.
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`: discriminator.
 - `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it. This value can be in any format so long as it is unique to the current scenario session loaded in the game.
-- `sentAt: string`: ISO 8601 timestamp at producer.
+- `sentAt: string`: ISO 8601 timestamp at producer. Time zone designator must be defined.
 
 ## 3. Architecture
 
@@ -51,11 +51,21 @@ All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequen
 - distance/location: **meters**
 - gradient: **‰** (permille)
 - current: **A** (amperes)
-- time: ISO 8601 strings, with `Kind=Unspecified` permitted for sims that lack real dates
+- time: ISO 8601 strings
 
-If the field has the unit of **%** (percent) or **‰** (permille), it means that the value is a proportion that is multiplied by 100 or 1000 respectively when communicated. For example,
+**Proportional units:** If the field has the unit of **%** (percent) or **‰** (permille), it means that the value is a proportion that is multiplied by 100 or 1000 respectively when communicated. For example,
 - `physics.gradient` has the unit **‰**. If the gradient is -33‰, the field will have the value of `-33.0`.
 - `cars.list[...].occupancyRate` has the unit **%**. If the occupancy is 150%, the field will have the value of `150.0`.
+
+**Date and time:** Date and time must both be defined in ISO 8601 format. The implementation depends on the use case.
+- General format specifications
+  - Only the years 0000 through 9999 (inclusive) are allowed.
+- Header `sentAt`
+  - Must *include* the time zone designator.
+- `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`:
+  - Must *exclude* the time zone designator, thereby representing local time.
+  - The capability `time.dateKnown` tells the consumer if a reasonable date for the scenario can be guaranteed.
+  - The date must increment past midnight.
 
 #### Raw Values
 
@@ -279,7 +289,7 @@ This section provides information on how certain data fields are populated in th
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
-| `time.dateKnown` | `bool` | `true` if sim provides the real date. This affects how the time string MUST be provided by the producer (see §5.1). |
+| `time.dateKnown` | `bool` | `true` if the simulator/producer can produce a real date. For example, a HMI may use this to determine if it should show the date. |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
 | `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
@@ -402,13 +412,11 @@ Sent per-frame (~10 Hz / 100 ms typical, sim MAY emit faster or slower). Every c
 
 ```jsonc
 {
-  "sim": "10:34:22", // "HH:MM:SS" when the time.dateKnown capability is false; ISO datetime when true
+  "sim": "2026-09-06T15:00:00", // ISO datetime, local to scenario
   "elapsed": 412.5, // seconds since scenario start; monotonic
   "tick": 1650, // frame counter; increments each emit
 }
 ```
-
-Note that a `time.sim` past 24:00:00 is NOT allowed. When the date is not provided, implementation of time-of-day rollover detection is up to the consumer.
 
 ### 5.2 `diagram`
 
