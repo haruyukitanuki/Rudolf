@@ -45,10 +45,10 @@ public class Station
   /// <summary>Whether this is a passenger stop, operation-only stop, or pass.</summary>
   public StopType? StopType;
 
-  /// <summary>ISO datetime or HH:MM:SS; null for first station and passing-only stops.</summary>
+  /// <summary>ISO local datetime; null for first station and passing-only stops.</summary>
   public string? Arrival;
 
-  /// <summary>ISO datetime or HH:MM:SS; null for last station.</summary>
+  /// <summary>ISO local datetime; null for last station.</summary>
   public string? Departure;
 
   /// <summary>Platform/track name (着発線); null when not specified.</summary>
@@ -94,10 +94,10 @@ public class Interaction
   /// <summary>Name of the track used by the other train.</summary>
   public string? Track;
 
-  /// <summary>Other train arrival as ISO datetime or HH:MM:SS; null if passing or unspecified.</summary>
+  /// <summary>Other train arrival as ISO local datetime; null if passing or unspecified.</summary>
   public string? Arrival;
 
-  /// <summary>Other train passing or departure as ISO datetime or HH:MM:SS; null if unspecified.</summary>
+  /// <summary>Other train passing or departure as ISO local datetime; null if unspecified.</summary>
   public string? Departure;
 
   /// <summary>Whether this is a passenger stop, operation-only stop, or pass.</summary>
