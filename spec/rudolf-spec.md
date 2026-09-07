@@ -480,7 +480,7 @@ Each `Interaction` has the following data structure (example data shown):
 
 ```jsonc
 {
-  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait'
+  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait' | 'Unknown' | null
   "trainNumber": "724A", // string | null
   "destination": "大手橋", // string | null
   "track": "上り1番線", // string | null
@@ -498,6 +498,7 @@ Interaction types are shown in the table below.
 | `ExchangeMovement` | 交, X | Wait for a train to clear the tracks ahead. Has a higher priority for display than `Connecting` and `Transfer`. |
 | `Transfer` | 連 | Passengers can change to another train that has not arrived at the station. |
 | `Wait` | 待 | Wait for a faster train to pass from behind. |
+| `Unknown` | | Interaction cannot be determined, or is not implemented. |
 
 Consumers may derive full station records + live distance to next via lookup:
 
