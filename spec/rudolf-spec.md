@@ -127,7 +127,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "00:00:00",
+    "scenarioStartTime": "2026-09-06T07:42:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
@@ -447,7 +447,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
       "doorSide": 1, // int: direction the doors open (see §5.6); 3 when the side cannot be determined
       "stopType": "PassengerStop", // 'PassengerStop' | 'OperationStop' | 'Passing' | null
       "arrival": null,
-      "departure": "10:00:00",
+      "departure": "2026-09-06T10:00:00",
       "stopPositionName": "下り1番線", // string | null: track used at a station (着発線)
       "trackSectionName": null, // string | null: operation route (運転線路)
       "remarks": null, // string | null: notes (usually by the driver) on timetable that do not correspond to the other fields
@@ -485,7 +485,7 @@ Each `Interaction` has the following data structure (example data shown):
   "destination": "大手橋", // string | null
   "track": "上り1番線", // string | null
   "arrival": null, // string | null
-  "departure": "07:48:10", // string | null
+  "departure": "2026-09-06T07:48:10", // string | null
   "stopType": "Passing" // same possible values as in station list
 }
 ```
