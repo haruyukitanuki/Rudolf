@@ -57,15 +57,15 @@ All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequen
 - `physics.gradient` has the unit **‰**. If the gradient is -33‰, the field will have the value of `-33.0`.
 - `cars.list[...].occupancyRate` has the unit **%**. If the occupancy is 150%, the field will have the value of `150.0`.
 
-**Date and time:** Date and time must both be defined in ISO 8601 format. The implementation depends on the use case.
+**Date and time:** Defined in ISO 8601 format. The implementation depends on the use case.
 - General format specifications
   - Only the years 0000 through 9999 (inclusive) are allowed.
 - Header `sentAt`
-  - Must *include* the time zone designator.
+  - Must *include* the time zone designator. This allows synchronization of documents emitted in different time zones.
 - `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`:
-  - Must *exclude* the time zone designator, thereby representing local time.
+  - Must *exclude* the time zone designator, thereby representing local time in the simulator.
   - The capability `time.dateKnown` tells the consumer if a reasonable date for the scenario can be guaranteed.
-  - The date must increment past midnight.
+  - The date must increment past midnight in simulator time.
 
 #### Raw Values
 
