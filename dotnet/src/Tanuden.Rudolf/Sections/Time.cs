@@ -4,7 +4,7 @@ namespace Tanuden.Rudolf.Sections;
 public class Time
 {
   /// <summary>ISO local datetime (no time zone).</summary>
-  public string Sim = "00:00:00";
+  public string Sim = "0000-01-01T00:00:00";
 
   /// <summary>Seconds since scenario start; monotonic.</summary>
   public double Elapsed;
