@@ -17,4 +17,7 @@ public enum InteractionType
 
   /// <summary>Wait for a train to pass from behind. (待)</summary>
   Wait,
+
+  /// <summary>Interaction cannot be determined, or other forms of action</summary>
+  Unknown,
 }
