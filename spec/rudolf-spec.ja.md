@@ -239,11 +239,40 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 - `holdingBrakeNotches`：抑速ブレーキのノッチ段数。備えていない場合は `0`、不明な場合は `null`。
 - `cpStartPressure`／`cpStopPressure`：空気圧縮機（コンプレッサー）の起動／停止圧力（kPa）。不明な場合は `null`。
 
-### 4.2 `vehicle.name`, `vehicle.model` & `vehicle.operator`
+### 4.2 車両情報
+
+#### 4.2.1 命名
 
 - `name`：車両形式の表示名（例：`"225系0番台"`）。「系」や「番台」の漢字表記が正確であることを確認してください。編成内に複数の形式が混結されている場合は、`+` で連結します（例：`"E231系1000番台+E233系3000番台"`）。
 - `model`：車両モデル識別子（例：`"225-0"`）。相互運用性を最大化するため、`series-subseries` 形式とすべきであり（SHOULD）、かな表記はTitleCaseでローマ字化すべきです（SHOULD）。編成内に複数の形式が混結されている場合は、`+` で連結します（例：`"E231-1000+E233-3000"`）。
 - `operator`：運行会社（例：`"EastJapanRailwayCompany"`、`"TokyuCorporation"`）。互換性を最大化するため、グループ名ではなく日本語版Wikipediaに準拠した正式な鉄道事業者名をTitleCaseで記述すべきです（SHOULD）。
+
+#### 4.2.2 列車静的情報
+
+`leadCar` はシナリオで先頭車となる車両を指定します。
+
+`totalLength` と `totalEmptyMass` は合計値を指定し、不明な場合は -1 とします。注意点：
+
+- 合計値が車両ごとの値の合計と等しくなるのは、対応する `physics.length` または `physics.mass` 機能が `All` の場合のみです。
+- 貨物質量を車両質量から除外できない場合、ここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。
+
+#### 4.2.3 車両ごとの静的情報
+
+`cars` は車両ごとの詳細を指定します：
+
+| `cars` のキー | 値 | 説明 |
+| :--- | :--- | :--- |
+| `carNo` | `int` | `OutputDataFrame.cars.list[...].carNo` の生成順序を指定します。 |
+| `model` | `string` | `vehicle.model` と同形式。 |
+| `hasDriverCab` | `bool` または `null` | |
+| `hasConductorCab` | `bool` または `null` | |
+| `hasMotor` | `bool` または `null` | |
+| `hasPantograph` | `bool` または `null` | |
+| `cabDirection` | {`Left`, `Right`} のいずれか。 | HMI 画面上の方向。 |
+| `pantographType` | {`SingleArm`, `Scissor`} のいずれか。 | |
+| `pantographDirection` | {`Left`, `Right`, `Both`} のいずれか。 | HMI 画面上の方向。 |
+| `length` | `double` | 長さ（メートル）。不明な場合は -1。 |
+| `emptyMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量をここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
 
 ### 4.3 `capabilities`
 
@@ -256,7 +285,9 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `time.dateKnown` | `bool` | シミュレーターが正確な実日付を提供する場合 `true`。これはプロデューサーが時刻文字列をどのように提供しなければならないかに影響します（MUST。§5.1参照）。 |
 | `physics.gradient` | `bool` | 勾配データの利用可否。 |
 | `physics.curveRadius` | `bool` | 曲線半径データの利用可否。 |
-| `physics.perCar` | {`True`, `Broadcast`, `Unavailable`} のいずれか | 車両ごとの物理データの利用可否。`True` の場合、`DataFrame.cars` に全車両の実データが含まれます。`Broadcast` の場合、先頭車両のデータのみが存在し、コンシューマー側で先頭の値を全車にブロードキャストしなければなりません（MUST）。`Unavailable` の場合、`DataFrame.cars` に車両ごとのデータは提供されません。 |
+| `physics.length` | {`All`, `TotalOnly`, `None`} のいずれか | `SimulatorProfile.vehicle.cars`、`OutputDataFrame.physics`、`OutputDataFrame.cars` における長さデータの詳細レベル。 |
+| `physics.mass` | {`All`, `TotalOnly`, `None`} のいずれか | `SimulatorProfile.vehicle.cars`、`OutputDataFrame.physics`、`OutputDataFrame.cars` における質量データの詳細レベル。 |
+| `physics.perCar` | {`All`, `FirstCarOnly`, `None`} のいずれか | `OutputDataFrame.cars` における車両ごとの物理データの利用可否。`FirstCarOnly` の場合、配列の先頭インデックスから全車にブロードキャストしなければなりません（MUST）。 |
 | `ats.richState` | `bool` | `DataFrame.ats.richState` コレクションの利用可否（§5.8参照）。 |
 | `stations.next` | `NextItemArrayType` | 駅データ配列の配信形態。 |
 | `speedLimits.next` | `NextItemArrayType` | 速度制限データ配列の配信形態。 |
@@ -374,7 +405,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ```jsonc
 {
-  "sim": "10:34:22", // time.dateKnown capabilityがfalseのときは "HH:MM:SS" 形式の時刻文字列、trueのときはISO日時文字列
+  "sim": "2026-09-06T15:00:00", // ISO 日時文字列。ローカル時刻（シナリオ時刻）
   "elapsed": 412.5, // シナリオ開始からの経過秒数（単調増加）
   "tick": 1650, // フレームカウンター。出力ごとにインクリメント
 }
@@ -410,7 +441,11 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
       "stopType": "PassengerStop", // 'PassengerStop' (客扱い) | 'OperationStop' (運転停車) | 'Passing' (通過) | null
       "arrival": null,
       "departure": "10:00:00",
-      "stopPositionName": "下り1番線", // string | null
+      "stopPositionName": "下り1番線", // string | null：着発線
+      "trackSectionName": null, // string | null：運転線路
+      "remarks": null, // string | null：時刻表上の運転士メモ（他のフィールドに該当しないもの）
+      "entrySpeed": null, // double | null：参照速度（km/h）
+      "exitSpeed": null, // double | null：参照速度（km/h）
       "isTimeTaken": true, // bool | null：採時駅かどうか。シミュレーターが未対応の場合はnull
       "stopPositions": [3, 4, 6], // number[] | null：現在の方向／番線における停止目標の両数候補。不明時はnull
     },
@@ -425,7 +460,37 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 `doorSide` は §5.6 の車両ごとのドアと共有される `SideOpened` 整数規約を使用し、決して `null` にはなりません：左右の側を判定できないプロデューサーは `3`（開扉・側別不明）を出力しなければなりません（MUST）。プロデューサーは、たとえ `0`（閉扉）と `3` に限定される場合でも、ヒューリスティックにこれを導出して構いません（MAY）。
 
+`arrival` および `departure` の時刻は、ISO 8601 日時または HH:MM:SS 形式で記述できます。24:00:00 を超える時刻は許可されません（MUST）。日付が提供されていない場合、日付をまたぐ時刻の処理はコンシューマーの実装に委ねられます。
+
+`stopPositionName` および `trackSectionName` は、機械的に読み取りやすいシンプルな形式で記述すべきです（SHOULD）。不明な場合は、実際の時刻表を参照してください。
+
+`entrySpeed` および `exitSpeed` は、時刻表や電子運転補助装置に表示される速度です。通常は分岐器上の制限速度です。
+
 `isTimeTaken`：採時駅かどうか（bool | null）。シミュレーターが対応していない場合は `null` です。ヒューリスティックに導出するプロデューサーは、時刻データが存在するものの有効な着・発時刻が適用されない駅に対しては、`null` ではなく `false` を出力すべきです（SHOULD）。
+
+各 `Interaction` は以下のデータ構造を持ちます（例示データ）：
+
+```jsonc
+{
+  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait' | 'Unknown' | null
+  "trainNumber": "724A", // string | null
+  "destination": "大手橋", // string | null
+  "track": "上り1番線", // string | null
+  "arrival": null, // string | null
+  "departure": "2026-09-06T07:48:10", // string | null
+  "stopType": "Passing" // 駅リストと同じ値
+}
+```
+
+Interaction 種別は以下の表のとおりです。
+
+| 値 | 日本語略称 | 意味 |
+| :--- | :--- | :--- |
+| `Connecting` | 接 | 既に駅に停車中の他の列車に乗り換え可能。 |
+| `ExchangeMovement` | 交, X | 前方の線路が空くのを待つ。`Connecting` や `Transfer` より表示優先度が高い。 |
+| `Transfer` | 連 | まだ駅に到着していない他の列車に乗り換え可能。 |
+| `Wait` | 待 | 後方から速い列車が通過するのを待つ。 |
+| `Unknown` | | Interaction を判別できない、または未実装。 |
 
 コンシューマーは、参照（ルックアップ）によって完全な駅レコードと次駅までのリアルタイム距離を導出します。
 
@@ -435,6 +500,8 @@ const next =
 const distanceToNext =
   next != null ? next.fromStartDistance - physics.fromStartDistance : null;
 ```
+
+合計路線距離が利用可能なのは、`SimulatorProfile.capabilities['stations.next']` が `MultiStatic` の場合のみです。
 
 ### 5.4 `physics`
 
@@ -446,12 +513,14 @@ const distanceToNext =
   "curveRadius": -500.0, // meters | null：TRAIN CREWは非公開。左カーブは負、右カーブは正、直線は0
   "gradient": null, // ‰ | null：旧バージョンのBVEEx等は非公開
   "mrPressure": 740.0, // kPa。元空気溜圧力（必須）
+  "totalLoadMass": null, // kg | null
 }
 ```
 
 - `fromStartDistance` は必須フィールドです。シナリオ開始からの累計走行距離（メートル）を表します。通常の運転中は単調増加します（後退時のみ減少）。
 - `absoluteDistance` は公式に測量されたキロ程です。複数路線間のデータ連携、ATS地上子の参照、位置情報マッピング等に役立ちます。シミュレーターがシナリオ相対の距離しか持たない場合は `null` になります。
 - `curveRadius` および `gradient` は先頭車両の位置における正確な値であるべきです（SHOULD）。正確な値が得られない場合は、キーフレーム値の使用が許可されます（MAY）。
+- `totalLoadMass`：BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合荷重質量に追加してはなりません（MUST）。合計荷重質量が車両ごとの値の合計と等しくなるのは、`SimulatorProfile.capabilities[physics.mass]` が `All` の場合のみです。
 
 車両ごとのBC圧力（ブレーキシリンダー圧力）および電流値は `cars` に格納されます。
 
@@ -690,13 +759,18 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
       "bcPressure": 307.4, // kPa | null：TCは車両ごとにネイティブ値／BVEは[0]両目の値を全体にブロードキャスト
       "amperage": 124, // A | null：TCは車両ごとにネイティブ値／BVEは[0]両目の値を全体にブロードキャスト
       "occupancyRate": null, // 乗車率（100%を超える場合あり）| null：TCはネイティブ値／BVEはnull
+      "loadMass": null // kg | null
     },
     // ...
   ],
 }
 ```
 
-車両ごとの物理演算データの正確性は `SimulatorProfile.capabilities['physics.perCar']` で宣言されます：`'true'`｜`'broadcast'`｜`'unavailable'`。
+車両ごとの物理演算データの正確性は `SimulatorProfile.capabilities['physics.perCar']` で宣言されます：`'All'`｜`'FirstCarOnly'`｜`'None'`。
+
+`occupancyRate`（混雑率）は、[国土交通省の定義](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html)に基づくべきです（SHOULD）。
+
+`loadMass` は、`SimulatorProfile.capabilities['physics.mass']` が `All` の場合の車両ごとのライブ荷重です。BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合は荷重質量ではなく空車質量側に含まれます。
 
 ### 5.12 `switches`
 
