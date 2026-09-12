@@ -975,7 +975,8 @@ Recommended transports:
         "cabDirection": "Right",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 2,
@@ -987,7 +988,8 @@ Recommended transports:
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 3,
@@ -999,7 +1001,8 @@ Recommended transports:
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 4,
@@ -1011,7 +1014,8 @@ Recommended transports:
         "cabDirection": "Left",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       }
     ],
     "leadCar": 4,

@@ -148,7 +148,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "cabDirection": "Right",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 2,
@@ -160,7 +161,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 3,
@@ -172,7 +174,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 4,
@@ -184,7 +187,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "cabDirection": "Left",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       }
     ],
     "leadCar": 4,
@@ -970,7 +974,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "cabDirection": "Right",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 2,
@@ -982,7 +987,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 3,
@@ -994,7 +1000,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "cabDirection": null,
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       },
       {
         "carNo": 4,
@@ -1006,7 +1013,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "cabDirection": "Left",
         "pantographType": null,
         "pantographDirection": null,
-        "length": -1
+        "length": 20,
+        "emptyMass": -1
       }
     ],
     "leadCar": 4,
