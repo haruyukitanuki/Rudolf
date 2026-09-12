@@ -77,6 +77,6 @@ public class SetDeadmanCommand : Command
   /// <summary>True while the channel is held; false when released.</summary>
   public bool Holding;
 
-  /// <summary>Which channel (hand/foot).</summary>
+  /// <summary>Which channel (hand/foot/EB).</summary>
   public EBDeadmanMethod Method;
 }

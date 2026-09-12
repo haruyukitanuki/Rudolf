@@ -20,4 +20,7 @@ public class Physics
 
   /// <summary>MR Pressure in kPa; train-level; always present.</summary>
   public double MrPressure;
+
+  /// <summary>Total load in kg.</summary>
+  public double? TotalLoadMass;
 }

@@ -7,7 +7,7 @@ namespace Tanuden.Rudolf.Profile;
 /// <summary>
 ///   Capability flags keyed by dotted path matching <see cref="OutputDataFrame" /> field paths.
 ///   Values are usually booleans; some keys carry string-enum values (e.g. <c>physics.perCar</c>
-///   is <c>"True" | "Broadcast" | "Unavailable"</c>).
+///   is <c>"None" | "FirstCarOnly" | "All"</c>).
 ///   Consumers read via <see cref="JsonElement" /> and call <c>.GetBoolean()</c>/<c>.GetString()</c> as needed.
 /// </summary>
 public class Capabilities : Dictionary<string, JsonElement>

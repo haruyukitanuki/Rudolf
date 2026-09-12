@@ -480,7 +480,7 @@ Each `Interaction` has the following data structure (example data shown):
 
 ```jsonc
 {
-  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait' | 'Unknown' | null
+  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait' | 'Unknown'
   "trainNumber": "724A", // string | null
   "destination": "大手橋", // string | null
   "track": "上り1番線", // string | null
@@ -955,7 +955,7 @@ Recommended transports:
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "00:00:00",
+    "scenarioStartTime": "2026-01-01T00:00:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
@@ -1027,10 +1027,16 @@ Recommended transports:
     }
   },
   "capabilities": {
+    "time.dateKnown": false,
     "physics.gradient": true,
-    "physics.perCar": "True",
+    "physics.curveRadius": false,
+    "physics.length": "All",
+    "physics.mass": "None",
+    "physics.perCar": "All",
     "ats.richState": true,
+    "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
+    "signals.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -1082,8 +1088,13 @@ Recommended transports:
         "arrival": null,
         "departure": "07:42:00",
         "stopPositionName": "日野森駅1番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 1,
@@ -1095,8 +1106,13 @@ Recommended transports:
         "arrival": "07:44:15",
         "departure": "07:48:30",
         "stopPositionName": "高見沢駅2番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 2,
@@ -1108,8 +1124,13 @@ Recommended transports:
         "arrival": "07:50:45",
         "departure": "07:51:15",
         "stopPositionName": "水越駅2番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 3,
@@ -1121,8 +1142,13 @@ Recommended transports:
         "arrival": "07:52:55",
         "departure": "07:53:25",
         "stopPositionName": "藤江駅2番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 4,
@@ -1134,8 +1160,13 @@ Recommended transports:
         "arrival": "07:56:50",
         "departure": "08:02:00",
         "stopPositionName": "大道寺駅4番下り_併B",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 5,
@@ -1147,8 +1178,13 @@ Recommended transports:
         "arrival": "08:02:45",
         "departure": "08:02:45",
         "stopPositionName": "江ノ原信号場下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 6,
@@ -1160,8 +1196,13 @@ Recommended transports:
         "arrival": "08:03:50",
         "departure": "08:04:20",
         "stopPositionName": "江ノ原駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 7,
@@ -1173,8 +1214,13 @@ Recommended transports:
         "arrival": "08:06:05",
         "departure": "08:06:35",
         "stopPositionName": "新野崎駅3番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 8,
@@ -1186,8 +1232,13 @@ Recommended transports:
         "arrival": "08:08:00",
         "departure": "08:08:30",
         "stopPositionName": "新井川駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 9,
@@ -1199,8 +1250,13 @@ Recommended transports:
         "arrival": "08:10:00",
         "departure": "08:10:30",
         "stopPositionName": "羽衣橋駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 10,
@@ -1212,8 +1268,13 @@ Recommended transports:
         "arrival": "08:11:55",
         "departure": "08:12:25",
         "stopPositionName": "浜園駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 11,
@@ -1225,8 +1286,13 @@ Recommended transports:
         "arrival": "08:14:20",
         "departure": "08:19:00",
         "stopPositionName": "津崎駅4番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 12,
@@ -1238,8 +1304,13 @@ Recommended transports:
         "arrival": "08:21:05",
         "departure": "08:21:35",
         "stopPositionName": "虹ケ浜駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 13,
@@ -1251,8 +1322,10 @@ Recommended transports:
         "arrival": "08:23:30",
         "departure": "08:24:00",
         "stopPositionName": "海岸公園駅下り",
+        "trackSectionName": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 14,
@@ -1264,8 +1337,13 @@ Recommended transports:
         "arrival": "08:25:35",
         "departure": "08:26:05",
         "stopPositionName": "河原崎駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 15,
@@ -1277,8 +1355,13 @@ Recommended transports:
         "arrival": "08:27:30",
         "departure": "08:28:00",
         "stopPositionName": "駒野駅3番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 16,
@@ -1290,8 +1373,13 @@ Recommended transports:
         "arrival": "08:30:55",
         "departure": null,
         "stopPositionName": "館浜駅3番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       }
     ],
     "currentIndex": null,

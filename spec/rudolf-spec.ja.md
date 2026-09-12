@@ -450,6 +450,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
       "exitSpeed": null, // double | null：参照速度（km/h）
       "isTimeTaken": true, // bool | null：採時駅かどうか。シミュレーターが未対応の場合はnull
       "stopPositions": [3, 4, 6], // number[] | null：現在の方向／番線における停止目標の両数候補。不明時はnull
+      "interactions": null // Interaction[] | null
     },
     // ... 駅ごとに繰り返し
   ],
@@ -474,7 +475,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ```jsonc
 {
-  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait' | 'Unknown' | null
+  "interactionType": "ExchangeMovement", // 'Connecting' | 'ExchangeMovement' | 'Transfer' | 'Wait' | 'Unknown'
   "trainNumber": "724A", // string | null
   "destination": "大手橋", // string | null
   "track": "上り1番線", // string | null
@@ -949,7 +950,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "00:00:00",
+    "scenarioStartTime": "2026-01-01T00:00:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
@@ -1021,10 +1022,16 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     }
   },
   "capabilities": {
+    "time.dateKnown": false,
     "physics.gradient": true,
-    "physics.perCar": "True",
+    "physics.curveRadius": false,
+    "physics.length": "All",
+    "physics.mass": "None",
+    "physics.perCar": "All",
     "ats.richState": true,
+    "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
+    "signals.next": "Single",
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -1076,8 +1083,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": null,
         "departure": "07:42:00",
         "stopPositionName": "日野森駅1番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 1,
@@ -1089,8 +1101,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "07:44:15",
         "departure": "07:48:30",
         "stopPositionName": "高見沢駅2番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 2,
@@ -1102,8 +1119,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "07:50:45",
         "departure": "07:51:15",
         "stopPositionName": "水越駅2番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 3,
@@ -1115,8 +1137,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "07:52:55",
         "departure": "07:53:25",
         "stopPositionName": "藤江駅2番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 4,
@@ -1128,8 +1155,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "07:56:50",
         "departure": "08:02:00",
         "stopPositionName": "大道寺駅4番下り_併B",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 5,
@@ -1141,8 +1173,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:02:45",
         "departure": "08:02:45",
         "stopPositionName": "江ノ原信号場下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 6,
@@ -1154,8 +1191,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:03:50",
         "departure": "08:04:20",
         "stopPositionName": "江ノ原駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 7,
@@ -1167,8 +1209,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:06:05",
         "departure": "08:06:35",
         "stopPositionName": "新野崎駅3番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 8,
@@ -1180,8 +1227,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:08:00",
         "departure": "08:08:30",
         "stopPositionName": "新井川駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 9,
@@ -1193,8 +1245,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:10:00",
         "departure": "08:10:30",
         "stopPositionName": "羽衣橋駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 10,
@@ -1206,8 +1263,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:11:55",
         "departure": "08:12:25",
         "stopPositionName": "浜園駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 11,
@@ -1219,8 +1281,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:14:20",
         "departure": "08:19:00",
         "stopPositionName": "津崎駅4番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 12,
@@ -1232,8 +1299,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:21:05",
         "departure": "08:21:35",
         "stopPositionName": "虹ケ浜駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 13,
@@ -1245,8 +1317,10 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:23:30",
         "departure": "08:24:00",
         "stopPositionName": "海岸公園駅下り",
+        "trackSectionName": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 14,
@@ -1258,8 +1332,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:25:35",
         "departure": "08:26:05",
         "stopPositionName": "河原崎駅下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 15,
@@ -1271,8 +1350,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:27:30",
         "departure": "08:28:00",
         "stopPositionName": "駒野駅3番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       },
       {
         "index": 16,
@@ -1284,8 +1368,13 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "arrival": "08:30:55",
         "departure": null,
         "stopPositionName": "館浜駅3番下り",
+        "trackSectionName": null,
+        "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
-        "stopPositions": null
+        "stopPositions": null,
+        "interactions": null
       }
     ],
     "currentIndex": null,
@@ -1329,7 +1418,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     ]
   },
   "lamps": {
-    "values": [1, 1, 0, 0, /* ... 合計512個の値 */]
+    "values": [1, 1, 0, 0, /* ... total 512 */]
   },
   "ats": {
     "class": "普通",
