@@ -292,7 +292,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | Key | Value | Description |
 | :--- | :--- | :--- |
 | `position` | One of {`Left`, `Middle`, `Right`, `Jacobs`}. | Where the bogie sits under the car, in left-to-right display order. Positions need not be unique (a 4-bogie car lists `Left`, `Middle`, `Middle`, `Right`). Non-bogie fixed-axle groups use the same values (they draw identically). |
-| `axles` | `AxleStatic[]` | Axles in this bogie, left-to-right. Array length is the axle count (2 typical, 3 for Bo-axle). |
+| `axles` | `AxleStatic[]` | Axles in this bogie, left-to-right. Array length is the axle count (2 typical, 3 for Co arrangement). |
 
 `axles` entries:
 
@@ -822,7 +822,7 @@ Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.
 | `AuxiliaryPower` | Auxiliary power supply (補助電源装置異常, SIV). |
 | `SafetyDevice` | Onboard safety device (保安装置異常): ATS/ATC equipment. |
 | `Monitor` | Monitor system (モニタ装置異常). |
-| `TrainRadio` | Train radio (列車無線異常). |
+| `TrainRadio` | Train radio (無線異常). |
 | `AirConditioner` | Air conditioning (空調装置異常). Comfort-only. |
 | `Other` | Unclassified or sim-specific (その他). |
 

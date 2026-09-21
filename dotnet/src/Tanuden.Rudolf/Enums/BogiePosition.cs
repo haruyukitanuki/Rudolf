@@ -9,12 +9,12 @@ public enum BogiePosition
   /// <summary>Leftmost bogie under the car as displayed.</summary>
   Left,
 
-  /// <summary>Intermediate bogie (3+ bogie cars, e.g. Bo-Bo-Bo).</summary>
+  /// <summary>Intermediate bogie (only for cars with 3 or more bogies, e.g. Bo-Bo-Bo).</summary>
   Middle,
 
   /// <summary>Rightmost bogie under the car as displayed.</summary>
   Right,
 
-  /// <summary>Bogie shared with the adjacent car (Jacobs bogie, articulated/AGT/LRV).</summary>
+  /// <summary>Bogie shared with the next car (Jacobs/articulated bogie).</summary>
   Jacobs
 }

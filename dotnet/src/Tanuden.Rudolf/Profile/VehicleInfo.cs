@@ -68,7 +68,7 @@ public class BogieStatic
   /// <summary>Where this bogie sits under the car, in left-to-right display order.</summary>
   public BogiePosition Position;
 
-  /// <summary>Axles in this bogie, left-to-right. Count is the axle count (2 typical, 3 for Bo).</summary>
+  /// <summary>Axles in this bogie, left-to-right. Item count is equal to the number of axles (2 typical, 3 for Co arrangement).</summary>
   public List<AxleStatic> Axles = new();
 }
 

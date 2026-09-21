@@ -290,7 +290,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | キー | 値 | 説明 |
 | :--- | :--- | :--- |
 | `position` | {`Left`, `Middle`, `Right`, `Jacobs`} のいずれか。 | 台車が車両のどこにあるか。画面左から右の表示順。位置の重複は許容（4台車の車両は `Left`, `Middle`, `Middle`, `Right`）。台車でない固定軸も同じ値を使用（描画上同じため）。 |
-| `axles` | `AxleStatic[]` | この台車の車軸、左から右。配列長が軸数（通常2、Bo軸は3）。 |
+| `axles` | `AxleStatic[]` | この台車の車軸、左から右。配列長が軸数（通常2、Co軸は3）。 |
 
 `axles` の各要素：
 
@@ -820,7 +820,7 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 | `AuxiliaryPower` | 補助電源装置異常（SIV）。 |
 | `SafetyDevice` | 保安装置異常：車上の ATS/ATC 機器。 |
 | `Monitor` | モニタ装置異常。 |
-| `TrainRadio` | 列車無線異常。 |
+| `TrainRadio` | 無線異常。 |
 | `AirConditioner` | 空調装置異常。快適性のみに関わる。 |
 | `Other` | 未分類またはシミュレーター固有（その他）。 |
 

@@ -30,7 +30,7 @@ public enum CarFault
   /// <summary>Monitor system (モニタ装置異常).</summary>
   Monitor,
 
-  /// <summary>Train radio (列車無線異常).</summary>
+  /// <summary>Train radio (無線異常).</summary>
   TrainRadio,
 
   /// <summary>Air conditioning (空調装置異常). Comfort-only.</summary>

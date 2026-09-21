@@ -12,7 +12,7 @@ public enum BogieFault
   /// <summary>Brake equipment mounted on this bogie (台車ブレーキ): dragging/stuck brake, rigging fault. Control-side faults use <see cref="CarFault.Brake" />.</summary>
   Brake,
 
-  /// <summary>Collector shoe sheered/damaged (集電靴の破損・脱落); third-rail vehicles.</summary>
+  /// <summary>Collector shoe sheared/damaged (集電靴の破損・脱落); third-rail vehicles.</summary>
   CollectorShoe,
 
   /// <summary>Unclassified or sim-specific (その他).</summary>
