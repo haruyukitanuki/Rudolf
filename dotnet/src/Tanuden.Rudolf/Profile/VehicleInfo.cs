@@ -55,6 +55,23 @@ public class VehicleInfo
   public VehicleCapabilities Capabilities = new();
 }
 
+/// <summary>Static composition of a single axle within a bogie.</summary>
+public class AxleStatic
+{
+  /// <summary>True when this axle is powered (powered by a traction motor). Per-axle granularity covers 0.5M and 0.75M layouts where only some axles of a bogie are powered.</summary>
+  public bool IsPowered;
+}
+
+/// <summary>Static composition of one bogie (or non-bogie fixed-axle group; they draw identically) under a car.</summary>
+public class BogieStatic
+{
+  /// <summary>Where this bogie sits under the car, in left-to-right display order.</summary>
+  public BogiePosition Position;
+
+  /// <summary>Axles in this bogie, left-to-right. Item count is equal to the number of axles (2 typical, 3 for Co arrangement).</summary>
+  public List<AxleStatic> Axles = new();
+}
+
 /// <summary>Static composition for a single car (cabs, motors, pantograph layout).</summary>
 public class CarStaticInfo
 {
@@ -96,4 +113,11 @@ public class CarStaticInfo
   /// Freight may be included here only if it cannot be separated from car mass.
   /// </summary>
   public double EmptyMass = -1;
+
+  /// <summary>
+  ///   Bogies under this car, left-to-right display order. Empty when the sim does not provide
+  ///   composition. A Jacobs bogie (see <see cref="Enums.BogiePosition.Jacobs" />) is shared
+  ///   with the adjacent car and is listed ONLY by this car when this car is on the bogie's LEFT.
+  /// </summary>
+  public List<BogieStatic> Bogies = new();
 }

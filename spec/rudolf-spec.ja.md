@@ -14,6 +14,8 @@
 | Extension（拡張） | `extensions:` 配下に置かれる、名前空間付きのシミュレーター固有・ベンダー固有ブロック（例：`bve:beaconRing`）。 |
 | Scenario（シナリオ） | シナリオの読み込みから終了までの、シミュレーターの1回のプレイセッション。 |
 | HMI | ヒューマンマシンインターフェース。すなわち列車情報管理装置（TIMS／INTEROS／MON等）。 |
+| 台車（ボギー） | 車両の下にある台車。1両に1つ以上の台車がある。台車でない固定軸も台車としてモデル化する（描画上同じため）。ジャコブス台車は隣接する車両と共有され、台車の左側の車両のみがこれを列挙する。 |
+| 車軸 | 台車に属する車軸。1本の車軸には車輪が2つあるが、Rudolf は車輪単位ではなく車軸単位でモデル化する。各車軸は動軸または非動軸のいずれか（`isPowered`）。 |
 
 ## 2. ドキュメントの種類
 
@@ -214,6 +216,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.faults": true,
+    "cars.bogies": true,
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -279,6 +283,22 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `pantographDirection` | {`Left`, `Right`, `Both`} のいずれか。 | HMI 画面上の方向。 |
 | `length` | `double` | 長さ（メートル）。不明な場合は -1。 |
 | `emptyMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量をここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
+| `bogies` | `BogieStatic[]` | この車両の台車。画面左から右の表示順。構成が不明な場合は空配列。詳細は下記。 |
+
+`bogies` の各要素：
+
+| キー | 値 | 説明 |
+| :--- | :--- | :--- |
+| `position` | {`Left`, `Middle`, `Right`, `Jacobs`} のいずれか。 | 台車が車両のどこにあるか。画面左から右の表示順。位置の重複は許容（4台車の車両は `Left`, `Middle`, `Middle`, `Right`）。台車でない固定軸も同じ値を使用（描画上同じため）。 |
+| `axles` | `AxleStatic[]` | この台車の車軸、左から右。配列長が軸数（通常2、Co軸は3）。 |
+
+`axles` の各要素：
+
+| キー | 値 | 説明 |
+| :--- | :--- | :--- |
+| `isPowered` | `bool` | この車軸が動軸（主電動機で駆動される軸）である場合 `true`。車軸単位の指定により、0.5M・0.75M のように台車内の一部車軸のみ動力を持つ構成に対応します。主電動機は台車に搭載されるため、動力の有無は車軸に属する属性です。 |
+
+`Jacobs` 台車は隣接する車両と共有されます。`Jacobs` 台車は、その所有者（台車の左側の車両）の `bogies` にのみ列挙しなければなりません（MUST）。右側の隣接車両はこれを列挙してはなりません（MUST NOT）。車両をまたいで軸数を集計するコンシューマーは、各 `Jacobs` を一度だけ読み取ればよく、重複排除は不要です。
 
 ### 4.3 `capabilities`
 
@@ -298,6 +318,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `stations.next` | `NextItemArrayType` | 駅データ配列の配信形態。 |
 | `speedLimits.next` | `NextItemArrayType` | 速度制限データ配列の配信形態。 |
 | `signals.next` | `NextItemArrayType` | 信号データ配列の配信形態。 |
+| `cars.faults` | `bool` | `OutputDataFrame.cars.list[...].faults` における車両故障報告の利用可否（§5.11 参照）。 |
+| `cars.bogies` | `bool` | `OutputDataFrame.cars.list[...].bogies` における台車データの利用可否（§5.11 参照）。 |
 
 `NextItemArrayType` は、シナリオ内のオブジェクトを格納する配列の動作を指定します：
 
@@ -529,7 +551,7 @@ const distanceToNext =
 - `curveRadius` および `gradient` は先頭車両の位置における正確な値であるべきです（SHOULD）。正確な値が得られない場合は、キーフレーム値の使用が許可されます（MAY）。
 - `totalLoadMass`：BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合荷重質量に追加してはなりません（MUST）。合計荷重質量が車両ごとの値の合計と等しくなるのは、`SimulatorProfile.capabilities[physics.mass]` が `All` の場合のみです。
 
-車両ごとのBC圧力（ブレーキシリンダー圧力）および電流値は `cars` に格納されます。
+台車ごとのBC圧力（ブレーキシリンダー圧力）および主電動機電流は `cars.list[...].bogies` に格納されます。各フィールドは物理機器・センサーの設置レベルに対応します。
 
 ### 5.5 `controllers`
 
@@ -763,10 +785,15 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
   "list": [
     {
       "carNo": 1,
-      "bcPressure": 307.4, // kPa | null：TCは車両ごとにネイティブ値／BVEは[0]両目の値を全体にブロードキャスト
-      "amperage": 124, // A | null：TCは車両ごとにネイティブ値／BVEは[0]両目の値を全体にブロードキャスト
       "occupancyRate": null, // 乗車率（100%を超える場合あり）| null：TCはネイティブ値／BVEはnull
-      "loadMass": null // kg | null
+      "loadMass": null, // kg | null
+      "faults": [], // CarFault[] | null：空配列は正常／nullは未モデル（cars.faults ケイパビリティ）
+      "bogies": [ // SimulatorProfile.vehicle.cars[...].bogies とインデックス整列／nullは未モデル
+        { "position": "Left", "bcPressure": 307.4, "amperage": 62, "faults": [] },
+        // kPa | null：この台車のBC圧力（センサーは台車レベル）
+        // A | null：この台車の主電動機電流
+        { "position": "Right", "bcPressure": 307.4, "amperage": 62, "faults": [] }
+      ]
     },
     // ...
   ],
@@ -778,6 +805,35 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 `occupancyRate`（混雑率）は、[国土交通省の定義](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html)に基づくべきです（SHOULD）。
 
 `loadMass` は、`SimulatorProfile.capabilities['physics.mass']` が `All` の場合の車両ごとのライブ荷重です。BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合は荷重質量ではなく空車質量側に含まれます。
+
+`faults` は、車体・屋根・運転台搭載機器の故障を列挙します。空配列は正常、要素が 1 つ以上あれば故障が発生中、`null`（または省略）はシミュレーターが状態をモデル化していないこと（`cars.faults` ケイパビリティ不在/false）を意味します。複数故障の同時報告は可能（MAY）で、配列の順序に意味はなく、重複の出力は禁止（MUST NOT）です。`faults` は現在の状態のみを表し、故障履歴や修理作業は対象外です。新しいメンバーはマイナーバージョンで追加でき（MAY）、コンシューマーは未知のメンバーを無視しなければなりません（MUST）。`Traction` は台車をモデル化しない簡単なシミュレーターでも主回路の故障を報告できるよう車両レベルに存在します。台車単位の分解能を持つシミュレーターは、代わりに `bogies[].faults` の `BogieFault.Traction` を使用すべきです（SHOULD）。
+
+`CarFault` の値域：
+
+| 値 | 説明 |
+| :--- | :--- |
+| `Door` | 扉装置（ドア故障）。 |
+| `Pantograph` | パンタグラフ異常。持続的な離線を含む。 |
+| `Traction` | 主回路関連の故障（車両レベル）。 |
+| `Brake` | ブレーキ制御装置異常：BCU、動作・緩解不良。 |
+| `Compressor` | 空気圧縮機異常（CP）。 |
+| `AuxiliaryPower` | 補助電源装置異常（SIV）。 |
+| `SafetyDevice` | 保安装置異常：車上の ATS/ATC 機器。 |
+| `Monitor` | モニタ装置異常。 |
+| `TrainRadio` | 無線異常。 |
+| `AirConditioner` | 空調装置異常。快適性のみに関わる。 |
+| `Other` | 未分類またはシミュレーター固有（その他）。 |
+
+`bogies` は台車ごとの動的状態を運びます。null でない場合、`SimulatorProfile.vehicle.cars[...].bogies` とインデックス整列（同じ長さ・同じ左から右の順序）でなければなりません（MUST）。`bcPressure` はその台車のブレーキシリンダー圧力、`amperage` はその台車の主電動機電流です（主電動機は台車に搭載され、電気機関車などのモノモーター台車は車軸が機械的に結合されるため、台車レベルで報告します）。車両単位の分解能しかないプロデューサーは、その車両の値を各台車に出力すべきです（SHOULD）。共有された `Jacobs` 台車は、その所有者（台車の左側の車両）のリストにのみ現れます。動的な値は 1 箇所にのみ存在するため、車両間の整合性や重複排除の規則は不要です。台車の `faults` は台車搭載機器（主電動機・車軸・ブレーキ・集電靴）に範囲を限定します。`Brake` は物理的な設置場所で両レベルに分かれます：車両レベルの `CarFault.Brake` はブレーキ制御装置（BCU など制御側）、台車レベルの `BogieFault.Brake` は各台車の機械的なブレーキ（制動不良・緩解不良・基礎ブレーキ機構）です。`BogieFault` に車体搭載機器のメンバーはない（それらは車両レベル）。車軸単位の動的データは 2.0 には含まず、車輪レベルの状態は将来のマイナーバージョンで追加される可能性があります。
+
+`BogieFault` の値域：
+
+| 値 | 説明 |
+| :--- | :--- |
+| `Traction` | この台車に搭載された主電動機。 |
+| `Brake` | この台車に搭載されたブレーキ装置（台車ブレーキ）：制動不良・緩解不良・基礎ブレーキ機構の故障。制御側の故障は `CarFault.Brake` を使用。 |
+| `CollectorShoe` | 集電靴の破損・脱落。第三軌条（サードレール）車両。 |
+| `Other` | 未分類またはシミュレーター固有（その他）。 |
 
 ### 5.12 `switches`
 
@@ -1040,6 +1096,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.faults": true,
+    "cars.bogies": true,
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -1473,27 +1531,39 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "list": [
       {
         "carNo": 1,
-        "bcPressure": 0,
-        "amperage": 702.1439208984375,
-        "occupancyRate": 100
+        "occupancyRate": 100,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] }
+        ]
       },
       {
         "carNo": 2,
-        "bcPressure": 0,
-        "amperage": 0,
-        "occupancyRate": 65.47618865966797
+        "occupancyRate": 65.47618865966797,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": null, "faults": [] }
+        ]
       },
       {
         "carNo": 3,
-        "bcPressure": 0,
-        "amperage": 0,
-        "occupancyRate": 77.38095092773438
+        "occupancyRate": 77.38095092773438,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": null, "faults": [] }
+        ]
       },
       {
         "carNo": 4,
-        "bcPressure": 0,
-        "amperage": 702.1439208984375,
-        "occupancyRate": 85.71428680419922
+        "occupancyRate": 85.71428680419922,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] }
+        ]
       }
     ]
   },

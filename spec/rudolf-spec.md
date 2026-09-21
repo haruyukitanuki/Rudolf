@@ -14,6 +14,8 @@
 | Extension | A namespaced sim- or vendor-specific block under `extensions:` (e.g., `bve:beaconRing`).                      |
 | Scenario  | One running play-session of a sim, from scenario load to scenario end.                                        |
 | HMI       | Human Machine Interface, i.e. 列車情報管理装置 (TIMS/INTEROS).                                                |
+| Bogie     | A wheel truck (台車) under a car. A car has one or more bogies. Non-bogie fixed-axle groups are modeled as bogies (they draw identically). A Jacobs bogie is shared with the adjacent car and is listed only by the car on the bogie's left. |
+| Axle      | A wheelset (車軸) belonging to a bogie. An axle has two wheels; Rudolf models the axle, never individual wheels. Each axle is either powered or unpowered (`isPowered`). |
 
 ## 2. Types of Documents
 
@@ -84,6 +86,7 @@ A field that's absent from the JSON MEANS "the sim doesn't support this field at
 #### Versioning
 
 All documents carry a single `schemaVersion` at the envelope level. A breaking change to any section bumps `schemaVersion`. Consumers MUST tolerate unknown fields added in future minor versions (read what they know, ignore what they don't).
+
 
 ### 3.2 Document structure
 
@@ -215,6 +218,8 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.faults": true,
+    "cars.bogies": true,
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -280,6 +285,22 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | `pantographDirection` | One of {`Left`, `Right`, `Both`}. | Direction on HMI screen. |
 | `length` | `double` | Length in meters, or -1 if unknown. |
 | `emptyMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
+| `bogies` | `BogieStatic[]` | Bogies under this car, left-to-right display order. Empty when composition is not provided. See below. |
+
+`bogies` entries:
+
+| Key | Value | Description |
+| :--- | :--- | :--- |
+| `position` | One of {`Left`, `Middle`, `Right`, `Jacobs`}. | Where the bogie sits under the car, in left-to-right display order. Positions need not be unique (a 4-bogie car lists `Left`, `Middle`, `Middle`, `Right`). Non-bogie fixed-axle groups use the same values (they draw identically). |
+| `axles` | `AxleStatic[]` | Axles in this bogie, left-to-right. Array length is the axle count (2 typical, 3 for Co arrangement). |
+
+`axles` entries:
+
+| Key | Value | Description |
+| :--- | :--- | :--- |
+| `isPowered` | `bool` | True when this axle is powered (driven by a traction motor). Per-axle granularity covers the 0.5M and 0.75M configurations where only some axles of a bogie are powered. Motors are mounted on bogies; the powered/unpowered distinction belongs to the axle. |
+
+A `Jacobs` bogie is shared between adjacent cars. It MUST be listed ONLY in the `bogies` of its owner: the car on the bogie's LEFT. The right-hand adjacent car MUST NOT list it. Consumers aggregating axle counts across cars therefore read each `Jacobs` entry exactly once; no deduplication is required.
 
 ### 4.3 `capabilities`
 
@@ -299,6 +320,8 @@ This section provides information on how certain data fields are populated in th
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
+| `cars.faults` | `bool` | Availability of per-car fault reporting in `OutputDataFrame.cars.list[...].faults` (see §5.11). |
+| `cars.bogies` | `bool` | Availability of per-bogie data in `OutputDataFrame.cars.list[...].bogies` (see §5.11). |
 
 `NextItemArrayType` specifies the behavior of arrays that store objects in a scenario:
 
@@ -530,7 +553,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 - `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
 - `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
-Per-car BC pressure and amperage live in `cars`.
+Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each field sits at the level of its physical equipment/sensor.
 
 ### 5.5 `controllers`
 
@@ -764,10 +787,15 @@ Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabD
   "list": [
     {
       "carNo": 1,
-      "bcPressure": 307.4, // kPa | null : TC native per-car; BVE: broadcast from [0]
-      "amperage": 124, // A | null   : TC native per-car; BVE: broadcast from [0]
       "occupancyRate": null, // passenger percentage filled (may exceed 100%) | null : TC native; BVE: null
-      "loadMass": null // kg | null
+      "loadMass": null, // kg | null
+      "faults": [], // CarFault[] | null: empty = normal; null = not modeled (cars.faults capability)
+      "bogies": [ // index-aligned with SimulatorProfile.vehicle.cars[...].bogies; null = not modeled
+        { "position": "Left", "bcPressure": 307.4, "amperage": 62, "faults": [] },
+        // kPa | null: BC pressure of this bogie (sensor lives at bogie level)
+        // A | null: motor current of this bogie
+        { "position": "Right", "bcPressure": 307.4, "amperage": 62, "faults": [] }
+      ]
     },
     // ...
   ],
@@ -779,6 +807,35 @@ Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.
 `occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
 
 `loadMass` is the per-car live load when `SimulatorProfile.capabilities['physics.mass']` is `All`. Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value instead of the load mass.
+
+`faults` lists faults of body/roof/cab-mounted equipment on the car. Empty array = normal; non-empty = one or more active faults; `null` (or omission) when the sim does not model them (`cars.faults` capability absent/false). Multiple simultaneous faults MAY be reported; array order carries no meaning; duplicates MUST NOT be emitted. `faults` describes the CURRENT state only; failure history and repair workflows are out of scope. New members MAY be appended in minor versions; consumers MUST ignore unknown members. `Traction` exists at car level so simple sims can flag a traction-system fault without bogie modeling; sims with per-bogie resolution SHOULD use `bogies[].faults` with `BogieFault.Traction` instead.
+
+`CarFault` value space:
+
+| Value | Description |
+| :--- | :--- |
+| `Door` | Doors (ドア故障). |
+| `Pantograph` | Pantograph (パンタグラフ異常), including persistent dewirement (離線). |
+| `Traction` | Traction equipment, car-level (主回路関連の故障). |
+| `Brake` | Brake control equipment (ブレーキ装置異常): BCU, sticking. |
+| `Compressor` | Air compressor (空気圧縮機異常, CP). |
+| `AuxiliaryPower` | Auxiliary power supply (補助電源装置異常, SIV). |
+| `SafetyDevice` | Onboard safety device (保安装置異常): ATS/ATC equipment. |
+| `Monitor` | Monitor system (モニタ装置異常). |
+| `TrainRadio` | Train radio (無線異常). |
+| `AirConditioner` | Air conditioning (空調装置異常). Comfort-only. |
+| `Other` | Unclassified or sim-specific (その他). |
+
+`bogies` carries per-bogie runtime state. When non-null it MUST be index-aligned with `SimulatorProfile.vehicle.cars[...].bogies` (same length, same left-to-right order). `bcPressure` is the brake cylinder pressure of the bogie; `amperage` is the motor current of the bogie (reported at bogie level because motors are mounted on bogies and some designs, e.g. monomotor bogies on electric locomotives, mechanically link axles). Producers with only per-car resolution SHOULD emit the car value on every bogie of the car. A shared `Jacobs` bogie appears only in its owner's listing (the car on the bogie's left); its dynamic values exist once, so no cross-car consistency or dedupe rule is needed. `faults` on a bogie is scoped to bogie-mounted equipment (motors, axles, brakes, collector shoe). The `Brake` members at both levels split by physical location: car-level `CarFault.Brake` is brake CONTROL equipment (BCU, control-side), bogie-level `BogieFault.Brake` is the per-bogie mechanical brake (dragging, sticking, rigging). `BogieFault` has no body-equipment members (those are car-level). Axle-level runtime data is not part of 2.0; wheel-level states may be added in a future minor version.
+
+`BogieFault` value space:
+
+| Value | Description |
+| :--- | :--- |
+| `Traction` | Traction motors mounted on this bogie (主電動機). |
+| `Brake` | Brake equipment mounted on this bogie (台車ブレーキ): dragging/stuck brake, rigging fault. Control-side faults use `CarFault.Brake`. |
+| `CollectorShoe` | Collector shoe sheered/damaged (集電靴の破損・脱落); third-rail vehicles. |
+| `Other` | Unclassified or sim-specific (その他). |
 
 ### 5.12 `switches`
 
@@ -1041,6 +1098,8 @@ Recommended transports:
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.faults": true,
+    "cars.bogies": true,
     "input.command.SetNotch": true,
     "input.command.SetPowerNotch": true,
     "input.command.SetBrakeNotch": true,
@@ -1474,27 +1533,39 @@ Recommended transports:
     "list": [
       {
         "carNo": 1,
-        "bcPressure": 0,
-        "amperage": 702.1439208984375,
-        "occupancyRate": 100
+        "occupancyRate": 100,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] }
+        ]
       },
       {
         "carNo": 2,
-        "bcPressure": 0,
-        "amperage": 0,
-        "occupancyRate": 65.47618865966797
+        "occupancyRate": 65.47618865966797,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": null, "faults": [] }
+        ]
       },
       {
         "carNo": 3,
-        "bcPressure": 0,
-        "amperage": 0,
-        "occupancyRate": 77.38095092773438
+        "occupancyRate": 77.38095092773438,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": null, "faults": [] }
+        ]
       },
       {
         "carNo": 4,
-        "bcPressure": 0,
-        "amperage": 702.1439208984375,
-        "occupancyRate": 85.71428680419922
+        "occupancyRate": 85.71428680419922,
+        "faults": [],
+        "bogies": [
+          { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
+          { "position": "Right", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] }
+        ]
       }
     ]
   },
