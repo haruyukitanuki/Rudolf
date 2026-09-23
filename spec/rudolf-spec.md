@@ -151,7 +151,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 2,
@@ -164,7 +164,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 3,
@@ -177,7 +177,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 4,
@@ -190,12 +190,12 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       }
     ],
     "leadCar": 4,
     "totalLength": 80,
-    "totalEmptyMass": -1,
+    "totalUnladenMass": -1,
     "capabilities": {
       "masconType": "OneHandle",
       "masconBrakeType": "Notched",
@@ -263,7 +263,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 
 `leadCar` specifies which car is the front car in the scenario.
 
-`totalLength` and `totalEmptyMass` specifies total quantities, or -1 if unknown. Note that:
+`totalLength` and `totalUnladenMass` specifies total quantities, or -1 if unknown. Note that:
 
 - Total values are equal to the sum of per-car values ONLY when the respective `physics.length` or `physics.mass` capability is `All`.
 - Freight mass MAY be included here if it cannot be excluded from car mass, but MUST be excluded from the load mass if done so.
@@ -284,7 +284,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | `pantographType` | One of {`SingleArm`, `Scissor`}. | |
 | `pantographDirection` | One of {`Left`, `Right`, `Both`}. | Direction on HMI screen. |
 | `length` | `double` | Length in meters, or -1 if unknown. |
-| `emptyMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
+| `unladenMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
 | `bogies` | `BogieStatic[]` | Bogies under this car, left-to-right display order. Empty when composition is not provided. See below. |
 
 `bogies` entries:
@@ -551,7 +551,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
 - `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
-- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
+- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
 Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each field sits at the level of its physical equipment/sensor.
 
@@ -806,7 +806,7 @@ Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.
 
 `occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
 
-`loadMass` is the per-car live load when `SimulatorProfile.capabilities['physics.mass']` is `All`. Due to limitations of certain simulators like BVE, freight mass may be part of the empty mass value instead of the load mass.
+`loadMass` is the per-car live load when `SimulatorProfile.capabilities['physics.mass']` is `All`. Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value instead of the load mass.
 
 `faults` lists faults of body/roof/cab-mounted equipment on the car. Empty array = normal; non-empty = one or more active faults; `null` (or omission) when the sim does not model them (`cars.faults` capability absent/false). Multiple simultaneous faults MAY be reported; array order carries no meaning; duplicates MUST NOT be emitted. `faults` describes the CURRENT state only; failure history and repair workflows are out of scope. New members MAY be appended in minor versions; consumers MUST ignore unknown members. `Traction` exists at car level so simple sims can flag a traction-system fault without bogie modeling; sims with per-bogie resolution SHOULD use `bogies[].faults` with `BogieFault.Traction` instead.
 
@@ -1033,7 +1033,7 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 2,
@@ -1046,7 +1046,7 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 3,
@@ -1059,7 +1059,7 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 4,
@@ -1072,7 +1072,7 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       }
     ],
     "leadCar": 4,
