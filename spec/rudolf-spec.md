@@ -247,7 +247,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 - `masconBrakeType`: brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
 - `powerNotches`: number of power notches (e.g. P1..P5 = 5); `null` when unknown.
 - `brakeNotches`: number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
-- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`); `null` when unknown.
+- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`, NOT the sentinel); `null` when unknown.
 - `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
 - `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
@@ -275,14 +275,14 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | Key in `cars` | Value | Description |
 | :--- | :--- | :--- |
 | `carNo` | `int` | Specifies the generation order of `OutputDataFrame.cars.list[...].carNo` |
-| `model` | `string` | Similar format to `vehicle.model`. |
+| `model` | `string` | Per-car model code (e.g. `"KuHaE233"`, `"MoHa225-51xx"`) |
 | `hasDriverCab` | `bool` or `null` | |
 | `hasConductorCab` | `bool` or `null` | |
 | `hasMotor` | `bool` or `null` | |
 | `hasPantograph` | `bool` or `null` | |
-| `cabDirection` | One of {`Left`, `Right`}. | Direction on HMI screen. |
-| `pantographType` | One of {`SingleArm`, `Scissor`}. | |
-| `pantographDirection` | One of {`Left`, `Right`, `Both`}. | Direction on HMI screen. |
+| `cabDirection` | `Left`, `Right`, or `null` | Direction on HMI screen. |
+| `pantographType` | `SingleArm`, `Scissor`, or `null` | Style of pantograph. |
+| `pantographDirection` | `Left`, `Right`, `Both`, or `null` | Direction of pantograph on HMI screen. |
 | `length` | `double` | Length in meters, or -1 if unknown. |
 | `unladenMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
 | `bogies` | `BogieStatic[]` | Bogies under this car, left-to-right display order. Empty when composition is not provided. See below. |
@@ -562,8 +562,8 @@ Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each fi
   "powerNotch": 2, // TC Pnotch/BVE Handles.PowerNotch
   "brakeNotch": 0, // TC Bnotch/BVE Handles.BrakeNotch
   "reverser": 1, // int: -1=Reverse, 0=Neutral, 1=Forward
-  "ato": null, // { active: bool, notch?: number } | null
-  "tasc": null, // { active: bool, notch?: number, inching: bool } | null
+  "ato": null, // { active: bool, notch: int | null } | null
+  "tasc": null, // { active: bool, notch: int | null, inching: bool } | null
   "deadman": null, // 'Hand' | 'Foot' | 'EB' | null: which channel is currently engaged
 }
 ```
@@ -918,11 +918,11 @@ All commands are discriminated by `command.kind`. The set:
 
 | Kind            | Payload                                           | Semantics                                                                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
+| `SetNotch`      | `{ value: int, relative: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
 | `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                                                                                                                                                                      |
 | `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                                                                                                                                                                      |
 | `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                                                                                                                                                           |
-| `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Values outside this range MUST be rejected.                                                                                                                                                                  |
+| `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Command with a value outside this range MUST be rejected.                                                                                                                                                                  |
 | `SetButton`     | `{ action: string, state: bool }`                 | Generic button. `action` is a `VehicleAction` (§6.2) or `GameAction` (§6.3) name, or a custom action string. Custom/non-spec actions are unvalidated passthrough, gated by `capabilities['input.button.<action>']`.                                                           |
 | `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | Wiper position.                                                                                                                                                                                                                                                               |
 | `SetAtoNotch`   | `{ value: int }`                                  | ATO notch suggestion. Per TC semantics: when notch > 0, applied only if manual notch is N; when notch < 0, max(manual, ato) applied.                                                                                                                                          |
@@ -1033,7 +1033,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
+          { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
+        ]
       },
       {
         "carNo": 2,
@@ -1046,7 +1050,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
+          { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
+        ]
       },
       {
         "carNo": 3,
@@ -1059,7 +1067,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
+          { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
+        ]
       },
       {
         "carNo": 4,
@@ -1072,7 +1084,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
+          { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
+        ]
       }
     ],
     "leadCar": 4,
@@ -1128,7 +1144,7 @@ Recommended transports:
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:19:26.6283871+00:00",
   "time": {
-    "sim": "07:51:50",
+    "sim": "2026-07-02T07:51:50",
     "elapsed": 28310.468,
     "tick": 639186203666283802
   },
@@ -1149,7 +1165,7 @@ Recommended transports:
         "doorSide": -1,
         "stopType": "PassengerStop",
         "arrival": null,
-        "departure": "07:42:00",
+        "departure": "2026-07-02T07:42:00",
         "stopPositionName": "日野森駅1番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1166,8 +1182,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:44:15",
-        "departure": "07:48:30",
+        "arrival": "2026-07-02T07:44:15",
+        "departure": "2026-07-02T07:48:30",
         "stopPositionName": "高見沢駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1184,8 +1200,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "07:50:45",
-        "departure": "07:51:15",
+        "arrival": "2026-07-02T07:50:45",
+        "departure": "2026-07-02T07:51:15",
         "stopPositionName": "水越駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1202,8 +1218,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:52:55",
-        "departure": "07:53:25",
+        "arrival": "2026-07-02T07:52:55",
+        "departure": "2026-07-02T07:53:25",
         "stopPositionName": "藤江駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1220,8 +1236,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:56:50",
-        "departure": "08:02:00",
+        "arrival": "2026-07-02T07:56:50",
+        "departure": "2026-07-02T08:02:00",
         "stopPositionName": "大道寺駅4番下り_併B",
         "trackSectionName": null,
         "remarks": null,
@@ -1238,8 +1254,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "Passing",
-        "arrival": "08:02:45",
-        "departure": "08:02:45",
+        "arrival": null,
+        "departure": "2026-07-02T08:02:45",
         "stopPositionName": "江ノ原信号場下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1256,8 +1272,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:03:50",
-        "departure": "08:04:20",
+        "arrival": "2026-07-02T08:03:50",
+        "departure": "2026-07-02T08:04:20",
         "stopPositionName": "江ノ原駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1274,8 +1290,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:06:05",
-        "departure": "08:06:35",
+        "arrival": "2026-07-02T08:06:05",
+        "departure": "2026-07-02T08:06:35",
         "stopPositionName": "新野崎駅3番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1292,8 +1308,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:08:00",
-        "departure": "08:08:30",
+        "arrival": "2026-07-02T08:08:00",
+        "departure": "2026-07-02T08:08:30",
         "stopPositionName": "新井川駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1310,8 +1326,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:10:00",
-        "departure": "08:10:30",
+        "arrival": "2026-07-02T08:10:00",
+        "departure": "2026-07-02T08:10:30",
         "stopPositionName": "羽衣橋駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1328,8 +1344,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:11:55",
-        "departure": "08:12:25",
+        "arrival": "2026-07-02T08:11:55",
+        "departure": "2026-07-02T08:12:25",
         "stopPositionName": "浜園駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1346,8 +1362,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "08:14:20",
-        "departure": "08:19:00",
+        "arrival": "2026-07-02T08:14:20",
+        "departure": "2026-07-02T08:19:00",
         "stopPositionName": "津崎駅4番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1364,8 +1380,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:21:05",
-        "departure": "08:21:35",
+        "arrival": "2026-07-02T08:21:05",
+        "departure": "2026-07-02T08:21:35",
         "stopPositionName": "虹ケ浜駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1382,8 +1398,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:23:30",
-        "departure": "08:24:00",
+        "arrival": "2026-07-02T08:23:30",
+        "departure": "2026-07-02T08:24:00",
         "stopPositionName": "海岸公園駅下り",
         "trackSectionName": null,
         "isTimeTaken": null,
@@ -1397,8 +1413,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:25:35",
-        "departure": "08:26:05",
+        "arrival": "2026-07-02T08:25:35",
+        "departure": "2026-07-02T08:26:05",
         "stopPositionName": "河原崎駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1415,8 +1431,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:27:30",
-        "departure": "08:28:00",
+        "arrival": "2026-07-02T08:27:30",
+        "departure": "2026-07-02T08:28:00",
         "stopPositionName": "駒野駅3番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1433,7 +1449,7 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "08:30:55",
+        "arrival": "2026-07-02T08:30:55",
         "departure": null,
         "stopPositionName": "館浜駅3番下り",
         "trackSectionName": null,

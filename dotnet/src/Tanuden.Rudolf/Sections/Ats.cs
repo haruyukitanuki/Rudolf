@@ -32,7 +32,7 @@ public class Ats
 /// </summary>
 public class AtsRichState
 {
-  /// <summary>Stable enum-like codes (e.g. <c>"P_APPROACH"</c>, <c>"EB"</c>).</summary>
+  /// <summary>Raw free-form string from the sim (e.g. <c>"P_APPROACH"</c>, <c>"EB"</c>).</summary>
   public string Code = string.Empty;
 
   /// <summary>Human-readable display labels (e.g. <c>"P接近"</c>).</summary>

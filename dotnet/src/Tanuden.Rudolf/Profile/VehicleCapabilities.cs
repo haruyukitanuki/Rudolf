@@ -23,7 +23,7 @@ public class VehicleCapabilities
   public int? BrakeNotches;
 
   /// <summary>
-  ///   Signed notch value representing EB in the SetNotch encoding (e.g. <c>-8</c>); null when unknown.
+  ///   Signed notch value representing EB in the SetNotch encoding (e.g. <c>-8</c>, NOT the sentinel); null when unknown.
   /// </summary>
   public int? EbNotch;
 

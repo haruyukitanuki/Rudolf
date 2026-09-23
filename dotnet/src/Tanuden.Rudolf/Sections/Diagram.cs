@@ -21,6 +21,6 @@ public class Diagram
   /// <summary>Operation direct relative to the line.</summary>
   public LineDirection? Direction;
 
-  /// <summary>Usually derived from Diagram Number using a formula dependent on the operator.</summary>
+  /// <summary>Sim-native only; not derived.</summary>
   public string? RunNumber;
 }
