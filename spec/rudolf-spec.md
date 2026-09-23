@@ -40,7 +40,7 @@ Every document carries:
 
 #### Naming conventions
 
-camelCase on the wire. C# producers convert from PascalCase via `CamelCasePropertyNamesContractResolver`. TypeScript/JavaScript consumers read camelCase directly.
+camelCase on the wire. C# producers convert from PascalCase via `System.Text.Json` operations (refer to [this guide](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties)). TypeScript/JavaScript consumers read camelCase directly.
 
 #### String encoding
 
@@ -73,7 +73,7 @@ All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequen
 
 Producers SHOULD emit raw values that preserve all physical information from the sim. Data fidelity MUST be preserved; values MUST NOT be transformed, clamped, or otherwise modified in a way that loses detail. The sim's physical gauge limitations (e.g., a needle that only moves in one direction) are a display concern for the consumer, not a reason to distort the data layer.
 
-As an illustration, `physics.current` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Producers MUST NOT emit `Math.Abs(current)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
+As an illustration, `cars.list[].bogies[].amperage` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Producers MUST NOT emit `Math.Abs(amperage)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
 
 Similarly, producers MUST NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is strictly necessary for data-type safety.
 
@@ -316,7 +316,7 @@ This section provides information on how certain data fields are populated in th
 | `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.mass` | One of {`All`, `TotalOnly`, `None`}. | Mass detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
-| `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
+| `ats.richState` | `bool` | Availability of the `OutputDataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
@@ -532,7 +532,7 @@ const distanceToNext =
   next != null ? next.fromStartDistance - physics.fromStartDistance : null;
 ```
 
-Total route distance is only guaranteed to be available when `SimulatorProfile.capabilities['stations.next']` is `MultiStatic`, 
+Total route distance is only guaranteed to be available when `SimulatorProfile.capabilities['stations.next']` is `MultiStatic`.
 
 ### 5.4 `physics`
 
@@ -697,7 +697,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 }
 ```
 
-`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['speedLimits.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it must be treated as `None`. Note that `MultiStatic` cannot be used.
+`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['signals.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it must be treated as `None`. Note that `MultiStatic` cannot be used.
 
 **Default transponder category vocabulary:**
 
@@ -1092,6 +1092,8 @@ Recommended transports:
       }
     ],
     "leadCar": 4,
+    "totalLength": 80,
+    "totalUnladenMass": -1,
     "capabilities": {
       "masconType": "OneHandle",
       "masconBrakeType": "Notched",
@@ -1146,7 +1148,7 @@ Recommended transports:
   "time": {
     "sim": "2026-07-02T07:51:50",
     "elapsed": 28310.468,
-    "tick": 639186203666283802
+    "tick": 1650
   },
   "diagram": {
     "trainNumber": "777",
@@ -1402,6 +1404,7 @@ Recommended transports:
         "departure": "2026-07-02T08:24:00",
         "stopPositionName": "海岸公園駅下り",
         "trackSectionName": null,
+        "remarks": null,
         "isTimeTaken": null,
         "stopPositions": null,
         "interactions": null
@@ -1470,7 +1473,8 @@ Recommended transports:
     "absoluteDistance": 19408.52734375,
     "curveRadius": null,
     "gradient": -1.9993319511413574,
-    "mrPressure": 695.1132202148438
+    "mrPressure": 695.1132202148438,
+    "totalLoadMass": -1
   },
   "controllers": {
     "powerNotch": 5,
@@ -1550,6 +1554,7 @@ Recommended transports:
       {
         "carNo": 1,
         "occupancyRate": 100,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
@@ -1559,6 +1564,7 @@ Recommended transports:
       {
         "carNo": 2,
         "occupancyRate": 65.47618865966797,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1568,6 +1574,7 @@ Recommended transports:
       {
         "carNo": 3,
         "occupancyRate": 77.38095092773438,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1577,6 +1584,7 @@ Recommended transports:
       {
         "carNo": 4,
         "occupancyRate": 85.71428680419922,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
