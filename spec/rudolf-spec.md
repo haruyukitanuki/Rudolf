@@ -77,6 +77,8 @@ As an illustration, `cars.list[].bogies[].amperage` may represent regenerative o
 
 Similarly, producers MUST NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is strictly necessary for data-type safety.
 
+There is only one exception. Non-finite numbers (e.g., `NaN`, `+Infinity`) MUST be converted to `0`. This is because those numbers are not supported in the JSON specification.
+
 #### Nullables
 
 A field set to `null` means that "the sim really doesn't have this value right now."
@@ -261,7 +263,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 
 #### 4.2.2 Train Static Information
 
-`leadCar` specifies which car is the front car in the scenario.
+`leadCar` specifies which car is the front car in the scenario. This is not necessarily the car with the smallest number, nor the leftmost car on the display.
 
 `totalLength` and `totalUnladenMass` specifies total quantities, or -1 if unknown. Note that:
 
@@ -270,7 +272,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 
 #### 4.2.3 Per-car Static Information
 
-`cars` specifies per-car details:
+`cars` specifies per-car details. Each entry corresponds to a single car. The cars are arranged from left to right in display order.
 
 | Key in `cars` | Value | Description |
 | :--- | :--- | :--- |
@@ -284,7 +286,7 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | `pantographType` | `SingleArm`, `Scissor`, or `null` | Style of pantograph. |
 | `pantographDirection` | `Left`, `Right`, `Both`, or `null` | Direction of pantograph on HMI screen. |
 | `length` | `double` | Length in meters, or -1 if unknown. |
-| `unladenMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
+| `unladenMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here if it cannot be excluded from car mass, but MUST be excluded from the load mass if done so. |
 | `bogies` | `BogieStatic[]` | Bogies under this car, left-to-right display order. Empty when composition is not provided. See below. |
 
 `bogies` entries:
@@ -463,7 +465,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 {
   "list": [
     {
-      "index": 0,
+      "index": 0, // position of the station in the list
       "name": "中京",
       "fromStartDistance": 0, // meters from scenario start; always present
       "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程);
@@ -482,8 +484,8 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
     },
     // ... per station
   ],
-  "currentIndex": null, // number | null: station the train is currently at
-  "nextIndex": 5, // number | null: next station ahead
+  "currentIndex": null, // number | null: index of the station the train is currently stopped at
+  "nextIndex": 5, // number | null: index of the next station ahead
 }
 ```
 
@@ -491,7 +493,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `doorSide` uses the `SideOpened` int convention shared with the per-car doors in §5.6 and is never `null`: producers that cannot determine the side MUST emit `3` (open, side unknown). Producers MAY derive this heuristically, even if limited to `0` (closed) and `3`.
 
-`arrival` and `departure` times may be written in ISO 8601 datetime or simply HH:MM:SS. Note that times past 24:00:00 are NOT allowed. When the date is not provided, implementation of time-of-day rollover detection is up to the consumer.
+`arrival` and `departure` times must be written in ISO 8601 local datetime. Note that times past 24:00:00 are NOT allowed.
 
 `stopPositionName` and `trackSectionName` should be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
 
@@ -550,7 +552,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
-- `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
+- `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable. The producer is free to decide whether extremely large radius corners should be treated as straights.
 - `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
 Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each field sits at the level of its physical equipment/sensor.
@@ -782,6 +784,8 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 
 Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabDirection, pantographType, pantographDirection, length) lives in `SimulatorProfile.vehicle.cars`: NOT duplicated per-frame.
 
+Each entry in the list corresponds to one car. The cars are ordered left to right according to how they are displayed.
+
 ```jsonc
 {
   "list": [
@@ -918,7 +922,7 @@ All commands are discriminated by `command.kind`. The set:
 
 | Kind            | Payload                                           | Semantics                                                                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int, relative: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
+| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
 | `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                                                                                                                                                                      |
 | `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                                                                                                                                                                      |
 | `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                                                                                                                                                           |
@@ -929,6 +933,8 @@ All commands are discriminated by `command.kind`. The set:
 | `SetDeadman`    | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | Deadman switch state per channel.                                                                                                                                                                                                                                             |
 
 Producers MUST set fields described as such; OPTIONAL fields use a `default behavior` documented per-command.
+
+Producers MUST throw an exception (or closest equivalent for the programming language used) when receiving an unknown command.
 
 > **`SetNotch` Emergency sentinel.** The reserved constant `EB = -100` (any `value <= -100`) requests Emergency regardless of `relative`. Prefer the constant over a bare literal; it is train-agnostic and supersedes the old hardcoded `-8`.
 >

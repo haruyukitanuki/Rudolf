@@ -21,6 +21,6 @@ public enum NextItemArrayType
   /// <summary>
   ///   All items from the start to the end of the scenario are exposed.
   ///   Only applicable to <see cref="Stations.List"/>.
-  /// </summary>.
+  /// </summary>
   MultiStatic
 }

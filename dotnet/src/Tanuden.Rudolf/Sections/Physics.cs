@@ -12,7 +12,10 @@ public class Physics
   /// <summary>Absolute kilometer-post; null when sim doesn't expose chainage.</summary>
   public double? AbsoluteDistance;
 
-  /// <summary>Meters; null when the sim doesn't expose radius.</summary>
+  /// <summary>
+  /// Meters; negative for left turns, positive for right turns, 0 for straights;
+  /// null when the sim doesn't expose radius.
+  /// </summary>
   public double? CurveRadius;
 
   /// <summary>Per mille; null when the sim doesn't expose gradient.</summary>
