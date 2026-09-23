@@ -151,7 +151,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 2,
@@ -164,7 +164,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 3,
@@ -177,7 +177,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 4,
@@ -190,10 +190,12 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       }
     ],
     "leadCar": 4,
+    "totalLength": 80,
+    "totalUnladenMass": -1,
     "capabilities": {
       "masconType": "OneHandle",
       "masconBrakeType": "Notched",
@@ -261,7 +263,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 `leadCar` はシナリオで先頭車となる車両を指定します。
 
-`totalLength` と `totalEmptyMass` は合計値を指定し、不明な場合は -1 とします。注意点：
+`totalLength` と `totalUnladenMass` は合計値を指定し、不明な場合は -1 とします。注意点：
 
 - 合計値が車両ごとの値の合計と等しくなるのは、対応する `physics.length` または `physics.mass` 機能が `All` の場合のみです。
 - 貨物質量を車両質量から除外できない場合、ここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。
@@ -282,7 +284,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `pantographType` | {`SingleArm`, `Scissor`} のいずれか。 | |
 | `pantographDirection` | {`Left`, `Right`, `Both`} のいずれか。 | HMI 画面上の方向。 |
 | `length` | `double` | 長さ（メートル）。不明な場合は -1。 |
-| `emptyMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量をここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
+| `unladenMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量をここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
 | `bogies` | `BogieStatic[]` | この車両の台車。画面左から右の表示順。構成が不明な場合は空配列。詳細は下記。 |
 
 `bogies` の各要素：
@@ -1031,7 +1033,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 2,
@@ -1044,7 +1046,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 3,
@@ -1057,7 +1059,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       },
       {
         "carNo": 4,
@@ -1070,7 +1072,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "emptyMass": -1
+        "unladenMass": -1
       }
     ],
     "leadCar": 4,
