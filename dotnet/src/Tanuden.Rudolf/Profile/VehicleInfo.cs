@@ -43,10 +43,10 @@ public class VehicleInfo
   public double TotalLength = -1;
 
   /// <summary>
-  ///   Total mass of the train without passengers in kg, -1 if unknown.
+  ///   Total unladen mass of the train in kg, -1 if unknown.
   ///   Freight may be included here only if it cannot be separated from car mass.
   /// </summary>
-  public double TotalEmptyMass = -1;
+  public double TotalUnladenMass = -1;
 
   /// <summary>
   ///   Static control-hardware description (mascon layout, notch counts, holding brake, compressor
@@ -109,10 +109,10 @@ public class CarStaticInfo
   public double Length = -1;
 
   /// <summary>
-  /// Car mass without passengers in kg, -1 if unknown.
+  /// Car unladen mass in kg, -1 if unknown.
   /// Freight may be included here only if it cannot be separated from car mass.
   /// </summary>
-  public double EmptyMass = -1;
+  public double UnladenMass = -1;
 
   /// <summary>
   ///   Bogies under this car, left-to-right display order. Empty when the sim does not provide
