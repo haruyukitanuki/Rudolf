@@ -38,9 +38,13 @@ Every document carries:
 
 ### 3.1 Envelope conventions
 
-#### Naming conventions
+#### Style conventions
 
-camelCase on the wire. C# producers convert from PascalCase via `System.Text.Json` operations (refer to [this guide](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties)). TypeScript/JavaScript consumers read camelCase directly.
+**Naming:** camelCase on the wire for property names and dictionary keys. C# producers convert from PascalCase via `System.Text.Json` operations (refer to [this guide](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties)). TypeScript/JavaScript consumers read camelCase directly.
+
+**Structure:** Choose appropriate JSON ignore and inclusion conditions such that items unsupported in this spec are not accidentally passed on the wire.
+
+**Whitespace:** Amount of whitespace (e.g., for indenting) is not specified.
 
 #### String encoding
 
@@ -64,7 +68,7 @@ All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequen
   - Only the years 0000 through 9999 (inclusive) are allowed.
 - Header `sentAt`
   - Must *include* the time zone designator. This allows synchronization of documents emitted in different time zones.
-- `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`:
+- Scenario times (e.g., `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`):
   - Must *exclude* the time zone designator, thereby representing local time in the simulator.
   - The capability `time.dateKnown` tells the consumer if a reasonable date for the scenario can be guaranteed.
   - The date must increment past midnight in simulator time.
@@ -77,7 +81,7 @@ As an illustration, `cars.list[].bogies[].amperage` may represent regenerative o
 
 Similarly, producers MUST NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is strictly necessary for data-type safety.
 
-There is only one exception. Non-finite numbers (e.g., `NaN`, `+Infinity`) MUST be converted to `0`. This is because those numbers are not supported in the JSON specification.
+There is only one exception. Non-finite numbers (e.g., `NaN`, `+Infinity`) MUST be converted to `0`. This is because such values are not supported in the JSON specification.
 
 #### Nullables
 
@@ -88,7 +92,6 @@ A field that's absent from the JSON MEANS "the sim doesn't support this field at
 #### Versioning
 
 All documents carry a single `schemaVersion` at the envelope level. A breaking change to any section bumps `schemaVersion`. Consumers MUST tolerate unknown fields added in future minor versions (read what they know, ignore what they don't).
-
 
 ### 3.2 Document structure
 
@@ -241,17 +244,15 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 }
 ```
 
-#### 4.1 Vehicle Control Capabilities (`vehicle.capabilities`)
+### 4.1 Scenario Information
 
-Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
-
-- `masconType`: master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
-- `masconBrakeType`: brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
-- `powerNotches`: number of power notches (e.g. P1..P5 = 5); `null` when unknown.
-- `brakeNotches`: number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
-- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`, NOT the sentinel); `null` when unknown.
-- `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
-- `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
+- `title`: Scenario title.
+- `route`: Route identity (e.g. file path stem or route-pack name).
+- `author`: Scenario author if the simulator exposes it, null otherwise.
+- `scenarioStartTime`: Scenario start time as ISO local datetime.
+- `diagramNumber`: Train/diagram number when known at scenario load. Mirrors `OutputDataFrame.diagram.trainNumber`. Typically a short alphanumeric code. sometimes with kanji or kana.
+- `boundFor`: Destination when known at scenario load. Mirrors `OutputDataFrame.diagram.boundFor`. Not necessarily the final stop in the scenario.
+- `serviceType`: Service type when known at scenario load. Mirrors `OutputDataFrame.diagram.serviceType`.
 
 ### 4.2 Vehicle Information
 
@@ -303,6 +304,18 @@ Static control-hardware description for the vehicle, distinct from the top-level
 | `isPowered` | `bool` | True when this axle is powered (driven by a traction motor). Per-axle granularity covers the 0.5M and 0.75M configurations where only some axles of a bogie are powered. Motors are mounted on bogies; the powered/unpowered distinction belongs to the axle. |
 
 A `Jacobs` bogie is shared between adjacent cars. It MUST be listed ONLY in the `bogies` of its owner: the car on the bogie's LEFT. The right-hand adjacent car MUST NOT list it. Consumers aggregating axle counts across cars therefore read each `Jacobs` entry exactly once; no deduplication is required.
+
+#### 4.2.4 Vehicle Control Capabilities (`vehicle.capabilities`)
+
+Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
+
+- `masconType`: master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
+- `masconBrakeType`: brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
+- `powerNotches`: number of power notches (e.g. P1..P5 = 5); `null` when unknown.
+- `brakeNotches`: number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
+- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`, NOT the sentinel); `null` when unknown.
+- `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
+- `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
 ### 4.3 `capabilities`
 

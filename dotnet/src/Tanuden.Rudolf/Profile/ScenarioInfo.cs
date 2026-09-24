@@ -13,7 +13,7 @@ public class ScenarioInfo
   public string? Author;
 
   /// <summary>Scenario start time as ISO local datetime.</summary>
-  public string ScenarioStartTime = string.Empty;
+  public string ScenarioStartTime = "0000-01-01T00:00:00";
 
   /// <summary>
   ///   Train/diagram number when known at scenario load. Mirrors

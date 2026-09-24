@@ -22,6 +22,7 @@ public class CommandJsonConverter : JsonConverter<Command>
     var kind = kindElem.GetString();
     var raw = root.GetRawText();
 
+    /*
     return kind switch
     {
       "SetNotch" => Deserialize<SetNotchCommand>(raw, options),
@@ -35,6 +36,70 @@ public class CommandJsonConverter : JsonConverter<Command>
       "SetDeadman" => Deserialize<SetDeadmanCommand>(raw, options),
       _ => throw new JsonException($"Unknown command kind: {kind}")
     };
+    */
+
+    if (kind == "SetNotch")
+    {
+      return Deserialize<SetNotchCommand>(raw, options);
+    }
+    else if (kind == "SetPowerNotch")
+    {
+      var command = Deserialize<SetPowerNotchCommand>(raw, options);
+      if (command.Value < 0)
+      {
+        throw new ArgumentOutOfRangeException($"SetPowerNotchCommand: Value cannot be negative. Value is {command.Value}");
+      }
+      return command;
+    }
+    else if (kind == "SetBrakeNotch")
+    {
+      var command = Deserialize<SetBrakeNotchCommand>(raw, options);
+      if (command.Value < 0)
+      {
+        throw new ArgumentOutOfRangeException($"SetBrakeNotchCommand: Value cannot be negative. Value is {command.Value}");
+      }
+      return command;
+    }
+    else if (kind == "SetBrakeSAP")
+    {
+      var command = Deserialize<SetBrakeSAPCommand>(raw, options);
+      if (command.KPa < 0)
+      {
+        throw new ArgumentOutOfRangeException($"SetBrakeSAPCommand: KPa cannot be negative. KPa is {command.KPa}");
+      }
+      return command;
+    }
+    else if (kind == "SetReverser")
+    {
+      var command = Deserialize<SetReverserCommand>(raw, options);
+
+      // Need to add a specific value check as it is passed as an int in JSON
+      if (!Enum.IsDefined(typeof(Enums.Reverser), command.Value))
+      {
+        throw new ArgumentOutOfRangeException($"SetReverserCommand: Unsupported reverser position {command.Value}");
+      }
+      return command;
+    }
+    if (kind == "SetButton")
+    {
+      return Deserialize<SetButtonCommand>(raw, options);
+    }
+    else if (kind == "SetWiper")
+    {
+      return Deserialize<SetWiperCommand>(raw, options);
+    }
+    else if (kind == "SetAtoNotch")
+    {
+      return Deserialize<SetAtoNotchCommand>(raw, options);
+    }
+    else if (kind == "SetDeadman")
+    {
+      return Deserialize<SetDeadmanCommand>(raw, options);
+    }
+    else
+    {
+      throw new JsonException($"Unknown command kind: {kind}");
+    }
   }
 
   /// <inheritdoc />
