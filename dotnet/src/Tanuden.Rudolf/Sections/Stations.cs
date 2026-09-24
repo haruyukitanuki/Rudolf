@@ -45,10 +45,10 @@ public class Station
   /// <summary>Whether this is a passenger stop, operation-only stop, or pass.</summary>
   public StopType? StopType;
 
-  /// <summary>ISO local datetime; null for passing-only stops.</summary>
+  /// <summary>ISO local datetime; null for the first station and when passing.</summary>
   public string? Arrival;
 
-  /// <summary>ISO local datetime.</summary>
+  /// <summary>ISO local datetime; null for the last station.</summary>
   public string? Departure;
 
   /// <summary>Platform/track name (着発線); null when not specified.</summary>

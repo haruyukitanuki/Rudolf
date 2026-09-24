@@ -22,14 +22,22 @@ public class SetNotchCommand : Command
 /// <summary>Set the power notch (two-handle vehicles).</summary>
 public class SetPowerNotchCommand : Command
 {
-  /// <summary>0 = neutral; positive integers are P1, P2, ... up to the vehicle's max.</summary>
+  /// <summary>
+  /// 0 = neutral.
+  /// Positive integers are P1, P2, ... up to the vehicle's max.
+  /// Negative integers may have sim-specific uses (e.g., TRAIN CREW 抑速).
+  /// </summary>
   public int Value;
 }
 
 /// <summary>Set the brake notch (two-handle vehicles).</summary>
 public class SetBrakeNotchCommand : Command
 {
-  /// <summary>0 = release; positive integers are B1, B2, ... up to EB.</summary>
+  /// <summary>
+  /// 0 = release.
+  /// Positive integers are B1, B2, ... up to EB.
+  /// Negative integers may have sim-specific uses.
+  /// </summary>
   public int Value;
 }
 

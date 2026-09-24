@@ -81,7 +81,7 @@ As an illustration, `cars.list[].bogies[].amperage` may represent regenerative o
 
 Similarly, producers MUST NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is strictly necessary for data-type safety.
 
-There is only one exception. Non-finite numbers (e.g., `NaN`, `+Infinity`) MUST be converted to `0`. This is because such values are not supported in the JSON specification.
+Wire stability exception: Non-finite numbers (e.g., `NaN`, `+Infinity`) MUST be converted to `0`. This is because such values are not supported in the JSON specification.
 
 #### Nullables
 
@@ -244,25 +244,32 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 }
 ```
 
-### 4.1 Scenario Information
+### 4.1 `sim`
+
+- `name`: Simulator name.
+- `version`: Simulator version, empty if unknown.
+- `adapterName`: Adapter name.
+- `adapterVersion`: Adapter version.
+
+### 4.2 `scenario`
 
 - `title`: Scenario title.
 - `route`: Route identity (e.g. file path stem or route-pack name).
 - `author`: Scenario author if the simulator exposes it, null otherwise.
 - `scenarioStartTime`: Scenario start time as ISO local datetime.
-- `diagramNumber`: Train/diagram number when known at scenario load. Mirrors `OutputDataFrame.diagram.trainNumber`. Typically a short alphanumeric code. sometimes with kanji or kana.
+- `diagramNumber`: Train/diagram number when known at scenario load. Mirrors `OutputDataFrame.diagram.trainNumber`. Typically a short alphanumeric code, sometimes with kanji or kana (e.g. `"1234A"`, `"回567"`).
 - `boundFor`: Destination when known at scenario load. Mirrors `OutputDataFrame.diagram.boundFor`. Not necessarily the final stop in the scenario.
 - `serviceType`: Service type when known at scenario load. Mirrors `OutputDataFrame.diagram.serviceType`.
 
-### 4.2 Vehicle Information
+### 4.3 `vehicle`
 
-#### 4.2.1 Naming
+#### 4.3.1 Naming
 
 - `name`: human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
 - `model`: vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it SHOULD be in `series-subseries` format; producers SHOULD romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
 - `operator`: operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). To maximize compatibility, producers SHOULD refer to Japanese Wikipedia for the full official operator name (not group) and TitleCase it.
 
-#### 4.2.2 Train Static Information
+#### 4.3.2 Train Static Information
 
 `leadCar` specifies which car is the front car in the scenario. This is not necessarily the car with the smallest number, nor the leftmost car on the display.
 
@@ -271,7 +278,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 - Total values are equal to the sum of per-car values ONLY when the respective `physics.length` or `physics.mass` capability is `All`.
 - Freight mass MAY be included here if it cannot be excluded from car mass, but MUST be excluded from the load mass if done so.
 
-#### 4.2.3 Per-car Static Information
+#### 4.3.3 Per-car Static Information
 
 `cars` specifies per-car details. Each entry corresponds to a single car. The cars are arranged from left to right in display order.
 
@@ -305,7 +312,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 
 A `Jacobs` bogie is shared between adjacent cars. It MUST be listed ONLY in the `bogies` of its owner: the car on the bogie's LEFT. The right-hand adjacent car MUST NOT list it. Consumers aggregating axle counts across cars therefore read each `Jacobs` entry exactly once; no deduplication is required.
 
-#### 4.2.4 Vehicle Control Capabilities (`vehicle.capabilities`)
+#### 4.3.4 Vehicle Control Capabilities (`vehicle.capabilities`)
 
 Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
 
@@ -317,11 +324,11 @@ Static control-hardware description for the vehicle, distinct from the top-level
 - `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
 - `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
 
-### 4.3 `capabilities`
+### 4.4 `capabilities`
 
 This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are OPTIONAL; an undefined key MUST be treated as unsupported.
 
-#### 4.3.1 OutputDataFrame Capabilities
+#### 4.4.1 OutputDataFrame Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
@@ -347,14 +354,14 @@ This section provides information on how certain data fields are populated in th
 | `MultiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
 | `MultiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
 
-#### 4.3.2 InputCommand Capabilities
+#### 4.4.2 InputCommand Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
 | `input.command.*` | `bool` | `*` is a command type specified in §6.1. |
 | `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
 
-### 4.4 `vocabularies`
+### 4.5 `vocabularies`
 
 Sim-specific overrides as a list of key-value pairs. Each section is nullable: `null` means no overrides apply and consumers fall back to the defaults published in this spec.
 
@@ -791,7 +798,7 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 - `'Restriction'`: a temporary or operational restriction (curve restriction, weather-related slow order, work zone, station-approach restriction, special-event slow)
 - `null`: type unknown or unclassified (sim has the limit value but not its origin)
 
-**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.3.1): `Single` = only the immediate next change; `MultiDynamic` = the full forward sequence; `None` or absent = unsupported. `MultiStatic` is not supported.
+**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.4.1): `Single` = only the immediate next change; `MultiDynamic` = the full forward sequence; `None` or absent = unsupported. `MultiStatic` is not supported.
 
 ### 5.11 `cars`
 
@@ -935,10 +942,10 @@ All commands are discriminated by `command.kind`. The set:
 
 | Kind            | Payload                                           | Semantics                                                                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
-| `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                                                                                                                                                                      |
-| `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                                                                                                                                                                      |
-| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                                                                                                                                                           |
+| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch for one-handle vehicles. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. Run native sim-specific function for one-handle vehicles if available, otherwise set power and brake separately, using only positive or zero positions. |
+| `SetPowerNotch` | `{ value: int }`                                  | Power handle position (int) for two-handle vehicles: positive = power notches, 0 = cut power, negative = sim-specific (e.g., TRAIN CREW 抑速).                                                                                                                                                                                                                                                       |
+| `SetBrakeNotch` | `{ value: int }`                                  | Brake handle position (int) for two-handle vehicles: positive = brake notches, 0 = release brakes, negative = sim-specific.                                                                                                                                                                                                                                                        |
+| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency. All other values must be rejected.                                                                                                                                                                                           |
 | `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Command with a value outside this range MUST be rejected.                                                                                                                                                                  |
 | `SetButton`     | `{ action: string, state: bool }`                 | Generic button. `action` is a `VehicleAction` (§6.2) or `GameAction` (§6.3) name, or a custom action string. Custom/non-spec actions are unvalidated passthrough, gated by `capabilities['input.button.<action>']`.                                                           |
 | `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | Wiper position.                                                                                                                                                                                                                                                               |
@@ -1525,7 +1532,7 @@ Recommended transports:
     ]
   },
   "lamps": {
-    "values": [1, 1, 0, 0, /* ... total 512 */]
+    "values": [1, 1, 0, 0] /* total 512 items, array shortened here */
   },
   "ats": {
     "class": "普通",

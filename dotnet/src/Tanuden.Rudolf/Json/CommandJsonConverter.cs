@@ -22,71 +22,48 @@ public class CommandJsonConverter : JsonConverter<Command>
     var kind = kindElem.GetString();
     var raw = root.GetRawText();
 
-    /*
-    return kind switch
-    {
-      "SetNotch" => Deserialize<SetNotchCommand>(raw, options),
-      "SetPowerNotch" => Deserialize<SetPowerNotchCommand>(raw, options),
-      "SetBrakeNotch" => Deserialize<SetBrakeNotchCommand>(raw, options),
-      "SetBrakeSAP" => Deserialize<SetBrakeSAPCommand>(raw, options),
-      "SetReverser" => Deserialize<SetReverserCommand>(raw, options),
-      "SetButton" => Deserialize<SetButtonCommand>(raw, options),
-      "SetWiper" => Deserialize<SetWiperCommand>(raw, options),
-      "SetAtoNotch" => Deserialize<SetAtoNotchCommand>(raw, options),
-      "SetDeadman" => Deserialize<SetDeadmanCommand>(raw, options),
-      _ => throw new JsonException($"Unknown command kind: {kind}")
-    };
-    */
-
     if (kind == "SetNotch")
     {
       return Deserialize<SetNotchCommand>(raw, options);
     }
     else if (kind == "SetPowerNotch")
     {
-      var command = Deserialize<SetPowerNotchCommand>(raw, options);
-      if (command.Value < 0)
-      {
-        throw new ArgumentOutOfRangeException($"SetPowerNotchCommand: Value cannot be negative. Value is {command.Value}");
-      }
-      return command;
+      return Deserialize<SetPowerNotchCommand>(raw, options);
     }
     else if (kind == "SetBrakeNotch")
     {
-      var command = Deserialize<SetBrakeNotchCommand>(raw, options);
-      if (command.Value < 0)
-      {
-        throw new ArgumentOutOfRangeException($"SetBrakeNotchCommand: Value cannot be negative. Value is {command.Value}");
-      }
-      return command;
+      return Deserialize<SetBrakeNotchCommand>(raw, options);
     }
     else if (kind == "SetBrakeSAP")
     {
       var command = Deserialize<SetBrakeSAPCommand>(raw, options);
-      if (command.KPa < 0)
-      {
-        throw new ArgumentOutOfRangeException($"SetBrakeSAPCommand: KPa cannot be negative. KPa is {command.KPa}");
-      }
+
+      if (command.KPa < 0 || (command.KPa > 400 && command.KPa < 410) || command.KPa > 410)
+        throw new ArgumentOutOfRangeException("KPa", command.KPa, "KPa must be in the range 0..400 or 410.");
+      
       return command;
     }
     else if (kind == "SetReverser")
     {
       var command = Deserialize<SetReverserCommand>(raw, options);
 
-      // Need to add a specific value check as it is passed as an int in JSON
       if (!Enum.IsDefined(typeof(Enums.Reverser), command.Value))
-      {
-        throw new ArgumentOutOfRangeException($"SetReverserCommand: Unsupported reverser position {command.Value}");
-      }
+        throw new ArgumentException($"Unsupported reverser position {command.Value}");
+      
       return command;
     }
-    if (kind == "SetButton")
+    else if (kind == "SetButton")
     {
       return Deserialize<SetButtonCommand>(raw, options);
     }
     else if (kind == "SetWiper")
     {
-      return Deserialize<SetWiperCommand>(raw, options);
+      var command = Deserialize<SetWiperCommand>(raw, options);
+
+      if (!Enum.IsDefined(typeof(Enums.Wiper), command.State))
+        throw new ArgumentException($"Unsupported wiper state {command.State}");
+      
+      return command;
     }
     else if (kind == "SetAtoNotch")
     {
@@ -94,7 +71,12 @@ public class CommandJsonConverter : JsonConverter<Command>
     }
     else if (kind == "SetDeadman")
     {
-      return Deserialize<SetDeadmanCommand>(raw, options);
+      var command = Deserialize<SetDeadmanCommand>(raw, options);
+
+      if (!Enum.IsDefined(typeof(Enums.EBDeadmanMethod), command.Method))
+        throw new ArgumentException($"Unsupported deadman method {command.Method}");
+      
+      return command;
     }
     else
     {
