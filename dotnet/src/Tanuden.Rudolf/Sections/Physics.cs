@@ -24,6 +24,6 @@ public class Physics
   /// <summary>MR Pressure in kPa; train-level; always present.</summary>
   public double MrPressure;
 
-  /// <summary>Total load in kg.</summary>
+  /// <summary>Total load in kg. Only available if <c>physics.mass</c> capability is <c>All</c> or <c>TotalOnly</c>.</summary>
   public double? TotalLoadMass;
 }

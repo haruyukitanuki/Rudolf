@@ -16,7 +16,7 @@ public class SetNotchCommand : Command
   public int Value;
 
   /// <summary>When true, <see cref="Value" /> is a signed step delta instead of an absolute notch; default false.</summary>
-  public bool Relative;
+  public bool? Relative;
 }
 
 /// <summary>Set the power notch (two-handle vehicles).</summary>
