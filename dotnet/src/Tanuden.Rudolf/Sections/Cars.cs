@@ -39,7 +39,7 @@ public class Car
   /// <summary>Percentage filled (May exceed 100%).</summary>
   public double? OccupancyRate;
 
-  /// <summary>Load in kg.</summary>
+  /// <summary>Load in kg. Only available if <c>physics.mass</c> capability is <c>All</c>.</summary>
   public double? LoadMass;
 
   /// <summary>Body/roof/cab-scoped faults. Empty = normal; null = not modeled.</summary>

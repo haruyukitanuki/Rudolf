@@ -34,7 +34,7 @@ public class AtoState
   public int? Notch;
 }
 
-/// <summary>Train Automatic Stop Controller state.</summary>
+/// <summary>Train Automatic Stop Control state.</summary>
 public class TascState
 {
   /// <summary>True when TASC is engaged.</summary>

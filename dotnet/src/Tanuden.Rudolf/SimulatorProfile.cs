@@ -19,7 +19,7 @@ public class SimulatorProfile
   /// <summary>Opaque identifier tying all documents of one play-session together.</summary>
   public string ScenarioId = string.Empty;
 
-  /// <summary>ISO 8601 timestamp at the producer.</summary>
+  /// <summary>ISO 8601 timestamp, including time zone designator, at the producer.</summary>
   public string SentAt = string.Empty;
 
   /// <summary>Incremented when profile data is changed within a drive.</summary>

@@ -85,21 +85,21 @@ public class CarStaticInfo
   public string Model = string.Empty;
 
   /// <summary>True when this car has a driver's cab.</summary>
-  public bool HasDriverCab;
+  public bool? HasDriverCab;
 
   /// <summary>True when this car has a conductor's cab.</summary>
-  public bool HasConductorCab;
+  public bool? HasConductorCab;
 
   /// <summary>True when this car is motorized (M/MM').</summary>
-  public bool HasMotor;
+  public bool? HasMotor;
 
   /// <summary>True when this car carries one or more pantographs.</summary>
-  public bool HasPantograph;
+  public bool? HasPantograph;
 
   /// <summary>Which way this car's driver cab faces; null when the car has no driver cab.</summary>
   public Direction? CabDirection;
 
-  /// <summary>Style of pantograph; null when <see cref="HasPantograph" /> is false.</summary>
+  /// <summary>Style of pantograph; null when <see cref="HasPantograph" /> is false or unknown.</summary>
   public PantographType? PantographType;
 
   /// <summary>Which end(s) the pantograph(s) lean toward; null when <see cref="HasPantograph" /> is false or unknown.</summary>

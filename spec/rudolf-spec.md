@@ -32,15 +32,19 @@ Every document carries:
 - `schemaVersion: string`: Rudolf spec version. Current version: `"1.0"`.
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`: discriminator.
 - `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it. This value can be in any format so long as it is unique to the current scenario session loaded in the game.
-- `sentAt: string`: ISO 8601 timestamp at producer. Time zone designator must be defined.
+- `sentAt: string`: ISO 8601 timestamp at producer. Time zone designator MUST be defined.
 
 ## 3. Architecture
 
 ### 3.1 Envelope conventions
 
-#### Naming conventions
+#### Style conventions
 
-camelCase on the wire. C# producers convert from PascalCase via `CamelCasePropertyNamesContractResolver`. TypeScript/JavaScript consumers read camelCase directly.
+**Naming:** camelCase on the wire for property names and dictionary keys. C# producers convert from PascalCase via `System.Text.Json` operations (refer to [this guide](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties)). TypeScript/JavaScript consumers read camelCase directly.
+
+**Structure:** Choose appropriate JSON ignore and inclusion conditions such that items unsupported in this spec are not accidentally passed on the wire.
+
+**Whitespace:** Amount of whitespace (e.g., for indenting) is not specified.
 
 #### String encoding
 
@@ -63,19 +67,21 @@ All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequen
 - General format specifications
   - Only the years 0000 through 9999 (inclusive) are allowed.
 - Header `sentAt`
-  - Must *include* the time zone designator. This allows synchronization of documents emitted in different time zones.
-- `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`:
-  - Must *exclude* the time zone designator, thereby representing local time in the simulator.
+  - MUST *include* the time zone designator. This allows synchronization of documents emitted in different time zones.
+- Scenario times (e.g., `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`):
+  - MUST *exclude* the time zone designator, thereby representing local time in the simulator.
   - The capability `time.dateKnown` tells the consumer if a reasonable date for the scenario can be guaranteed.
-  - The date must increment past midnight in simulator time.
+  - The date MUST increment past midnight in simulator time.
 
 #### Raw Values
 
 Producers SHOULD emit raw values that preserve all physical information from the sim. Data fidelity MUST be preserved; values MUST NOT be transformed, clamped, or otherwise modified in a way that loses detail. The sim's physical gauge limitations (e.g., a needle that only moves in one direction) are a display concern for the consumer, not a reason to distort the data layer.
 
-As an illustration, `physics.current` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Producers MUST NOT emit `Math.Abs(current)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
+As an illustration, `cars.list[].bogies[].amperage` may represent regenerative or dynamic braking current, which is physically negative. Some sims emit this as a positive value because the cab's ammeter gauge only points one way and the driver discerns the sign by context. In Rudolf, if the physical current is negative, the field MUST be negative. Producers MUST NOT emit `Math.Abs(amperage)` just because the gauge can only show positives. Consumers that drive a physical gauge or HMI are responsible for mapping negative values to their display range.
 
 Similarly, producers MUST NOT clamp values to a "reasonable" range, round, smooth, or interpolate unless the sim itself does so natively, or unless it is strictly necessary for data-type safety.
+
+Wire stability exception: Non-finite numbers (e.g., `NaN`, `+Infinity`) MUST be converted to `0`. This is because such values are not supported in the JSON specification.
 
 #### Nullables
 
@@ -86,7 +92,6 @@ A field that's absent from the JSON MEANS "the sim doesn't support this field at
 #### Versioning
 
 All documents carry a single `schemaVersion` at the envelope level. A breaking change to any section bumps `schemaVersion`. Consumers MUST tolerate unknown fields added in future minor versions (read what they know, ignore what they don't).
-
 
 ### 3.2 Document structure
 
@@ -239,52 +244,57 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 }
 ```
 
-#### 4.1 Vehicle Control Capabilities (`vehicle.capabilities`)
+### 4.1 `sim`
 
-Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
+- `name`: Simulator name.
+- `version`: Simulator version, empty if unknown.
+- `adapterName`: Adapter name.
+- `adapterVersion`: Adapter version.
 
-- `masconType`: master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
-- `masconBrakeType`: brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
-- `powerNotches`: number of power notches (e.g. P1..P5 = 5); `null` when unknown.
-- `brakeNotches`: number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
-- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`); `null` when unknown.
-- `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
-- `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
+### 4.2 `scenario`
 
-### 4.2 Vehicle Information
+- `title`: Scenario title.
+- `route`: Route identity (e.g. file path stem or route-pack name).
+- `author`: Scenario author if the simulator exposes it, null otherwise.
+- `scenarioStartTime`: Scenario start time as ISO local datetime.
+- `diagramNumber`: Train/diagram number when known at scenario load. Mirrors `OutputDataFrame.diagram.trainNumber`. Typically a short alphanumeric code, sometimes with kanji or kana (e.g. `"1234A"`, `"回567"`).
+- `boundFor`: Destination when known at scenario load. Mirrors `OutputDataFrame.diagram.boundFor`. Not necessarily the final stop in the scenario.
+- `serviceType`: Service type when known at scenario load. Mirrors `OutputDataFrame.diagram.serviceType`.
 
-#### 4.2.1 Naming
+### 4.3 `vehicle`
+
+#### 4.3.1 Naming
 
 - `name`: human display name for the model (e.g. `"225系0番台"`). Ensure the correct kanji is used for kei (系) and bandai (番台). When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231系1000番台+E233系3000番台"`).
 - `model`: vehicle model identifier (e.g. `"225-0"`). For maximum interoperability it SHOULD be in `series-subseries` format; producers SHOULD romanise all kana in TitleCase. When the formation mixes more than one model, delimit them with a `+` (e.g. `"E231-1000+E233-3000"`).
 - `operator`: operating company (e.g. `"EastJapanRailwayCompany"`, `"TokyuCorporation"`). To maximize compatibility, producers SHOULD refer to Japanese Wikipedia for the full official operator name (not group) and TitleCase it.
 
-#### 4.2.2 Train Static Information
+#### 4.3.2 Train Static Information
 
-`leadCar` specifies which car is the front car in the scenario.
+`leadCar` specifies which car is the front car in the scenario. This is not necessarily the car with the smallest number, nor the leftmost car on the display.
 
 `totalLength` and `totalUnladenMass` specifies total quantities, or -1 if unknown. Note that:
 
 - Total values are equal to the sum of per-car values ONLY when the respective `physics.length` or `physics.mass` capability is `All`.
 - Freight mass MAY be included here if it cannot be excluded from car mass, but MUST be excluded from the load mass if done so.
 
-#### 4.2.3 Per-car Static Information
+#### 4.3.3 Per-car Static Information
 
-`cars` specifies per-car details:
+`cars` specifies per-car details. Each entry corresponds to a single car. The cars are arranged from left to right in display order.
 
 | Key in `cars` | Value | Description |
 | :--- | :--- | :--- |
 | `carNo` | `int` | Specifies the generation order of `OutputDataFrame.cars.list[...].carNo` |
-| `model` | `string` | Similar format to `vehicle.model`. |
+| `model` | `string` | Per-car model code (e.g. `"KuHaE233"`, `"MoHa225-51xx"`) |
 | `hasDriverCab` | `bool` or `null` | |
 | `hasConductorCab` | `bool` or `null` | |
 | `hasMotor` | `bool` or `null` | |
 | `hasPantograph` | `bool` or `null` | |
-| `cabDirection` | One of {`Left`, `Right`}. | Direction on HMI screen. |
-| `pantographType` | One of {`SingleArm`, `Scissor`}. | |
-| `pantographDirection` | One of {`Left`, `Right`, `Both`}. | Direction on HMI screen. |
+| `cabDirection` | `Left`, `Right`, or `null` | Direction on HMI screen. |
+| `pantographType` | `SingleArm`, `Scissor`, or `null` | Style of pantograph. |
+| `pantographDirection` | `Left`, `Right`, `Both`, or `null` | Direction of pantograph on HMI screen. |
 | `length` | `double` | Length in meters, or -1 if unknown. |
-| `unladenMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here, but MUST be excluded from the load mass if done so. |
+| `unladenMass` | `double` | Mass without passengers in kg, or -1 if unknown. Freight mass MAY be included here if it cannot be excluded from car mass, but MUST be excluded from the load mass if done so. |
 | `bogies` | `BogieStatic[]` | Bogies under this car, left-to-right display order. Empty when composition is not provided. See below. |
 
 `bogies` entries:
@@ -302,11 +312,23 @@ Static control-hardware description for the vehicle, distinct from the top-level
 
 A `Jacobs` bogie is shared between adjacent cars. It MUST be listed ONLY in the `bogies` of its owner: the car on the bogie's LEFT. The right-hand adjacent car MUST NOT list it. Consumers aggregating axle counts across cars therefore read each `Jacobs` entry exactly once; no deduplication is required.
 
-### 4.3 `capabilities`
+#### 4.3.4 Vehicle Control Capabilities (`vehicle.capabilities`)
+
+Static control-hardware description for the vehicle, distinct from the top-level `capabilities` map (which declares which live `OutputDataFrame` fields the adapter populates). Every field is nullable; `null` means the sim has no value for it right now.
+
+- `masconType`: master-controller handle layout: `'OneHandle' | 'TwoHandle' | null` (MasconType).
+- `masconBrakeType`: brake-handle behaviour: `'Notched' | 'LapCapable' | 'Continuous' | null` (MasconBrakeType). `LapCapable` is controls with lap (so it automatically implies continuous); `Continuous` is a non-notched handle with no lap position (e.g. direct/straight-air controls).
+- `powerNotches`: number of power notches (e.g. P1..P5 = 5); `null` when unknown.
+- `brakeNotches`: number of service brake notches (e.g. B1..B7 = 7); `null` when unknown.
+- `ebNotch`: signed notch value representing EB in the SetNotch encoding (e.g. `-8`, NOT the sentinel); `null` when unknown.
+- `holdingBrakeNotches`: number of holding-brake (抑速) notches; `0` when the vehicle has none, `null` when unknown.
+- `cpStartPressure` / `cpStopPressure`: air-compressor cut-in / cut-out pressures, in kPa; `null` when unknown.
+
+### 4.4 `capabilities`
 
 This section provides information on how certain data fields are populated in the `OutputDataFrame`, or if the fields are used at all. It also specifies what types of `InputCommand` are supported by the sim. All keys are OPTIONAL; an undefined key MUST be treated as unsupported.
 
-#### 4.3.1 OutputDataFrame Capabilities
+#### 4.4.1 OutputDataFrame Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
@@ -315,8 +337,8 @@ This section provides information on how certain data fields are populated in th
 | `physics.curveRadius` | `bool` | |
 | `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.mass` | One of {`All`, `TotalOnly`, `None`}. | Mass detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
-| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
-| `ats.richState` | `bool` | Availability of the `DataFrame.ats.richState` collection (see §5.8). |
+| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data MUST be broadcast from the first index of the arrays. |
+| `ats.richState` | `bool` | Availability of the `OutputDataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
@@ -332,14 +354,14 @@ This section provides information on how certain data fields are populated in th
 | `MultiDynamic` | Any number of items | Any number of objects ahead of the train, or nothing. Not necessarily to the end of the scenario. |
 | `MultiStatic` | Any number of items | All items from the start to the end of the scenario. Only applicable to `stations.next`. |
 
-#### 4.3.2 InputCommand Capabilities
+#### 4.4.2 InputCommand Capabilities
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
 | `input.command.*` | `bool` | `*` is a command type specified in §6.1. |
 | `input.button.*` | `bool` | `*` is a control used with the SetButton command. Standard SetButton controls are defined in §6.2 and §6.3. |
 
-### 4.4 `vocabularies`
+### 4.5 `vocabularies`
 
 Sim-specific overrides as a list of key-value pairs. Each section is nullable: `null` means no overrides apply and consumers fall back to the defaults published in this spec.
 
@@ -463,7 +485,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 {
   "list": [
     {
-      "index": 0,
+      "index": 0, // position of the station in the list
       "name": "中京",
       "fromStartDistance": 0, // meters from scenario start; always present
       "absoluteDistance": 35403.2, // meters | null: absolute kilometer-post (キロ程);
@@ -482,8 +504,8 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
     },
     // ... per station
   ],
-  "currentIndex": null, // number | null: station the train is currently at
-  "nextIndex": 5, // number | null: next station ahead
+  "currentIndex": null, // number | null: index of the station the train is currently stopped at
+  "nextIndex": 5, // number | null: index of the next station ahead
 }
 ```
 
@@ -491,9 +513,9 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `doorSide` uses the `SideOpened` int convention shared with the per-car doors in §5.6 and is never `null`: producers that cannot determine the side MUST emit `3` (open, side unknown). Producers MAY derive this heuristically, even if limited to `0` (closed) and `3`.
 
-`arrival` and `departure` times may be written in ISO 8601 datetime or simply HH:MM:SS. Note that times past 24:00:00 are NOT allowed. When the date is not provided, implementation of time-of-day rollover detection is up to the consumer.
+`arrival` and `departure` times MUST be written in ISO 8601 local datetime. Note that times past 24:00:00 are NOT allowed.
 
-`stopPositionName` and `trackSectionName` should be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
+`stopPositionName` and `trackSectionName` SHOULD be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
 
 `entrySpeed` and `exitSpeed` are speeds shown on timetables or electronic driving aids. They are usually the speed limits on switches/points.
 
@@ -523,7 +545,7 @@ Interaction types are shown in the table below.
 | `Wait` | 待 | Wait for a faster train to pass from behind. |
 | `Unknown` | | Interaction cannot be determined, or is not implemented. |
 
-Consumers may derive full station records + live distance to next via lookup:
+Consumers MAY derive full station records + live distance to next via lookup:
 
 ```js
 const next =
@@ -532,7 +554,7 @@ const distanceToNext =
   next != null ? next.fromStartDistance - physics.fromStartDistance : null;
 ```
 
-Total route distance is only guaranteed to be available when `SimulatorProfile.capabilities['stations.next']` is `MultiStatic`, 
+Total route distance is only guaranteed to be available when `SimulatorProfile.capabilities['stations.next']` is `MultiStatic`.
 
 ### 5.4 `physics`
 
@@ -550,8 +572,8 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
-- `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable.
-- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
+- `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable. The producer is free to decide whether extremely large radius corners should be treated as straights, as physics-based systems cannot give true indications of straights.
+- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it MUST NOT be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
 Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each field sits at the level of its physical equipment/sensor.
 
@@ -562,8 +584,8 @@ Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each fi
   "powerNotch": 2, // TC Pnotch/BVE Handles.PowerNotch
   "brakeNotch": 0, // TC Bnotch/BVE Handles.BrakeNotch
   "reverser": 1, // int: -1=Reverse, 0=Neutral, 1=Forward
-  "ato": null, // { active: bool, notch?: number } | null
-  "tasc": null, // { active: bool, notch?: number, inching: bool } | null
+  "ato": null, // { active: bool, notch: int | null } | null
+  "tasc": null, // { active: bool, notch: int | null, inching: bool } | null
   "deadman": null, // 'Hand' | 'Foot' | 'EB' | null: which channel is currently engaged
 }
 ```
@@ -697,7 +719,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 }
 ```
 
-`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['speedLimits.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it must be treated as `None`. Note that `MultiStatic` cannot be used.
+`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['signals.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it MUST be treated as `None`. Note that `MultiStatic` cannot be used.
 
 **Default transponder category vocabulary:**
 
@@ -776,11 +798,13 @@ Consumers compute the effective phase speed via `vocab?.signalPhaseSpeed?.[Strin
 - `'Restriction'`: a temporary or operational restriction (curve restriction, weather-related slow order, work zone, station-approach restriction, special-event slow)
 - `null`: type unknown or unclassified (sim has the limit value but not its origin)
 
-**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.3.1): `Single` = only the immediate next change; `MultiDynamic` = the full forward sequence; `None` or absent = unsupported. `MultiStatic` is not supported.
+**`next` ordering and completeness:** `next` is an array of upcoming speed-limit changes ordered **nearest-first** (ascending `distance`), so `next[0]` is the closest change ahead. It is `null` when the sim knows of no upcoming change, never an empty array. A producer that only knows the immediate next change emits a single-element array; a producer that knows the whole forward sequence emits every upcoming change. Which of the two a producer does is declared in `SimulatorProfile.capabilities['speedLimits.next']` as a `NextItemArrayType` value (§4.4.1): `Single` = only the immediate next change; `MultiDynamic` = the full forward sequence; `None` or absent = unsupported. `MultiStatic` is not supported.
 
 ### 5.11 `cars`
 
 Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabDirection, pantographType, pantographDirection, length) lives in `SimulatorProfile.vehicle.cars`: NOT duplicated per-frame.
+
+Each entry in the list corresponds to one car. The cars are ordered left to right according to how they are displayed.
 
 ```jsonc
 {
@@ -802,9 +826,9 @@ Per-car DYNAMIC state. Static per-car data (model, hasMotor/Cab/Pantograph, cabD
 }
 ```
 
-Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`. If `FirstCarOnly`, only the first index contains data and all others are undefined, and `carNo` may not match the arrangement of the actual train.
+Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`. If `FirstCarOnly`, only the first index contains data and all others are undefined, and `carNo` might not match the arrangement of the actual train.
 
-`occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
+`occupancyRate` (混雑率) SHOULD be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
 
 `loadMass` is the per-car live load when `SimulatorProfile.capabilities['physics.mass']` is `All`. Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value instead of the load mass.
 
@@ -918,11 +942,11 @@ All commands are discriminated by `command.kind`. The set:
 
 | Kind            | Payload                                           | Semantics                                                                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. |
-| `SetPowerNotch` | `{ value: int }`                                  | Power-only positive int.                                                                                                                                                                                                                                                      |
-| `SetBrakeNotch` | `{ value: int }`                                  | Brake-only positive int.                                                                                                                                                                                                                                                      |
-| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency.                                                                                                                                                                                           |
-| `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Values outside this range MUST be rejected.                                                                                                                                                                  |
+| `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch for one-handle vehicles. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. Run native sim-specific function for one-handle vehicles if available, otherwise set power and brake separately, using only positive or zero positions. |
+| `SetPowerNotch` | `{ value: int }`                                  | Power handle position (int) for two-handle vehicles: positive = power notches, 0 = cut power, negative = sim-specific (e.g., TRAIN CREW 抑速).                                                                                                                                                                                                                                                       |
+| `SetBrakeNotch` | `{ value: int }`                                  | Brake handle position (int) for two-handle vehicles: positive = brake notches, 0 = release brakes, negative = sim-specific.                                                                                                                                                                                                                                                        |
+| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency. All other values MUST be rejected.                                                                                                                                                                                           |
+| `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Command with a value outside this range MUST be rejected.                                                                                                                                                                  |
 | `SetButton`     | `{ action: string, state: bool }`                 | Generic button. `action` is a `VehicleAction` (§6.2) or `GameAction` (§6.3) name, or a custom action string. Custom/non-spec actions are unvalidated passthrough, gated by `capabilities['input.button.<action>']`.                                                           |
 | `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | Wiper position.                                                                                                                                                                                                                                                               |
 | `SetAtoNotch`   | `{ value: int }`                                  | ATO notch suggestion. Per TC semantics: when notch > 0, applied only if manual notch is N; when notch < 0, max(manual, ato) applied.                                                                                                                                          |
@@ -930,13 +954,15 @@ All commands are discriminated by `command.kind`. The set:
 
 Producers MUST set fields described as such; OPTIONAL fields use a `default behavior` documented per-command.
 
+Producers MUST throw an exception (or closest equivalent for the programming language used) when receiving an unknown command.
+
 > **`SetNotch` Emergency sentinel.** The reserved constant `EB = -100` (any `value <= -100`) requests Emergency regardless of `relative`. Prefer the constant over a bare literal; it is train-agnostic and supersedes the old hardcoded `-8`.
 >
 > **Custom `SetButton` actions.** `VehicleAction` (§6.2) and `GameAction` (§6.3) are the spec vocabularies whose members serialize to the `action` string. Actions outside that vocabulary travel through the same string field via a separate custom-action method, and are unvalidated passthrough; a sim declares support with `capabilities['input.button.<action>']`.
 
 ### 6.2 VehicleAction enum
 
-Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims may not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action; use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
+Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims might not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action; use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
 
 - `EBReset`: reset the EB/deadman alarm (EB復帰)
 - `GradientStart`: engage the gradient-start / anti-rollback switch (勾配起動スイッチ)
@@ -1033,7 +1059,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
+          { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
+        ]
       },
       {
         "carNo": 2,
@@ -1046,7 +1076,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
+          { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
+        ]
       },
       {
         "carNo": 3,
@@ -1059,7 +1093,11 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
+          { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
+        ]
       },
       {
         "carNo": 4,
@@ -1072,10 +1110,16 @@ Recommended transports:
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
+          { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
+        ]
       }
     ],
     "leadCar": 4,
+    "totalLength": 80,
+    "totalUnladenMass": -1,
     "capabilities": {
       "masconType": "OneHandle",
       "masconBrakeType": "Notched",
@@ -1128,9 +1172,9 @@ Recommended transports:
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:19:26.6283871+00:00",
   "time": {
-    "sim": "07:51:50",
+    "sim": "2026-07-02T07:51:50",
     "elapsed": 28310.468,
-    "tick": 639186203666283802
+    "tick": 1650
   },
   "diagram": {
     "trainNumber": "777",
@@ -1149,7 +1193,7 @@ Recommended transports:
         "doorSide": -1,
         "stopType": "PassengerStop",
         "arrival": null,
-        "departure": "07:42:00",
+        "departure": "2026-07-02T07:42:00",
         "stopPositionName": "日野森駅1番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1166,8 +1210,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:44:15",
-        "departure": "07:48:30",
+        "arrival": "2026-07-02T07:44:15",
+        "departure": "2026-07-02T07:48:30",
         "stopPositionName": "高見沢駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1184,8 +1228,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "07:50:45",
-        "departure": "07:51:15",
+        "arrival": "2026-07-02T07:50:45",
+        "departure": "2026-07-02T07:51:15",
         "stopPositionName": "水越駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1202,8 +1246,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:52:55",
-        "departure": "07:53:25",
+        "arrival": "2026-07-02T07:52:55",
+        "departure": "2026-07-02T07:53:25",
         "stopPositionName": "藤江駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1220,8 +1264,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:56:50",
-        "departure": "08:02:00",
+        "arrival": "2026-07-02T07:56:50",
+        "departure": "2026-07-02T08:02:00",
         "stopPositionName": "大道寺駅4番下り_併B",
         "trackSectionName": null,
         "remarks": null,
@@ -1238,8 +1282,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "Passing",
-        "arrival": "08:02:45",
-        "departure": "08:02:45",
+        "arrival": null,
+        "departure": "2026-07-02T08:02:45",
         "stopPositionName": "江ノ原信号場下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1256,8 +1300,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:03:50",
-        "departure": "08:04:20",
+        "arrival": "2026-07-02T08:03:50",
+        "departure": "2026-07-02T08:04:20",
         "stopPositionName": "江ノ原駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1274,8 +1318,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:06:05",
-        "departure": "08:06:35",
+        "arrival": "2026-07-02T08:06:05",
+        "departure": "2026-07-02T08:06:35",
         "stopPositionName": "新野崎駅3番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1292,8 +1336,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:08:00",
-        "departure": "08:08:30",
+        "arrival": "2026-07-02T08:08:00",
+        "departure": "2026-07-02T08:08:30",
         "stopPositionName": "新井川駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1310,8 +1354,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:10:00",
-        "departure": "08:10:30",
+        "arrival": "2026-07-02T08:10:00",
+        "departure": "2026-07-02T08:10:30",
         "stopPositionName": "羽衣橋駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1328,8 +1372,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:11:55",
-        "departure": "08:12:25",
+        "arrival": "2026-07-02T08:11:55",
+        "departure": "2026-07-02T08:12:25",
         "stopPositionName": "浜園駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1346,8 +1390,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "08:14:20",
-        "departure": "08:19:00",
+        "arrival": "2026-07-02T08:14:20",
+        "departure": "2026-07-02T08:19:00",
         "stopPositionName": "津崎駅4番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1364,8 +1408,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:21:05",
-        "departure": "08:21:35",
+        "arrival": "2026-07-02T08:21:05",
+        "departure": "2026-07-02T08:21:35",
         "stopPositionName": "虹ケ浜駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1382,10 +1426,11 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:23:30",
-        "departure": "08:24:00",
+        "arrival": "2026-07-02T08:23:30",
+        "departure": "2026-07-02T08:24:00",
         "stopPositionName": "海岸公園駅下り",
         "trackSectionName": null,
+        "remarks": null,
         "isTimeTaken": null,
         "stopPositions": null,
         "interactions": null
@@ -1397,8 +1442,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:25:35",
-        "departure": "08:26:05",
+        "arrival": "2026-07-02T08:25:35",
+        "departure": "2026-07-02T08:26:05",
         "stopPositionName": "河原崎駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1415,8 +1460,8 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:27:30",
-        "departure": "08:28:00",
+        "arrival": "2026-07-02T08:27:30",
+        "departure": "2026-07-02T08:28:00",
         "stopPositionName": "駒野駅3番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1433,7 +1478,7 @@ Recommended transports:
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "08:30:55",
+        "arrival": "2026-07-02T08:30:55",
         "departure": null,
         "stopPositionName": "館浜駅3番下り",
         "trackSectionName": null,
@@ -1454,7 +1499,8 @@ Recommended transports:
     "absoluteDistance": 19408.52734375,
     "curveRadius": null,
     "gradient": -1.9993319511413574,
-    "mrPressure": 695.1132202148438
+    "mrPressure": 695.1132202148438,
+    "totalLoadMass": -1
   },
   "controllers": {
     "powerNotch": 5,
@@ -1486,7 +1532,7 @@ Recommended transports:
     ]
   },
   "lamps": {
-    "values": [1, 1, 0, 0, /* ... total 512 */]
+    "values": [1, 1, 0, 0] /* total 512 items, array shortened here */
   },
   "ats": {
     "class": "普通",
@@ -1534,6 +1580,7 @@ Recommended transports:
       {
         "carNo": 1,
         "occupancyRate": 100,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
@@ -1543,6 +1590,7 @@ Recommended transports:
       {
         "carNo": 2,
         "occupancyRate": 65.47618865966797,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1552,6 +1600,7 @@ Recommended transports:
       {
         "carNo": 3,
         "occupancyRate": 77.38095092773438,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1561,6 +1610,7 @@ Recommended transports:
       {
         "carNo": 4,
         "occupancyRate": 85.71428680419922,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },

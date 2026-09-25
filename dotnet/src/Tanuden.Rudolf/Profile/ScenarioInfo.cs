@@ -12,8 +12,8 @@ public class ScenarioInfo
   /// <summary>Scenario author (if the simulator exposes it). null otherwise.</summary>
   public string? Author;
 
-  /// <summary>Bare <c>"HH:MM:SS"</c>. This does not include date.</summary>
-  public string ScenarioStartTime = "00:00:00";
+  /// <summary>Scenario start time as ISO local datetime.</summary>
+  public string ScenarioStartTime = "0000-01-01T00:00:00";
 
   /// <summary>
   ///   Train/diagram number when known at scenario load. Mirrors
