@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Windshield wiper mode.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum Wiper
 {
   /// <summary>Wipers off.</summary>

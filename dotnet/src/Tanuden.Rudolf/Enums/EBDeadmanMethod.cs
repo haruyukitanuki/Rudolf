@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Which deadman/EB channel a <c>SetDeadman</c> command targets.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 // ReSharper disable once InconsistentNaming
 public enum EBDeadmanMethod
 {
