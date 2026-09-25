@@ -127,7 +127,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
   "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
-    "version": "",
+    "version": null,
     "adapterName": "Tanuden.Rudolf.Adapters.TrainCrew",
     "adapterVersion": "0.1.0"
   },
@@ -247,7 +247,7 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
 ### 4.1 `sim`
 
 - `name`: Simulator name.
-- `version`: Simulator version, empty if unknown.
+- `version`: Simulator version, null if unknown.
 - `adapterName`: Adapter name.
 - `adapterVersion`: Adapter version.
 
@@ -1030,7 +1030,7 @@ Recommended transports:
   "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
-    "version": "",
+    "version": null,
     "adapterName": "Tanuden.Rudolf.Adapters.TrainCrew",
     "adapterVersion": "0.1.0"
   },
