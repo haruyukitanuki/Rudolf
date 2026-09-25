@@ -515,7 +515,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `arrival` and `departure` times MUST be written in ISO 8601 local datetime. Note that times past 24:00:00 are NOT allowed.
 
-`stopPositionName` and `trackSectionName` should be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
+`stopPositionName` and `trackSectionName` SHOULD be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
 
 `entrySpeed` and `exitSpeed` are speeds shown on timetables or electronic driving aids. They are usually the speed limits on switches/points.
 
@@ -545,7 +545,7 @@ Interaction types are shown in the table below.
 | `Wait` | 待 | Wait for a faster train to pass from behind. |
 | `Unknown` | | Interaction cannot be determined, or is not implemented. |
 
-Consumers may derive full station records + live distance to next via lookup:
+Consumers MAY derive full station records + live distance to next via lookup:
 
 ```js
 const next =
@@ -826,9 +826,9 @@ Each entry in the list corresponds to one car. The cars are ordered left to righ
 }
 ```
 
-Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`. If `FirstCarOnly`, only the first index contains data and all others are undefined, and `carNo` may not match the arrangement of the actual train.
+Per-car-physics realness is declared in `SimulatorProfile.capabilities['physics.perCar']`: `'None'` | `'FirstCarOnly'` | `'All'`. If `FirstCarOnly`, only the first index contains data and all others are undefined, and `carNo` might not match the arrangement of the actual train.
 
-`occupancyRate` (混雑率) should be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
+`occupancyRate` (混雑率) SHOULD be based on the [definition](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html) by the Japanese Ministry of Land, Infrastructure and Transport.
 
 `loadMass` is the per-car live load when `SimulatorProfile.capabilities['physics.mass']` is `All`. Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value instead of the load mass.
 
@@ -962,7 +962,7 @@ Producers MUST throw an exception (or closest equivalent for the programming lan
 
 ### 6.2 VehicleAction enum
 
-Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims may not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action; use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
+Physical cab/train controls used with `SetButton`. Vocabulary derived from the TRAIN CREW SDK with cleaner naming. Each entry has a known semantic; sims might not support all: consult `SimulatorProfile.capabilities['input.button.<action>']`. Notch is no longer a button action; use `SetNotch` (§6.1). Renamed from the old `InputAction`: `Broadcast` → `InCarBroadcast`, `LightLow` → `HeadLightLow`.
 
 - `EBReset`: reset the EB/deadman alarm (EB復帰)
 - `GradientStart`: engage the gradient-start / anti-rollback switch (勾配起動スイッチ)
