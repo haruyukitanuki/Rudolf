@@ -32,7 +32,7 @@ Every document carries:
 - `schemaVersion: string`: Rudolf spec version. Current version: `"1.0"`.
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`: discriminator.
 - `scenarioId: string`: opaque identifier tying all documents of one play-session together. The same `scenarioId` appears on the SimulatorProfile, all OutputDataFrames in that scenario, and all InputCommands targeting it. This value can be in any format so long as it is unique to the current scenario session loaded in the game.
-- `sentAt: string`: ISO 8601 timestamp at producer. Time zone designator must be defined.
+- `sentAt: string`: ISO 8601 timestamp at producer. Time zone designator MUST be defined.
 
 ## 3. Architecture
 
@@ -67,11 +67,11 @@ All string values are emitted as literal UTF-8, with **no `\uXXXX` escape sequen
 - General format specifications
   - Only the years 0000 through 9999 (inclusive) are allowed.
 - Header `sentAt`
-  - Must *include* the time zone designator. This allows synchronization of documents emitted in different time zones.
+  - MUST *include* the time zone designator. This allows synchronization of documents emitted in different time zones.
 - Scenario times (e.g., `OutputDataFrame.time.sim` and `OutputDataFrame.stations.*`):
-  - Must *exclude* the time zone designator, thereby representing local time in the simulator.
+  - MUST *exclude* the time zone designator, thereby representing local time in the simulator.
   - The capability `time.dateKnown` tells the consumer if a reasonable date for the scenario can be guaranteed.
-  - The date must increment past midnight in simulator time.
+  - The date MUST increment past midnight in simulator time.
 
 #### Raw Values
 
@@ -337,7 +337,7 @@ This section provides information on how certain data fields are populated in th
 | `physics.curveRadius` | `bool` | |
 | `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.mass` | One of {`All`, `TotalOnly`, `None`}. | Mass detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
-| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data must be broadcast from the first index of the arrays. |
+| `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data MUST be broadcast from the first index of the arrays. |
 | `ats.richState` | `bool` | Availability of the `OutputDataFrame.ats.richState` collection (see §5.8). |
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
@@ -513,7 +513,7 @@ Consumers compute "remaining distance to terminus" as `stations.list[last].fromS
 
 `doorSide` uses the `SideOpened` int convention shared with the per-car doors in §5.6 and is never `null`: producers that cannot determine the side MUST emit `3` (open, side unknown). Producers MAY derive this heuristically, even if limited to `0` (closed) and `3`.
 
-`arrival` and `departure` times must be written in ISO 8601 local datetime. Note that times past 24:00:00 are NOT allowed.
+`arrival` and `departure` times MUST be written in ISO 8601 local datetime. Note that times past 24:00:00 are NOT allowed.
 
 `stopPositionName` and `trackSectionName` should be written in a simple manner such that it is easily machine readable. When in doubt, refer to real timetables.
 
@@ -573,7 +573,7 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
 - `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable. The producer is free to decide whether extremely large radius corners should be treated as straights, as physics-based systems cannot give true indications of straights.
-- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it must not be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
+- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it MUST NOT be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
 Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each field sits at the level of its physical equipment/sensor.
 
@@ -719,7 +719,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
 }
 ```
 
-`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['signals.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it must be treated as `None`. Note that `MultiStatic` cannot be used.
+`list` is ordered **nearest-first** (ascending `distance`), so `list[0]` is the closest signal ahead of the train. The maximum number of items in the list is inferred from `SimulatorProfile.capabilities['signals.next']`, which can be `None`, `Single`, `MultiDynamic`. If undefined, it MUST be treated as `None`. Note that `MultiStatic` cannot be used.
 
 **Default transponder category vocabulary:**
 
@@ -945,7 +945,7 @@ All commands are discriminated by `command.kind`. The set:
 | `SetNotch`      | `{ value: int, relative?: bool }`                 | Combined notch for one-handle vehicles. `relative` (default `false`) = absolute: value is the combined notch (0=N, +n=Pn, -1=抑速, -2…=B1…). `relative: true` = signed step delta. Either way, `value <= -100` (sentinel `EB = -100`) is Emergency, train-agnostic, supersedes the old hardcoded -8. Run native sim-specific function for one-handle vehicles if available, otherwise set power and brake separately, using only positive or zero positions. |
 | `SetPowerNotch` | `{ value: int }`                                  | Power handle position (int) for two-handle vehicles: positive = power notches, 0 = cut power, negative = sim-specific (e.g., TRAIN CREW 抑速).                                                                                                                                                                                                                                                       |
 | `SetBrakeNotch` | `{ value: int }`                                  | Brake handle position (int) for two-handle vehicles: positive = brake notches, 0 = release brakes, negative = sim-specific.                                                                                                                                                                                                                                                        |
-| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency. All other values must be rejected.                                                                                                                                                                                           |
+| `SetBrakeSAP`   | `{ kPa: double }`                                 | Electromagnetic direct brake SAP pressure target. 0-400 = service, 410 = emergency. All other values MUST be rejected.                                                                                                                                                                                           |
 | `SetReverser`   | `{ value: int }`                                  | Reverser position. `-1` = Reverse, `0` = Neutral, `1` = Forward. Command with a value outside this range MUST be rejected.                                                                                                                                                                  |
 | `SetButton`     | `{ action: string, state: bool }`                 | Generic button. `action` is a `VehicleAction` (§6.2) or `GameAction` (§6.3) name, or a custom action string. Custom/non-spec actions are unvalidated passthrough, gated by `capabilities['input.button.<action>']`.                                                           |
 | `SetWiper`      | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | Wiper position.                                                                                                                                                                                                                                                               |
