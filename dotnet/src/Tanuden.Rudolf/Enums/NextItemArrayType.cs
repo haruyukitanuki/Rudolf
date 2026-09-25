@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Enums;
 /// <summary>
 ///   Format of arrays used to store data in <see cref="Stations"/>, <see cref="SpeedLimits"/>, and <see cref="Signals"/>.
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum NextItemArrayType
 {
   /// <summary>No items in front of the train are ever exposed.</summary>

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Which outer-game screen is currently visible.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum GameScreen
 {
   /// <summary>Active gameplay (driving the train)</summary>

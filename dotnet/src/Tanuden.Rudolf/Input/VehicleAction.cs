@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Input;
 ///   Physical cab/train control actions referenced by <c>SetButtonCommand</c>.
 ///   Each value is a button-press or key-press style event (some are momentary, some are toggles).
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum VehicleAction
 {
   /// <summary>Reset the EB/deadman alarm (EB復帰).</summary>

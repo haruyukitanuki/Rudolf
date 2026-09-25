@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Enums;
 /// <summary>
 ///   Availability of data in arrays in <see cref="Cars"/>.
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum PerCarPhysicsType
 {
   /// <summary>No per-car data is available.</summary>

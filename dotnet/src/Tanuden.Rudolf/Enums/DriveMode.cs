@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Type of driving run</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum DriveMode
 {
   /// <summary>Scored/graded run (e.g. scenario mode)</summary>

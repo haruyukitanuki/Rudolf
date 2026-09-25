@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Machine-readable category of an ATS event in <see cref="Tanuden.Rudolf.Sections.AtsRichState" />.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum AtsRichStateType
 {
   /// <summary>

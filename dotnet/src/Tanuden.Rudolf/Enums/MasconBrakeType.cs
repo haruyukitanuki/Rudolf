@@ -5,7 +5,7 @@ namespace Tanuden.Rudolf.Enums;
 /// <summary>
 ///   How the brake handle behaves on the mascon.
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum MasconBrakeType
 {
   /// <summary>Discrete, self-lapping stepped brake notches.</summary>

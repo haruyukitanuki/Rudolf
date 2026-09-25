@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Fault of bogie-mounted equipment (motors, axles, brakes, collector shoe).</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum BogieFault
 {
   /// <summary>Traction motors mounted on this bogie (主電動機).</summary>
