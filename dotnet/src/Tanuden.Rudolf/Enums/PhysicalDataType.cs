@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Enums;
 /// <summary>
 ///   Availability of per-car and total data relating to a physical quantity.
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum PhysicalDataType
 {
   /// <summary>No data is available.</summary>

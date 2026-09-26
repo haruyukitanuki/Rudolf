@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Enums;
 ///   Functional category of a track-side transponder/beacon.
 ///   Adapters MUST emit <c>null</c> rather than guess when they can't categorize.
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum TransponderCategory
 {
   /// <summary>Pattern source transponder.</summary>

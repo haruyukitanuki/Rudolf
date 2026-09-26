@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Fault of body/roof/cab-mounted equipment on a single car (<c>OutputDataFrame.cars.list[...].faults</c>). Empty = normal; null = not modeled.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum CarFault
 {
   /// <summary>Doors (ドア故障).</summary>

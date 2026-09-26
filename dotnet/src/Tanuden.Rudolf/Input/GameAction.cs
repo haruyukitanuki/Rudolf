@@ -6,7 +6,7 @@ namespace Tanuden.Rudolf.Input;
 ///   Camera/view/UI/sim-meta actions referenced by <c>SetButtonCommand</c>.
 ///   Each value is a button-press or key-press style event (some are momentary, some are toggles).
 /// </summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum GameAction
 {
   /// <summary>Toggle the exterior/external view (外部視点切替).</summary>

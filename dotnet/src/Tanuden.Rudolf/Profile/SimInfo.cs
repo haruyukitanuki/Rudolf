@@ -6,8 +6,8 @@ public class SimInfo
   /// <summary>Simulator software name</summary>
   public string Name = string.Empty;
 
-  /// <summary>Simulator software version (if possible, in semver)</summary>
-  public string Version = string.Empty;
+  /// <summary>Simulator software version (if possible, in semver); null when the sim has no version.</summary>
+  public string? Version = null;
 
   /// <summary>Adapter package name</summary>
   public string AdapterName = string.Empty;

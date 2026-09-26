@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Tanuden.Rudolf.Enums;
 
 /// <summary>Where a bogie sits under its car, in left-to-right display order. Non-bogie fixed-axle groups use the same values (they draw identically).</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(Tanuden.Rudolf.Json.StringOnlyEnumConverter))]
 public enum BogiePosition
 {
   /// <summary>Leftmost bogie under the car as displayed.</summary>
