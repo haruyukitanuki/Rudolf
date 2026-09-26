@@ -375,7 +375,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     "signalPhaseSpeed": {
       "1": 0,
       "2": 25,
-      "3": 45,
+      "3": 55,
       "4": 80,
       "6": 110
     },
@@ -1054,7 +1054,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-                "unladenMass": -1,
+        "unladenMass": -1,
         "bogies": [
           { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
           { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
@@ -1071,7 +1071,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-                "unladenMass": -1,
+        "unladenMass": -1,
         "bogies": [
           { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
           { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
@@ -1088,7 +1088,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-                "unladenMass": -1,
+        "unladenMass": -1,
         "bogies": [
           { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
           { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
@@ -1105,7 +1105,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-                "unladenMass": -1,
+        "unladenMass": -1,
         "bogies": [
           { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
           { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
