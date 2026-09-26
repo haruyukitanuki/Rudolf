@@ -238,8 +238,6 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 }
 ```
 
-### 4.3 `vehicle`
-
 ### 4.1 `sim`
 
 - `name`：シミュレーター名。
@@ -256,6 +254,8 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 - `diagramNumber`：シナリオ読み込み時に判明している列車番号／ダイヤ番号。`OutputDataFrame.diagram.trainNumber` のミラー。通常は短い英数字コードで、漢字やかなを含む場合があります（例：`"1234A"`、`"回567"`）。
 - `boundFor`：シナリオ読み込み時に判明している行き先。`OutputDataFrame.diagram.boundFor` のミラー。シナリオの最終停車駅とは限りません。
 - `serviceType`：シナリオ読み込み時に判明している種別。`OutputDataFrame.diagram.serviceType` のミラー。
+
+### 4.3 `vehicle`
 
 #### 4.3.1 命名
 
