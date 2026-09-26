@@ -378,7 +378,7 @@ An example of the `signalPhaseSpeed` section is shown below:
     "signalPhaseSpeed": {
       "1": 0,
       "2": 25,
-      "3": 55,
+      "3": 45,
       "4": 80,
       "6": 110
     },
@@ -566,14 +566,14 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
   "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns, 0 for straights
   "gradient": null, // ‰ | null: old versions of BVEEx doesn't expose
   "mrPressure": 740.0, // kPa; train-level; always present
-  "totalLoadMass": null, // kg | null
+  "totalLoadMass": null, // kg, -1 = unknown, or null
 }
 ```
 
 - `fromStartDistance` is always present: meters traveled since the scenario started. Monotonically increasing during normal operation (decreasing only when the train reverses).
 - `absoluteDistance` is the official surveyed kilometer-post position (キロ程). Useful for cross-route correlation, ATS beacon lookup, and lat-lon mapping. Nullable when the sim only knows scenario-relative distance.
 - `curveRadius` and `gradient` SHOULD be exact values at the position of the lead car. Keyframe values are PERMITTED if exact values are unavailable. The producer is free to decide whether extremely large radius corners should be treated as straights, as physics-based systems cannot give true indications of straights.
-- `totalLoadMass`: Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it MUST NOT be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
+- `totalLoadMass` (kg, or -1 if unknown): Due to limitations of certain simulators like BVE, freight mass may be part of the unladen mass value, and in such cases it MUST NOT be added to the load mass. In addition, the total load mass is only equal to the sum of per-car values when `SimulatorProfile.capabilities[physics.mass]` is All.
 
 Per-bogie BC pressure and motor current live in `cars.list[...].bogies`; each field sits at the level of its physical equipment/sensor.
 
@@ -669,7 +669,7 @@ Lamps store data primarily intended for simple state indicators. Up to 512 slots
   "class": "ATS-P", // string | null : TC ATS_Class; BVE: from per-family-profile (v1: usually null)
   "speed": -1, // number | null : current ATS speed limit. -1 = free (unlimited); null = blank display; otherwise km/h
   "state": "P接近", // string | null : TC ATS_State (rich); BVE v1: 'EB' or null
-  "richState": [], // AtsRichState[]: one object per currently active ATS state
+  "richState": [], // AtsRichState[]: one object per currently active ATS state (empty here for brevity; non-null `state` SHOULD be accompanied by a matching richState entry)
 }
 ```
 
@@ -812,7 +812,7 @@ Each entry in the list corresponds to one car. The cars are ordered left to righ
     {
       "carNo": 1,
       "occupancyRate": null, // passenger percentage filled (may exceed 100%) | null : TC native; BVE: null
-      "loadMass": null, // kg | null
+      "loadMass": null, // kg, -1 = unknown, or null
       "faults": [], // CarFault[] | null: empty = normal; null = not modeled (cars.faults capability)
       "bogies": [ // index-aligned with SimulatorProfile.vehicle.cars[...].bogies; null = not modeled
         { "position": "Left", "bcPressure": 307.4, "amperage": 62, "faults": [] },
@@ -1038,7 +1038,7 @@ Recommended transports:
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "2026-01-01T00:00:00",
+    "scenarioStartTime": "2026-09-06T07:42:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
@@ -1173,7 +1173,7 @@ Recommended transports:
   "sentAt": "2026-07-02T20:19:26.6283871+00:00",
   "time": {
     "sim": "2026-07-02T07:51:50",
-    "elapsed": 28310.468,
+    "elapsed": 590.468,
     "tick": 1650
   },
   "diagram": {
@@ -1431,6 +1431,8 @@ Recommended transports:
         "stopPositionName": "海岸公園駅下り",
         "trackSectionName": null,
         "remarks": null,
+        "entrySpeed": null,
+        "exitSpeed": null,
         "isTimeTaken": null,
         "stopPositions": null,
         "interactions": null
