@@ -77,6 +77,8 @@ Rudolfは3種類のドキュメントを定義します。いずれもJSON形式
 
 同様に、シミュレーター自体がネイティブで行っている場合や、データ型の安全性のために絶対に必要な場合を除き、値を「妥当な」範囲にクランプしたり、四捨五入、平滑化、補間を行ったりしてはなりません（MUST NOT）。
 
+ワイヤ安定性の例外：非有限数（例：`NaN`、`+Infinity`）は `0` に変換しなければなりません（MUST）。JSON仕様ではこうした値がサポートされていないためです。
+
 #### null許容フィールド
 
 `null` が設定されたフィールドは、「シミュレーターが現在その値を実際に持っていない（未取得・不明）」ことを意味します。
@@ -129,7 +131,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "2026-09-06T07:42:00",
+    "scenarioStartTime": "2026-07-02T07:42:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
@@ -290,7 +292,6 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `length` | `double` | 長さ（メートル）。不明な場合は -1。 |
 | `unladenMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量をここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
 | `bogies` | `BogieStatic[]` | この車両の下にある台車。表示上の左から右の順。編成構成が提供されない場合は空配列。詳細は下記。 |
-| `bogies` | `BogieStatic[]` | この車両の台車。画面左から右の表示順。構成が不明な場合は空配列。詳細は下記。 |
 
 `bogies` の各要素：
 
@@ -453,7 +454,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 ```jsonc
 {
-  "sim": "2026-09-06T15:00:00", // ISO 日時文字列。ローカル時刻（シナリオ時刻）
+  "sim": "2026-07-02T15:00:00", // ISO 日時文字列。ローカル時刻（シナリオ時刻）
   "elapsed": 412.5, // シナリオ開始からの経過秒数（単調増加）
   "tick": 1650, // フレームカウンター。出力ごとにインクリメント
 }
@@ -488,7 +489,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
       "doorSide": 1, // int：開扉方向（§5.6参照）。左右判定不能時は3
       "stopType": "PassengerStop", // 'PassengerStop' (客扱い) | 'OperationStop' (運転停車) | 'Passing' (通過) | null
       "arrival": null,
-      "departure": "2026-09-06T10:00:00",
+      "departure": "2026-07-02T10:00:00",
       "stopPositionName": "下り1番線", // string | null：着発線
       "trackSectionName": null, // string | null：運転線路
       "remarks": null, // string | null：時刻表上の運転士メモ（他のフィールドに該当しないもの）
@@ -526,7 +527,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "destination": "大手橋", // string | null
   "track": "上り1番線", // string | null
   "arrival": null, // string | null
-  "departure": "2026-09-06T07:48:10", // string | null
+  "departure": "2026-07-02T07:48:10", // string | null
   "stopType": "Passing" // 駅リストと同じ値
 }
 ```
@@ -569,7 +570,7 @@ const distanceToNext =
 - `fromStartDistance` は必須フィールドです。シナリオ開始からの累計走行距離（メートル）を表します。通常の運転中は単調増加します（後退時のみ減少）。
 - `absoluteDistance` は公式に測量されたキロ程です。複数路線間のデータ連携、ATS地上子の参照、位置情報マッピング等に役立ちます。シミュレーターがシナリオ相対の距離しか持たない場合は `null` になります。
 - `curveRadius` および `gradient` は先頭車両の位置における正確な値であるべきです（SHOULD）。正確な値が得られない場合は、キーフレーム値の使用が許可されます（MAY）。極端に大きな半径の曲線を直線として扱うかどうかは、物理ベースのシステムでは直線の真の判別ができないため、プロデューサーの判断に委ねられます。
-- `totalLoadMass`：BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合荷重質量に追加してはなりません（MUST）。合計荷重質量が車両ごとの値の合計と等しくなるのは、`SimulatorProfile.capabilities[physics.mass]` が `All` の場合のみです。
+- `totalLoadMass`：BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合荷重質量に追加してはなりません（MUST）。合計荷重質量が不明な場合は `-1` になります。合計荷重質量が車両ごとの値の合計と等しくなるのは、`SimulatorProfile.capabilities[physics.mass]` が `All` の場合のみです。
 
 台車ごとのBC圧力（ブレーキシリンダー圧力）および主電動機電流は `cars.list[...].bogies` に格納されます。各フィールドは物理機器・センサーの設置レベルに対応します。
 
@@ -1032,7 +1033,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "2026-09-06T07:42:00",
+    "scenarioStartTime": "2026-07-02T07:42:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
