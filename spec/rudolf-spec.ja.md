@@ -14,8 +14,8 @@
 | Extension（拡張） | `extensions:` 配下に置かれる、名前空間付きのシミュレーター固有・ベンダー固有ブロック（例：`bve:beaconRing`）。 |
 | Scenario（シナリオ） | シナリオの読み込みから終了までの、シミュレーターの1回のプレイセッション。 |
 | HMI | ヒューマンマシンインターフェース。すなわち列車情報管理装置（TIMS／INTEROS／MON等）。 |
-| 台車（ボギー） | 車両の下にある台車。1両に1つ以上の台車がある。台車でない固定軸も台車としてモデル化する（描画上同じため）。ジャコブス台車は隣接する車両と共有され、台車の左側の車両のみがこれを列挙する。 |
-| 車軸 | 台車に属する車軸。1本の車軸には車輪が2つあるが、Rudolf は車輪単位ではなく車軸単位でモデル化する。各車軸は動軸または非動軸のいずれか（`isPowered`）。 |
+| 台車（ボギー） | 車両の下にある台車。1両につき1つ以上の台車を持ちます。台車構造を持たない固定軸（単台車等）も、描画上同一であるため台車としてモデル化します。連接台車（ジャコブス台車）は隣接する車両間で共有され、台車の左側の車両のみがこれを列挙します。 |
+| 車軸 | 台車に属する車軸。1本の車軸には2つの車輪がありますが、Rudolf は車輪単位ではなく車軸単位でモデル化します。各車軸は動軸または非動軸のいずれかです（`isPowered`）。 |
 
 ## 2. ドキュメントの種類
 
@@ -32,15 +32,19 @@ Rudolfは3種類のドキュメントを定義します。いずれもJSON形式
 - `schemaVersion: string`：Rudolf仕様のバージョン。現行バージョンは `"1.0"`。
 - `kind: 'SimulatorProfile' | 'OutputDataFrame' | 'InputCommand'`：ドキュメント種別の判別子。
 - `scenarioId: string`：1つのプレイセッションに属するすべてのドキュメントを紐付ける識別子。同一セッション内では、SimulatorProfile、そのシナリオ内のすべてのOutputDataFrame、およびそれらを対象とするすべてのInputCommandで同一の `scenarioId` が使用されます。ゲーム内でロードされた現在のシナリオセッションに対して一意である限り、この値のフォーマットは任意です。
-- `sentAt: string`：プロデューサー側におけるISO 8601形式のタイムスタンプ。タイムゾーン指定子を定義する必要があります。
+- `sentAt: string`：プロデューサー側におけるISO 8601形式のタイムスタンプ。タイムゾーン指定子を含めなければなりません（MUST）。
 
 ## 3. アーキテクチャ
 
 ### 3.1 エンベロープの規約
 
-#### 命名規約
+#### スタイル規約
 
-通信経路上（ワイヤー上）ではcamelCaseを使用します。C# のプロデューサーは `CamelCasePropertyNamesContractResolver` 等によってPascalCaseから変換します。TypeScript／JavaScriptのコンシューマーはcamelCaseのまま直接読み取ります。
+**命名（Naming）：** 通信経路上（ワイヤー上）のプロパティ名および辞書のキーにはcamelCaseを使用します。C# のプロデューサーは `System.Text.Json` の機能（[こちらのガイド](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties)を参照）によってPascalCaseから変換します。TypeScript／JavaScriptのコンシューマーはcamelCaseのまま直接読み取ります。
+
+**構造（Structure）：** 本仕様でサポートされていない項目が誤って通信経路上に送信されないよう、適切なJSONの除外（ignore）および包含条件を選択してください。
+
+**空白文字（Whitespace）：** 空白文字の量（インデント等）は規定されません。
 
 #### 文字列エンコーディング
 
@@ -60,23 +64,25 @@ Rudolfは3種類のドキュメントを定義します。いずれもJSON形式
 - `physics.gradient` の単位は **‰** です。勾配が -33‰ の場合、フィールドの値は `-33.0` となります。
 - `cars.list[...].occupancyRate` の単位は **%** です。乗車率が 150% の場合、フィールドの値は `150.0` となります。
 
-日時: ISO 8601 形式で定義されます。実装はユースケースに依存します。
+**日時（Date and time）：** ISO 8601 形式で定義されます。実装はユースケースに依存します。
 - 一般的な形式仕様
   - 西暦 0000 年から 9999 年まで（両端を含む）のみが許可されます。
 - ヘッダー `sentAt`
-  - タイムゾーン指定子を含める必要があります。これにより、異なるタイムゾーンで発行されたドキュメントの同期が可能になります。
-- `OutputDataFrame.time.sim` および `OutputDataFrame.stations.*`:
-  - タイムゾーン指定子を除外する必要があり、これによりシミュレーター内のローカル時間を表します。
+  - タイムゾーン指定子を含めなければなりません（MUST *include*）。これにより、異なるタイムゾーンで発行されたドキュメントの同期が可能になります。
+- シナリオ時刻（例：`OutputDataFrame.time.sim` および `OutputDataFrame.stations.*`）：
+  - タイムゾーン指定子を除外しなければならず（MUST *exclude*）、これによりシミュレーター内のローカル時刻を表します。
   - 機能 `time.dateKnown` は、シナリオに対して妥当な日付が保証されているかどうかをコンシューマーに伝えます。
-  - 日付は、シミュレーター時間で午前0時を過ぎて進む必要があります
+  - シミュレーター時刻が午前0時を過ぎた場合、日付が翌日に繰り上がらなければなりません（MUST）。
 
 #### 生の値（Raw Values）
 
 プロデューサーは、シミュレーターからのすべての物理情報を保持した生の数値を出力すべきです（SHOULD）。データの忠実性は維持されなければならず（MUST）、情報が失われるような値の変換、クランプ（範囲制限）、改変を行ってはなりません（MUST NOT）。シミュレーター側の物理計器の制約（例：メーターの針が一方向にしか動かない等）はコンシューマー側での表示上の関心事であり、データ層の値を歪める理由にはなりません。
 
-例として、`physics.current` は回生ブレーキまたは発電ブレーキの電流を表す場合があり、これは物理的には負の値になります。一部のシミュレーターでは、運転台の電流計の針が一方向にしか振れず運転士が文脈から符号を判別する構造であるために、これを正の値として出力することがあります。Rudolfにおいては、物理的な電流が負であるなら、フィールドの値も必ず負でなければなりません（MUST）。計器が正の値しか表示できないからという理由で `Math.Abs(current)` を出力してはなりません（MUST NOT）。物理計器やHMIを駆動するコンシューマー側が、負の値を自身の表示範囲にマッピングする責任を負います。
+例として、`cars.list[].bogies[].amperage` は回生ブレーキまたは発電ブレーキの電流を表す場合があり、これは物理的には負の値になります。一部のシミュレーターでは、運転台の電流計の針が一方向にしか振れず運転士が文脈から符号を判別する構造であるために、これを正の値として出力することがあります。Rudolfにおいては、物理的な電流が負であるなら、フィールドの値も必ず負でなければなりません（MUST）。計器が正の値しか表示できないからという理由で `Math.Abs(amperage)` を出力してはなりません（MUST NOT）。物理計器やHMIを駆動するコンシューマー側が、負の値を自身の表示範囲にマッピングする責任を負います。
 
 同様に、シミュレーター自体がネイティブで行っている場合や、データ型の安全性のために絶対に必要な場合を除き、値を「妥当な」範囲にクランプしたり、四捨五入、平滑化、補間を行ったりしてはなりません（MUST NOT）。
+
+通信形式（ワイヤーフォーマット）上の例外：非有限数（例：`NaN`、`+Infinity`）は `0` に変換しなければなりません（MUST）。これは、そのような値がJSON仕様でサポートされていないためです。
 
 #### null許容フィールド
 
@@ -86,7 +92,7 @@ JSONにフィールド自体が存在しない（省略されている）場合�
 
 #### バージョニング
 
-すべてのドキュメントは、エンベロープレベルに単一の `schemaVersion` を持ちます。いずれかのセクションに破壊的変更が行われた場合、`schemaVersion` を更新します。コンシューマーは、将来のマイナーバージョンで追加される未知のフィールドを許容しなければなりません（MUST。理解できるフィールドを読み取り、未知のフィールドは無視する）。
+すべてのドキュメントは、エンベロープレベルに単一の `schemaVersion` を持ちます。いずれかのセクションに破壊的変更が行われた場合、`schemaVersion` を更新します。コンシューマーは、将来のマイナーバージョンで追加される未知のフィールドを許容しなければなりません（MUST。理解できるフィールドを読み取り、未知のフィールドは無視します）。
 
 ### 3.2 ドキュメント構造
 
@@ -122,7 +128,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
   "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
-    "version": "",
+    "version": null,
     "adapterName": "Tanuden.Rudolf.Adapters.TrainCrew",
     "adapterVersion": "0.1.0"
   },
@@ -130,7 +136,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     "title": "777",
     "route": "",
     "author": null,
-    "scenarioStartTime": "00:00:00",
+    "scenarioStartTime": "2026-09-06T07:42:00",
     "diagramNumber": "777",
     "boundFor": "館浜",
     "serviceType": "普通"
@@ -239,59 +245,64 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 }
 ```
 
-### 4.1 `vehicle.capabilities`
+### 4.1 `sim`
 
-車両の静的な制御機器情報です。トップレベルの `capabilities` マップ（アダプターがどの `OutputDataFrame` フィールドを実際に生成・配信するかを宣言するもの）とは別個に定義されます。すべてのフィールドはnull許容であり、`null` は「シミュレーターが現時点で値を持たない」ことを意味します。
+- `name`：シミュレーター名。
+- `version`：シミュレーターのバージョン。不明な場合は null。
+- `adapterName`：アダプター名。
+- `adapterVersion`：アダプターのバージョン。
 
-- `masconType`：マスコンのハンドル方式。`'OneHandle' | 'TwoHandle' | null`（MasconType）。
-- `masconBrakeType`：ブレーキハンドルの動作方式。`'Notched' | 'LapCapable' | 'Continuous' | null`（MasconBrakeType）。`LapCapable` は重なり位置（ラップ）を持つ制御（連続制御を含意）、`Continuous` は重なり位置を持たない無段階（直通空気ブレーキなど）のハンドルです。
-- `powerNotches`：力行ノッチ段数（例：P1〜P5なら5）。不明な場合は `null`。
-- `brakeNotches`：常用ブレーキノッチ段数（例：B1〜B8なら8）。不明な場合は `null`。
-- `ebNotch`：SetNotchエンコーディングにおいて非常ブレーキ（EB）を表す符号付きノッチ値（例：`-8`）。不明な場合は `null`。
-- `holdingBrakeNotches`：抑速ブレーキのノッチ段数。備えていない場合は `0`、不明な場合は `null`。
-- `cpStartPressure`／`cpStopPressure`：空気圧縮機（コンプレッサー）の起動／停止圧力（kPa）。不明な場合は `null`。
+### 4.2 `scenario`
 
-### 4.2 車両情報
+- `title`：シナリオ名。
+- `route`：路線識別子（例：ファイルパスのルートまたは路線パック名）。
+- `author`：シミュレーターから取得可能な場合はシナリオ作者、そうでない場合は null。
+- `scenarioStartTime`：ISOローカル日時形式でのシナリオ開始時刻。
+- `diagramNumber`：シナリオ読み込み時に判明している列車番号／行路番号。`OutputDataFrame.diagram.trainNumber` と対応。通常は英数字の短いコードで、漢字やひらがなが含まれる場合もあります（例：`"1234A"`、`"回567"`）。
+- `boundFor`：シナリオ読み込み時に判明している行先。`OutputDataFrame.diagram.boundFor` と対応。必ずしもシナリオの終着駅とは限りません。
+- `serviceType`：シナリオ読み込み時に判明している列車種別。`OutputDataFrame.diagram.serviceType` と対応。
 
-#### 4.2.1 命名
+### 4.3 `vehicle`
+
+#### 4.3.1 命名
 
 - `name`：車両形式の表示名（例：`"225系0番台"`）。「系」や「番台」の漢字表記が正確であることを確認してください。編成内に複数の形式が混結されている場合は、`+` で連結します（例：`"E231系1000番台+E233系3000番台"`）。
 - `model`：車両モデル識別子（例：`"225-0"`）。相互運用性を最大化するため、`series-subseries` 形式とすべきであり（SHOULD）、かな表記はTitleCaseでローマ字化すべきです（SHOULD）。編成内に複数の形式が混結されている場合は、`+` で連結します（例：`"E231-1000+E233-3000"`）。
 - `operator`：運行会社（例：`"EastJapanRailwayCompany"`、`"TokyuCorporation"`）。互換性を最大化するため、グループ名ではなく日本語版Wikipediaに準拠した正式な鉄道事業者名をTitleCaseで記述すべきです（SHOULD）。
 
-#### 4.2.2 列車静的情報
+#### 4.3.2 列車静的情報
 
-`leadCar` はシナリオで先頭車となる車両を指定します。
+`leadCar` はシナリオで先頭車となる車両を指定します。これは必ずしも最も小さい番号の車両や、画面上で最も左側にある車両とは限りません。
 
 `totalLength` と `totalUnladenMass` は合計値を指定し、不明な場合は -1 とします。注意点：
 
 - 合計値が車両ごとの値の合計と等しくなるのは、対応する `physics.length` または `physics.mass` 機能が `All` の場合のみです。
-- 貨物質量を車両質量から除外できない場合、ここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。
+- 貨物質量を車両質量（自重）から分離できない場合、ここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。
 
-#### 4.2.3 車両ごとの静的情報
+#### 4.3.3 車両ごとの静的情報
 
-`cars` は車両ごとの詳細を指定します：
+`cars` は車両ごとの詳細を指定します。各要素は1両に対応します。車両は画面の表示順に左から右へ並びます。
 
 | `cars` のキー | 値 | 説明 |
 | :--- | :--- | :--- |
 | `carNo` | `int` | `OutputDataFrame.cars.list[...].carNo` の生成順序を指定します。 |
-| `model` | `string` | `vehicle.model` と同形式。 |
+| `model` | `string` | 車両ごとの形式コード（例：`"KuHaE233"`、`"MoHa225-51xx"`） |
 | `hasDriverCab` | `bool` または `null` | |
 | `hasConductorCab` | `bool` または `null` | |
 | `hasMotor` | `bool` または `null` | |
 | `hasPantograph` | `bool` または `null` | |
-| `cabDirection` | {`Left`, `Right`} のいずれか。 | HMI 画面上の方向。 |
-| `pantographType` | {`SingleArm`, `Scissor`} のいずれか。 | |
-| `pantographDirection` | {`Left`, `Right`, `Both`} のいずれか。 | HMI 画面上の方向。 |
+| `cabDirection` | `Left`、`Right`、または `null` | HMI 画面上の方向。 |
+| `pantographType` | `SingleArm`、`Scissor`、または `null` | パンタグラフの形式。 |
+| `pantographDirection` | `Left`、`Right`、`Both`、または `null` | HMI 画面上のパンタグラフの向き。 |
 | `length` | `double` | 長さ（メートル）。不明な場合は -1。 |
-| `unladenMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量をここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
+| `unladenMass` | `double` | 乗客なしの質量（kg）。不明な場合は -1。貨物質量を車両質量から除外できない場合はここに含めても構いませんが（MAY）、荷重質量からは除外しなければなりません（MUST）。 |
 | `bogies` | `BogieStatic[]` | この車両の台車。画面左から右の表示順。構成が不明な場合は空配列。詳細は下記。 |
 
 `bogies` の各要素：
 
 | キー | 値 | 説明 |
 | :--- | :--- | :--- |
-| `position` | {`Left`, `Middle`, `Right`, `Jacobs`} のいずれか。 | 台車が車両のどこにあるか。画面左から右の表示順。位置の重複は許容（4台車の車両は `Left`, `Middle`, `Middle`, `Right`）。台車でない固定軸も同じ値を使用（描画上同じため）。 |
+| `position` | {`Left`, `Middle`, `Right`, `Jacobs`} のいずれか。 | 台車が車両のどこにあるか。画面左から右の表示順。位置の重複は許容（4台車の車両は `Left`, `Middle`, `Middle`, `Right`）。台車構造を持たない固定軸（単台車等）も同一の値を使用します（描画上同一のため）。 |
 | `axles` | `AxleStatic[]` | この台車の車軸、左から右。配列長が軸数（通常2、Co軸は3）。 |
 
 `axles` の各要素：
@@ -300,23 +311,35 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | :--- | :--- | :--- |
 | `isPowered` | `bool` | この車軸が動軸（主電動機で駆動される軸）である場合 `true`。車軸単位の指定により、0.5M・0.75M のように台車内の一部車軸のみ動力を持つ構成に対応します。主電動機は台車に搭載されるため、動力の有無は車軸に属する属性です。 |
 
-`Jacobs` 台車は隣接する車両と共有されます。`Jacobs` 台車は、その所有者（台車の左側の車両）の `bogies` にのみ列挙しなければなりません（MUST）。右側の隣接車両はこれを列挙してはなりません（MUST NOT）。車両をまたいで軸数を集計するコンシューマーは、各 `Jacobs` を一度だけ読み取ればよく、重複排除は不要です。
+連接台車（`Jacobs` 台車）は隣接する車両と共有されます。`Jacobs` 台車は、その所有者（台車の左側の車両）の `bogies` にのみ列挙しなければなりません（MUST）。右側の隣接車両はこれを列挙してはなりません（MUST NOT）。編成全体で車軸数を集計するコンシューマーは、各 `Jacobs` 台車を一度だけ読み取ればよく、重複排除の処理は不要です。
 
-### 4.3 `capabilities`
+#### 4.3.4 車両制御機能（`vehicle.capabilities`）
+
+車両の静的な制御機器情報です。トップレベルの `capabilities` マップ（アダプターがどの `OutputDataFrame` フィールドを実際に生成・配信するかを宣言するもの）とは別個に定義されます。すべてのフィールドはnull許容であり、`null` は「シミュレーターが現時点で値を持たない」ことを意味します。
+
+- `masconType`：マスコンのハンドル方式。`'OneHandle' | 'TwoHandle' | null`（MasconType）。
+- `masconBrakeType`：ブレーキハンドルの動作方式。`'Notched' | 'LapCapable' | 'Continuous' | null`（MasconBrakeType）。`LapCapable` は重なり位置（ラップ）を持つ制御（連続制御を含意）、`Continuous` は重なり位置を持たない無段階（直通空気ブレーキなど）のハンドルです。
+- `powerNotches`：力行ノッチ段数（例：P1〜P5なら5）。不明な場合は `null`。
+- `brakeNotches`：常用ブレーキノッチ段数（例：B1〜B7なら7）。不明な場合は `null`。
+- `ebNotch`：SetNotchエンコーディングにおいて非常ブレーキ（EB）を表す符号付きノッチ値（例：`-8`、センチネル値ではない）。不明な場合は `null`。
+- `holdingBrakeNotches`：抑速ブレーキのノッチ段数。備えていない場合は `0`、不明な場合は `null`。
+- `cpStartPressure`／`cpStopPressure`：空気圧縮機（コンプレッサー）の起動／停止圧力（kPa）。不明な場合は `null`。
+
+### 4.4 `capabilities`
 
 本セクションは、`OutputDataFrame` 内の各データフィールドがどのように設定されるか、またはそのフィールドがサポートされているかについての情報を提供します。また、シミュレーターがサポートする `InputCommand` の種類も指定します。すべてのキーは省略可能であり（OPTIONAL）、未定義のキーは非対応として扱われなければなりません（MUST）。
 
-#### 4.3.1 OutputDataFrame Capabilities
+#### 4.4.1 OutputDataFrame Capabilities
 
 | キー | 値 | 説明 |
 | :--- | :--- | :--- |
-| `time.dateKnown` | `bool` | シミュレーターが正確な実日付を提供する場合 `true`。これはプロデューサーが時刻文字列をどのように提供しなければならないかに影響します（MUST。§5.1参照）。 |
+| `time.dateKnown` | `bool` | シミュレーター／プロデューサーが正確な日付を出力できる場合 `true`。例えば、HMIが日付を表示すべきか判断するために使用できます。 |
 | `physics.gradient` | `bool` | 勾配データの利用可否。 |
 | `physics.curveRadius` | `bool` | 曲線半径データの利用可否。 |
 | `physics.length` | {`All`, `TotalOnly`, `None`} のいずれか | `SimulatorProfile.vehicle.cars`、`OutputDataFrame.physics`、`OutputDataFrame.cars` における長さデータの詳細レベル。 |
 | `physics.mass` | {`All`, `TotalOnly`, `None`} のいずれか | `SimulatorProfile.vehicle.cars`、`OutputDataFrame.physics`、`OutputDataFrame.cars` における質量データの詳細レベル。 |
 | `physics.perCar` | {`All`, `FirstCarOnly`, `None`} のいずれか | `OutputDataFrame.cars` における車両ごとの物理データの利用可否。`FirstCarOnly` の場合、配列の先頭インデックスから全車にブロードキャストしなければなりません（MUST）。 |
-| `ats.richState` | `bool` | `DataFrame.ats.richState` コレクションの利用可否（§5.8参照）。 |
+| `ats.richState` | `bool` | `OutputDataFrame.ats.richState` コレクションの利用可否（§5.8参照）。 |
 | `stations.next` | `NextItemArrayType` | 駅データ配列の配信形態。 |
 | `speedLimits.next` | `NextItemArrayType` | 速度制限データ配列の配信形態。 |
 | `signals.next` | `NextItemArrayType` | 信号データ配列の配信形態。 |
@@ -332,14 +355,14 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `MultiDynamic` | 任意の件数 | 列車の前方にある複数のオブジェクト、またはなし。必ずしもシナリオ終端までとは限りません。 |
 | `MultiStatic` | 任意の件数 | シナリオの開始から終了までの全項目。`stations.next` にのみ適用されます。 |
 
-#### 4.3.2 InputCommand Capabilities
+#### 4.4.2 InputCommand Capabilities
 
 | キー | 値 | 説明 |
 | :--- | :--- | :--- |
 | `input.command.*` | `bool` | `*` は §6.1 で定義されるコマンド種別です。 |
 | `input.button.*` | `bool` | `*` は SetButton コマンドで使用される操作対象です。標準の SetButton 操作は §6.2 および §6.3 で定義されています。 |
 
-### 4.4 `vocabularies`
+### 4.5 `vocabularies`
 
 キーと値のペアによるシミュレーター固有の上書き設定です。各セクションはnull許容です：`null` は上書きが適用されず、コンシューマーが本仕様に定義されたデフォルト値へフォールバックすることを意味します。
 
@@ -463,14 +486,14 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 {
   "list": [
     {
-      "index": 0,
+      "index": 0, // リスト内の駅の位置
       "name": "中京",
       "fromStartDistance": 0, // シナリオ開始地点からのメートル数（必須）
       "absoluteDistance": 35403.2, // meters | null：絶対キロ程
       "doorSide": 1, // int：開扉方向（§5.6参照）。左右判定不能時は3
       "stopType": "PassengerStop", // 'PassengerStop' (客扱い) | 'OperationStop' (運転停車) | 'Passing' (通過) | null
       "arrival": null,
-      "departure": "10:00:00",
+      "departure": "2026-09-06T10:00:00",
       "stopPositionName": "下り1番線", // string | null：着発線
       "trackSectionName": null, // string | null：運転線路
       "remarks": null, // string | null：時刻表上の運転士メモ（他のフィールドに該当しないもの）
@@ -478,7 +501,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
       "exitSpeed": null, // double | null：参照速度（km/h）
       "isTimeTaken": true, // bool | null：採時駅かどうか。シミュレーターが未対応の場合はnull
       "stopPositions": [3, 4, 6], // number[] | null：現在の方向／番線における停止目標の両数候補。不明時はnull
-      "interactions": null // Interaction[] | null
+      "interactions": null // Interaction[] | null：駅における他の列車との同期動作を示す
     },
     // ... 駅ごとに繰り返し
   ],
@@ -491,7 +514,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 
 `doorSide` は §5.6 の車両ごとのドアと共有される `SideOpened` 整数規約を使用し、決して `null` にはなりません：左右の側を判定できないプロデューサーは `3`（開扉・側別不明）を出力しなければなりません（MUST）。プロデューサーは、たとえ `0`（閉扉）と `3` に限定される場合でも、ヒューリスティックにこれを導出して構いません（MAY）。
 
-`arrival` および `departure` の時刻は、ISO 8601 日時または HH:MM:SS 形式で記述できます。24:00:00 を超える時刻は許可されません（MUST）。日付が提供されていない場合、日付をまたぐ時刻の処理はコンシューマーの実装に委ねられます。
+`arrival` および `departure` の時刻は、ISO 8601 ローカル日時形式で記述しなければなりません（MUST）。24:00:00 を超える時刻表記（25時など）は許可されない（NOT allowed）点に注意してください。
 
 `stopPositionName` および `trackSectionName` は、機械的に読み取りやすいシンプルな形式で記述すべきです（SHOULD）。不明な場合は、実際の時刻表を参照してください。
 
@@ -517,13 +540,13 @@ Interaction 種別は以下の表のとおりです。
 
 | 値 | 日本語略称 | 意味 |
 | :--- | :--- | :--- |
-| `Connecting` | 接 | 既に駅に停車中の他の列車に乗り換え可能。 |
-| `ExchangeMovement` | 交, X | 前方の線路が空くのを待つ。`Connecting` や `Transfer` より表示優先度が高い。 |
-| `Transfer` | 連 | まだ駅に到着していない他の列車に乗り換え可能。 |
-| `Wait` | 待 | 後方から速い列車が通過するのを待つ。 |
-| `Unknown` | | Interaction を判別できない、または未実装。 |
+| `Connecting` | 接 | 既に駅に停車中の他の列車への乗り換え（接続）。 |
+| `ExchangeMovement` | 交, X | 列車交換などのため、前方の線路開通を待機。`Connecting` や `Transfer` より表示優先度が高い。 |
+| `Transfer` | 連 | まだ駅に到着していない他の列車への乗り換え（連絡）。 |
+| `Wait` | 待 | 後方から来る優等列車の通過待ち（待避）。 |
+| `Unknown` | | 判別不能または未実装。 |
 
-コンシューマーは、参照（ルックアップ）によって完全な駅レコードと次駅までのリアルタイム距離を導出します。
+コンシューマーは、参照（ルックアップ）によって完全な駅レコードと次駅までのリアルタイム距離を導出して構いません（MAY）：
 
 ```js
 const next =
@@ -532,7 +555,7 @@ const distanceToNext =
   next != null ? next.fromStartDistance - physics.fromStartDistance : null;
 ```
 
-合計路線距離が利用可能なのは、`SimulatorProfile.capabilities['stations.next']` が `MultiStatic` の場合のみです。
+合計路線距離の提供が保証されるのは、`SimulatorProfile.capabilities['stations.next']` が `MultiStatic` の場合のみです。
 
 ### 5.4 `physics`
 
@@ -550,8 +573,8 @@ const distanceToNext =
 
 - `fromStartDistance` は必須フィールドです。シナリオ開始からの累計走行距離（メートル）を表します。通常の運転中は単調増加します（後退時のみ減少）。
 - `absoluteDistance` は公式に測量されたキロ程です。複数路線間のデータ連携、ATS地上子の参照、位置情報マッピング等に役立ちます。シミュレーターがシナリオ相対の距離しか持たない場合は `null` になります。
-- `curveRadius` および `gradient` は先頭車両の位置における正確な値であるべきです（SHOULD）。正確な値が得られない場合は、キーフレーム値の使用が許可されます（MAY）。
-- `totalLoadMass`：BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合荷重質量に追加してはなりません（MUST）。合計荷重質量が車両ごとの値の合計と等しくなるのは、`SimulatorProfile.capabilities[physics.mass]` が `All` の場合のみです。
+- `curveRadius` および `gradient` は、先頭車両の位置における正確な値であるべきです（SHOULD）。正確な値が得られない場合は、キーフレーム値（補間前の離散値）を使用しても構いません（MAY）。物理ベースのシミュレーションでは完全な直線を正確に表現できない場合があるため、曲率半径が極めて大きい曲線（カーブ）を直線（0）として扱うかどうかはプロデューサーの裁量に委ねられます。
+- `totalLoadMass`：BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、そのような場合は荷重質量に追加してはなりません（MUST NOT）。合計荷重質量が車両ごとの値の合計と等しくなるのは、`SimulatorProfile.capabilities[physics.mass]` が `All` の場合のみです。
 
 台車ごとのBC圧力（ブレーキシリンダー圧力）および主電動機電流は `cars.list[...].bogies` に格納されます。各フィールドは物理機器・センサーの設置レベルに対応します。
 
@@ -562,8 +585,8 @@ const distanceToNext =
   "powerNotch": 2, // TCのPノッチ / BVEのHandles.PowerNotch
   "brakeNotch": 0, // TCのBノッチ / BVEのHandles.BrakeNotch
   "reverser": 1, // int：-1=後進、0=中立、1=前進
-  "ato": null, // { active: bool, notch?: number } | null
-  "tasc": null, // { active: bool, notch?: number, inching: bool } | null
+  "ato": null, // { active: bool, notch: int | null } | null
+  "tasc": null, // { active: bool, notch: int | null, inching: bool } | null
   "deadman": null, // 'Hand' | 'Foot' | 'EB' | null：現在作動している方式
 }
 ```
@@ -599,12 +622,12 @@ const distanceToNext =
 
 補足：
 
-- `allClosed`（列車全体の閉扉状態を示すbool）は重要な指標として維持されます：両シミュレーターがネイティブに提供しており（`TC TrainState.AllClose`、`BVE DoorSet.AreAllClosed`）、HMIにおいて「出発可能か」を判断する要となるインジケーターです。
+- `allClosed`（列車全体の閉扉状態を示すbool）は重要な指標として維持されます：両シミュレーターがネイティブに提供しており（`TC TrainState.AllClose`、`BVE DoorSet.AreAllClosed`）、HMIにおいて発車可能かどうかを判断する要となるインジケーターです。
 - TRAIN CREWは車両ごとに1つの真偽値（bool）しか持ちません（左右の区別なし）：TCアダプターは、閉扉時に `0` を、開扉時に `3`（開扉中・側別不明）を出力します（ネイティブで側別判定が不可能なため）。BVEアダプターは、実際の側別データ（`-1`／`1`／`2`）を出力します。
 
 ### 5.7 `lamps`
 
-表示灯（ランプ）には、主に単純な状態インジケーターを目的としたデータが格納されます。最大512スロットが利用可能で、そのうち128スロットには定義済みの意味があるか、予約されています。プロデューサーは `vocabularies` を使用してさらに多くの表示灯を定義できます（MAY）。コンシューマーはインデックスを使用して表示灯にアクセスし、`vocabularies` を使用して名前からインデックスへ変換できます。
+表示灯（ランプ）には、主に単純な状態表示を目的としたデータが格納されます。最大512スロットが利用可能で、そのうち先頭128スロットには定義済みの意味が割り当てられているか、予約されています。プロデューサーは `vocabularies` を使用してさらに多くの表示灯を定義できます（MAY）。コンシューマーはインデックスを使用して表示灯にアクセスし、`vocabularies` を使用して名前からインデックスを解決できます。
 
 ```jsonc
 {
@@ -697,7 +720,7 @@ const distanceToNext =
 }
 ```
 
-`list` は**最寄り順**（`distance` の昇順）にソートされます。したがって `list[0]` は列車前方で最も近い信号機を表します。
+`list` は**最寄り順**（`distance` の昇順）にソートされます。したがって `list[0]` は列車前方で最も近い信号機を表します。リストの最大要素数は `SimulatorProfile.capabilities['signals.next']` から推論され、`None`、`Single`、`MultiDynamic` のいずれかを取ります。未定義の場合は `None` として扱わなければなりません（MUST）。なお、`MultiStatic` は使用できません。
 
 **デフォルトの地上子（トランスポンダ）カテゴリー語彙：**
 
@@ -749,7 +772,7 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 - `-1` — 無制限（現示固有の制限なし。線路最高速度または路線定義の上限速度）。
 - `null` — 不明（現示は存在するが、速度値が得られない）。
 
-コンシューマーは `vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]` によって実効的な現示制限速度を求めます。`?? defaults[phase]` のフォールバックは、明示的な `null` 値ではなく*欠落キー*に対してのみ適用されます。
+コンシューマーは `vocab?.signalPhaseSpeed?.[String(phase)] ?? defaults[phase]` によって実効的な現示制限速度を求めます。`?? defaults[phase]` のフォールバックは、明示的な `null` 値ではなくキーが存在しない場合（欠落キー）にのみ適用されます。
 
 ### 5.10 `speedLimits`
 
@@ -776,11 +799,13 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 - `'Restriction'`：一時的または運転上の制限（曲線制限、気象による徐行命令、工事区間、駅進入制限、特別イベント徐行など）
 - `null`：種別が不明または未分類（シミュレーターは制限速度値を持つが、その由来・理由が不明な場合）
 
-**`next` の順序と完全性：** `next` は前方の速度制限変化の配列であり、**最寄り順**（`distance` の昇順）に並びます。したがって `next[0]` は前方で最も近い速度制限変化を表します。前方の変化がシミュレーター側で判明していないときは `null` となり、空配列にはなりません。直近の1件のみを把握するプロデューサーは要素数1の配列を出力し、前方の全系列を把握するプロデューサーは今後のすべての変化を出力します。プロデューサーがどちらの動作を行うかは `SimulatorProfile.capabilities['speedLimits.next']` において `NextItemArrayType` の値（§4.3.1）として宣言されます：`Single` = 直近の1件のみ、`MultiDynamic`／`MultiStatic` = 前方の全系列、`None` または省略 = 非対応。
+**`next` の順序と完全性：** `next` は前方の速度制限変化の配列であり、**最寄り順**（`distance` の昇順）に並びます。したがって `next[0]` は前方で最も近い速度制限変化を表します。前方の変化がシミュレーター側で判明していないときは `null` となり、空配列にはなりません。直近の1件のみを把握するプロデューサーは要素数1の配列を出力し、前方の全系列を把握するプロデューサーは今後のすべての変化を出力します。プロデューサーがどちらの動作を行うかは `SimulatorProfile.capabilities['speedLimits.next']` において `NextItemArrayType` の値（§4.4.1）として宣言されます：`Single` = 直近の1件のみ、`MultiDynamic` = 前方の全系列、`None` または省略 = 非対応。`MultiStatic` はサポートされません。
 
 ### 5.11 `cars`
 
 車両ごとの**動的（DYNAMIC）**状態です。車両ごとの静的データ（形式モデル、モーター/運転台/パンタグラフの有無、運転台の向き、パンタグラフタイプ、パンタグラフの向き、車両長）は `SimulatorProfile.vehicle.cars` に格納され、毎フレーム重複して送信されることはありません。
+
+リストの各要素は1両に対応します。車両は画面の表示順に従って左から右へ並びます。
 
 ```jsonc
 {
@@ -802,13 +827,13 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 }
 ```
 
-車両ごとの物理演算データの正確性は `SimulatorProfile.capabilities['physics.perCar']` で宣言されます：`'All'`｜`'FirstCarOnly'`｜`'None'`。
+車両ごとの物理演算データの有効範囲は `SimulatorProfile.capabilities['physics.perCar']` で宣言されます：`'None'`｜`'FirstCarOnly'`｜`'All'`。`'FirstCarOnly'` の場合、先頭インデックスのみにデータが含まれ、他の要素はすべて未定義となり、`carNo` は実際の列車の編成配置と一致しない場合があります。
 
 `occupancyRate`（混雑率）は、[国土交通省の定義](https://www.mlit.go.jp/tetudo/toshitetu/03_04.html)に基づくべきです（SHOULD）。
 
 `loadMass` は、`SimulatorProfile.capabilities['physics.mass']` が `All` の場合の車両ごとのライブ荷重です。BVE等の一部シミュレーターの制約により、貨物質量が空車質量に含まれる場合があり、その場合は荷重質量ではなく空車質量側に含まれます。
 
-`faults` は、車体・屋根・運転台搭載機器の故障を列挙します。空配列は正常、要素が 1 つ以上あれば故障が発生中、`null`（または省略）はシミュレーターが状態をモデル化していないこと（`cars.faults` ケイパビリティ不在/false）を意味します。複数故障の同時報告は可能（MAY）で、配列の順序に意味はなく、重複の出力は禁止（MUST NOT）です。`faults` は現在の状態のみを表し、故障履歴や修理作業は対象外です。新しいメンバーはマイナーバージョンで追加でき（MAY）、コンシューマーは未知のメンバーを無視しなければなりません（MUST）。`Traction` は台車をモデル化しない簡単なシミュレーターでも主回路の故障を報告できるよう車両レベルに存在します。台車単位の分解能を持つシミュレーターは、代わりに `bogies[].faults` の `BogieFault.Traction` を使用すべきです（SHOULD）。
+`faults` は、車体・屋根・運転台搭載機器の故障を列挙します。空配列は正常、要素が 1 つ以上あれば故障が発生中、`null`（または省略）はシミュレーターが状態をモデル化していないこと（`cars.faults` ケイパビリティ不在/false）を意味します。複数故障の同時報告は可能（MAY）で、配列の順序に意味はなく、重複した要素を出力してはなりません（MUST NOT）。`faults` は現在の状態のみを表し、故障履歴や修理作業は対象外です。新しいメンバーはマイナーバージョンで追加でき（MAY）、コンシューマーは未知のメンバーを無視しなければなりません（MUST）。`Traction` は台車をモデル化しない簡単なシミュレーターでも主回路の故障を報告できるよう車両レベルに存在します。台車単位の分解能を持つシミュレーターは、代わりに `bogies[].faults` の `BogieFault.Traction` を使用すべきです（SHOULD）。
 
 `CarFault` の値域：
 
@@ -826,7 +851,7 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 | `AirConditioner` | 空調装置異常。快適性のみに関わる。 |
 | `Other` | 未分類またはシミュレーター固有（その他）。 |
 
-`bogies` は台車ごとの動的状態を運びます。null でない場合、`SimulatorProfile.vehicle.cars[...].bogies` とインデックス整列（同じ長さ・同じ左から右の順序）でなければなりません（MUST）。`bcPressure` はその台車のブレーキシリンダー圧力、`amperage` はその台車の主電動機電流です（主電動機は台車に搭載され、電気機関車などのモノモーター台車は車軸が機械的に結合されるため、台車レベルで報告します）。車両単位の分解能しかないプロデューサーは、その車両の値を各台車に出力すべきです（SHOULD）。共有された `Jacobs` 台車は、その所有者（台車の左側の車両）のリストにのみ現れます。動的な値は 1 箇所にのみ存在するため、車両間の整合性や重複排除の規則は不要です。台車の `faults` は台車搭載機器（主電動機・車軸・ブレーキ・集電靴）に範囲を限定します。`Brake` は物理的な設置場所で両レベルに分かれます：車両レベルの `CarFault.Brake` はブレーキ制御装置（BCU など制御側）、台車レベルの `BogieFault.Brake` は各台車の機械的なブレーキ（制動不良・緩解不良・基礎ブレーキ機構）です。`BogieFault` に車体搭載機器のメンバーはない（それらは車両レベル）。車軸単位の動的データは本仕様には含まず、車輪レベルの状態は将来のマイナーバージョンで追加される可能性があります。
+`bogies` は台車ごとの動的状態を運びます。null でない場合、`SimulatorProfile.vehicle.cars[...].bogies` とインデックス整列（同じ長さ・同じ左から右の順序）でなければなりません（MUST）。`bcPressure` はその台車のブレーキシリンダー圧力、`amperage` はその台車の主電動機電流です（主電動機は台車に搭載され、電気機関車などのモノモーター台車は車軸が機械的に結合されるため、台車レベルで報告します）。車両単位の分解能しかないプロデューサーは、その車両の値を各台車に出力すべきです（SHOULD）。共有される連接台車（`Jacobs` 台車）は、その所有者（台車の左側の車両）のリストにのみ現れます。動的な値は 1 箇所にのみ存在するため、車両間の整合性維持や重複排除の規則は不要です。台車の `faults` は台車搭載機器（主電動機・車軸・ブレーキ・集電靴）に範囲を限定します。`Brake` は物理的な設置場所で両レベルに分かれます：車両レベルの `CarFault.Brake` はブレーキ制御装置（BCU など制御側）、台車レベルの `BogieFault.Brake` は各台車の機械的なブレーキ（制動不良・緩解不良・基礎ブレーキ機構）です。`BogieFault` に車体搭載機器のメンバーはありません（それらは車両レベルで扱われます）。車軸単位の動的データは本仕様には含まれず、車輪レベルの状態は将来のマイナーバージョンで追加される可能性があります。
 
 `BogieFault` の値域：
 
@@ -918,17 +943,19 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
 
 | 種別 | ペイロード | 意味・動作 |
 | --- | --- | --- |
-| `SetNotch` | `{ value: int, relative?: bool }` | 統合ノッチ（総括ノッチ）。`relative`（デフォルト `false`）= 絶対指定：valueは統合ノッチ値（0=N、+n=Pn、-1=抑速、-2…=B1…）。`relative: true` = 符号付きステップ差分指定。いずれの場合も、`value <= -100`（センチネル定数 `EB = -100`）は非常ブレーキを表し、車両形式に依存せず、従来のハードコードされた -8 に取って代わります。 |
-| `SetPowerNotch` | `{ value: int }` | 力行専用ノッチ。正の整数。 |
-| `SetBrakeNotch` | `{ value: int }` | ブレーキ専用ノッチ。正の整数。 |
-| `SetBrakeSAP` | `{ kPa: double }` | 電磁直通ブレーキ（SAP）の目標圧力値。0〜400 = 常用ブレーキ、410 = 非常ブレーキ。 |
-| `SetReverser` | `{ value: int }` | レバーサー（逆転器）位置。`-1` = 後進、`0` = 中立、`1` = 前進。この範囲外の値は拒否されなければなりません（MUST）。 |
+| `SetNotch` | `{ value: int, relative?: bool }` | ワンハンドル車用の統合ノッチ（総括ノッチ）。`relative`（デフォルト `false`）= 絶対指定：valueは統合ノッチ値（0=N、+n=Pn、-1=抑速、-2…=B1…）。`relative: true` = 符号付きステップ差分指定。いずれの場合も、`value <= -100`（センチネル定数 `EB = -100`）は非常ブレーキを表し、車両形式に依存せず、従来のハードコードされた -8 に取って代わります。利用可能であればワンハンドル車用のシミュレーター固有ネイティブ関数を実行し、そうでなければ力行とブレーキを個別に、正またはゼロの位置のみを使用して設定します。 |
+| `SetPowerNotch` | `{ value: int }` | ツーハンドル車用の力行ハンドル位置（int）：正 = 力行ノッチ、0 = 力行オフ、負 = シミュレーター固有（例：TRAIN CREWの抑速）。 |
+| `SetBrakeNotch` | `{ value: int }` | ツーハンドル車用のブレーキハンドル位置（int）：正 = ブレーキノッチ、0 = ブレーキ緩解、負 = シミュレーター固有。 |
+| `SetBrakeSAP` | `{ kPa: double }` | 電磁直通ブレーキ（SAP）の目標圧力値。0〜400 = 常用ブレーキ、410 = 非常ブレーキ。それ以外のすべての値は拒否されなければなりません（MUST）。 |
+| `SetReverser` | `{ value: int }` | レバーサー（逆転器）位置。`-1` = 後進、`0` = 中立、`1` = 前進。この範囲外の値を持つコマンドは拒否されなければなりません（MUST）。 |
 | `SetButton` | `{ action: string, state: bool }` | 汎用ボタン操作。`action` は `VehicleAction`（§6.2）または `GameAction`（§6.3）の名前、あるいはカスタムアクション文字列です。カスタム／仕様外のアクションは検証なしのパススルーとして扱われ、`capabilities['input.button.<action>']` によって有効化されます。 |
 | `SetWiper` | `{ state: 'Off'\|'Intermittent'\|'Low'\|'High' }` | ワイパー位置。 |
 | `SetAtoNotch` | `{ value: int }` | ATO推奨ノッチ値。TRAIN CREWの仕様：notch > 0 のときは手動ノッチがNの場合のみ適用。notch < 0 のときは手動とATOのうち大きい方のブレーキ力を適用。 |
 | `SetDeadman` | `{ method: 'Hand'\|'Foot'\|'EB', holding: bool }` | 方式ごとのデッドマンスイッチ操作状態。 |
 
 必須として記述されたフィールドは必ず設定しなければなりません（MUST）。省略可能なフィールド（OPTIONAL）は、コマンドごとに文書化されたデフォルト動作が適用されます。
+
+プロデューサーは、未知のコマンドを受信した場合は例外（または使用するプログラミング言語における最も近い同等の処理）をスローしなければなりません（MUST）。
 
 > **`SetNotch` の非常ブレーキセンチネル**：予約された定数 `EB = -100`（`value <= -100` のすべて）は、`relative` の指定にかかわらず非常ブレーキを要求します。生のリテラル値よりもこの定数の使用を推奨します。これは車両形式に依存せず、従来のハードコードされた `-8` に取って代わるものです。
 >
@@ -1004,7 +1031,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
   "sequence": 1,
   "sim": {
     "name": "TRAIN CREW",
-    "version": "",
+    "version": null,
     "adapterName": "Tanuden.Rudolf.Adapters.TrainCrew",
     "adapterVersion": "0.1.0"
   },
@@ -1033,7 +1060,11 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
+          { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
+        ]
       },
       {
         "carNo": 2,
@@ -1046,7 +1077,11 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
+          { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
+        ]
       },
       {
         "carNo": 3,
@@ -1059,7 +1094,11 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": false }, {"isPowered": false}] },
+          { "position": "Right", "axles": [{ "isPowered": false }, {"isPowered": false}] }
+        ]
       },
       {
         "carNo": 4,
@@ -1072,10 +1111,16 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "pantographType": null,
         "pantographDirection": null,
         "length": 20,
-        "unladenMass": -1
+        "unladenMass": -1,
+        "bogies": [
+          { "position": "Left", "axles": [{ "isPowered": true }, {"isPowered": true}] },
+          { "position": "Right", "axles": [{ "isPowered": true }, {"isPowered": true}] }
+        ]
       }
     ],
     "leadCar": 4,
+    "totalLength": 80,
+    "totalUnladenMass": -1,
     "capabilities": {
       "masconType": "OneHandle",
       "masconBrakeType": "Notched",
@@ -1128,9 +1173,9 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
   "scenarioId": "51a35aec-d930-455f-a8fa-58f686f87254",
   "sentAt": "2026-07-02T20:19:26.6283871+00:00",
   "time": {
-    "sim": "07:51:50",
+    "sim": "2026-07-02T07:51:50",
     "elapsed": 28310.468,
-    "tick": 639186203666283802
+    "tick": 1650
   },
   "diagram": {
     "trainNumber": "777",
@@ -1149,7 +1194,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "doorSide": -1,
         "stopType": "PassengerStop",
         "arrival": null,
-        "departure": "07:42:00",
+        "departure": "2026-07-02T07:42:00",
         "stopPositionName": "日野森駅1番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1166,8 +1211,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:44:15",
-        "departure": "07:48:30",
+        "arrival": "2026-07-02T07:44:15",
+        "departure": "2026-07-02T07:48:30",
         "stopPositionName": "高見沢駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1184,8 +1229,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "07:50:45",
-        "departure": "07:51:15",
+        "arrival": "2026-07-02T07:50:45",
+        "departure": "2026-07-02T07:51:15",
         "stopPositionName": "水越駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1202,8 +1247,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:52:55",
-        "departure": "07:53:25",
+        "arrival": "2026-07-02T07:52:55",
+        "departure": "2026-07-02T07:53:25",
         "stopPositionName": "藤江駅2番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1220,8 +1265,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "07:56:50",
-        "departure": "08:02:00",
+        "arrival": "2026-07-02T07:56:50",
+        "departure": "2026-07-02T08:02:00",
         "stopPositionName": "大道寺駅4番下り_併B",
         "trackSectionName": null,
         "remarks": null,
@@ -1238,8 +1283,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "Passing",
-        "arrival": "08:02:45",
-        "departure": "08:02:45",
+        "arrival": null,
+        "departure": "2026-07-02T08:02:45",
         "stopPositionName": "江ノ原信号場下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1256,8 +1301,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:03:50",
-        "departure": "08:04:20",
+        "arrival": "2026-07-02T08:03:50",
+        "departure": "2026-07-02T08:04:20",
         "stopPositionName": "江ノ原駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1274,8 +1319,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:06:05",
-        "departure": "08:06:35",
+        "arrival": "2026-07-02T08:06:05",
+        "departure": "2026-07-02T08:06:35",
         "stopPositionName": "新野崎駅3番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1292,8 +1337,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:08:00",
-        "departure": "08:08:30",
+        "arrival": "2026-07-02T08:08:00",
+        "departure": "2026-07-02T08:08:30",
         "stopPositionName": "新井川駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1310,8 +1355,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:10:00",
-        "departure": "08:10:30",
+        "arrival": "2026-07-02T08:10:00",
+        "departure": "2026-07-02T08:10:30",
         "stopPositionName": "羽衣橋駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1328,8 +1373,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:11:55",
-        "departure": "08:12:25",
+        "arrival": "2026-07-02T08:11:55",
+        "departure": "2026-07-02T08:12:25",
         "stopPositionName": "浜園駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1346,8 +1391,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "08:14:20",
-        "departure": "08:19:00",
+        "arrival": "2026-07-02T08:14:20",
+        "departure": "2026-07-02T08:19:00",
         "stopPositionName": "津崎駅4番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1364,8 +1409,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:21:05",
-        "departure": "08:21:35",
+        "arrival": "2026-07-02T08:21:05",
+        "departure": "2026-07-02T08:21:35",
         "stopPositionName": "虹ケ浜駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1382,10 +1427,11 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:23:30",
-        "departure": "08:24:00",
+        "arrival": "2026-07-02T08:23:30",
+        "departure": "2026-07-02T08:24:00",
         "stopPositionName": "海岸公園駅下り",
         "trackSectionName": null,
+        "remarks": null,
         "isTimeTaken": null,
         "stopPositions": null,
         "interactions": null
@@ -1397,8 +1443,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:25:35",
-        "departure": "08:26:05",
+        "arrival": "2026-07-02T08:25:35",
+        "departure": "2026-07-02T08:26:05",
         "stopPositionName": "河原崎駅下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1415,8 +1461,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": -1,
         "stopType": "PassengerStop",
-        "arrival": "08:27:30",
-        "departure": "08:28:00",
+        "arrival": "2026-07-02T08:27:30",
+        "departure": "2026-07-02T08:28:00",
         "stopPositionName": "駒野駅3番下り",
         "trackSectionName": null,
         "remarks": null,
@@ -1433,7 +1479,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
         "absoluteDistance": null,
         "doorSide": 1,
         "stopType": "PassengerStop",
-        "arrival": "08:30:55",
+        "arrival": "2026-07-02T08:30:55",
         "departure": null,
         "stopPositionName": "館浜駅3番下り",
         "trackSectionName": null,
@@ -1454,7 +1500,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "absoluteDistance": 19408.52734375,
     "curveRadius": null,
     "gradient": -1.9993319511413574,
-    "mrPressure": 695.1132202148438
+    "mrPressure": 695.1132202148438,
+    "totalLoadMass": -1
   },
   "controllers": {
     "powerNotch": 5,
@@ -1486,7 +1533,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     ]
   },
   "lamps": {
-    "values": [1, 1, 0, 0, /* ... total 512 */]
+    "values": [1, 1, 0, 0] /* total 512 items, array shortened here */
   },
   "ats": {
     "class": "普通",
@@ -1534,6 +1581,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 1,
         "occupancyRate": 100,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
@@ -1543,6 +1591,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 2,
         "occupancyRate": 65.47618865966797,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1552,6 +1601,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 3,
         "occupancyRate": 77.38095092773438,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1561,6 +1611,7 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 4,
         "occupancyRate": 85.71428680419922,
+        "loadMass": -1,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
