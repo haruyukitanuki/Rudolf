@@ -38,6 +38,9 @@ public class VehicleCapabilities
   /// <summary>Air-compressor cut-out (stop) pressure in kPa; null when unknown.</summary>
   public double? CpStopPressure;
 
-  /// <summary>Style of air brake; null when unknown.</summary>
-  public PneumaticBrakeType? PneumaticBrakeType;
+  /// <summary>Whether the train has a brake pipe.</summary>
+  public bool HasBP;
+
+  /// <summary>Whether the train has a straight air pipe.</summary>
+  public bool HasSAP;
 }
