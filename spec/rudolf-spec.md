@@ -335,6 +335,7 @@ This section provides information on how certain data fields are populated in th
 | `time.dateKnown` | `bool` | `true` if the simulator/producer can produce a real date. For example, a HMI may use this to determine if it should show the date. |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
+| `physics.erPressure` | `bool` | Availability of equalizing reservoir pressure. |
 | `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.mass` | One of {`All`, `TotalOnly`, `None`}. | Mass detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data MUST be broadcast from the first index of the arrays. |
@@ -342,6 +343,8 @@ This section provides information on how certain data fields are populated in th
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
+| `cars.bpPressure` | `bool` | Whether the simulator/producer can provide BP (brake pipe, ブレーキ管) pressure, AND the train uses BP. |
+| `cars.sapPressure` | `bool` | Whether the simulator/producer can provide SAP (straight air pipe, 直通管) pressure, AND the train uses SAP. |
 | `cars.faults` | `bool` | Availability of per-car fault reporting in `OutputDataFrame.cars.list[...].faults` (see §5.11). |
 | `cars.bogies` | `bool` | Availability of per-bogie data in `OutputDataFrame.cars.list[...].bogies` (see §5.11). |
 
@@ -565,7 +568,8 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
   "absoluteDistance": 47823.6, // meters | null: absolute kilometer-post position on the route (キロ程)
   "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns, 0 for straights
   "gradient": null, // ‰ | null: old versions of BVEEx doesn't expose
-  "mrPressure": 740.0, // kPa; train-level; always present
+  "mrPressure": 740.0, // kPa; main reservoir is train-level; always present
+  "erPressure": 0.0, // kPa | null; equalizing reservoir is train-level; null when the sim doesn't model it
   "totalLoadMass": null, // kg | null
 }
 ```
@@ -813,6 +817,9 @@ Each entry in the list corresponds to one car. The cars are ordered left to righ
       "carNo": 1,
       "occupancyRate": null, // passenger percentage filled (may exceed 100%) | null : TC native; BVE: null
       "loadMass": null, // kg | null
+      "bpPressure": null, // kPa | null: brake pipe pressure; null if not provided or the car doesn't use BP
+      "sapPressure": null, // kPa | null: straight air pipe pressure; null if not provided or the car doesn't use SAP
+      "auxPressure": null, // kPa | null: auxiliary reservoir pressure; null if not provided or the car doesn't have an auxiliary reservoir
       "faults": [], // CarFault[] | null: empty = normal; null = not modeled (cars.faults capability)
       "bogies": [ // index-aligned with SimulatorProfile.vehicle.cars[...].bogies; null = not modeled
         { "position": "Left", "bcPressure": 307.4, "amperage": 62, "faults": [] },
