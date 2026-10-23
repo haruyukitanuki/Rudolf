@@ -1149,11 +1149,15 @@ Recommended transports:
     "physics.curveRadius": false,
     "physics.length": "All",
     "physics.mass": "None",
+    "physics.erPressure": null,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.bpPressure": null,
+    "cars.sapPressure": null,
+    "cars.auxPressure": null,
     "cars.faults": true,
     "cars.bogies": true,
     "input.command.SetNotch": true,
@@ -1512,6 +1516,7 @@ Recommended transports:
     "curveRadius": null,
     "gradient": -1.9993319511413574,
     "mrPressure": 695.1132202148438,
+    "erPressure": null,
     "totalLoadMass": -1
   },
   "controllers": {
@@ -1592,7 +1597,10 @@ Recommended transports:
       {
         "carNo": 1,
         "occupancyRate": 100,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
@@ -1602,7 +1610,10 @@ Recommended transports:
       {
         "carNo": 2,
         "occupancyRate": 65.47618865966797,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1612,7 +1623,10 @@ Recommended transports:
       {
         "carNo": 3,
         "occupancyRate": 77.38095092773438,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1622,7 +1636,10 @@ Recommended transports:
       {
         "carNo": 4,
         "occupancyRate": 85.71428680419922,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
