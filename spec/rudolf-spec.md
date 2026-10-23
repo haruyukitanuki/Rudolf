@@ -89,6 +89,12 @@ A field set to `null` means that "the sim really doesn't have this value right n
 
 A field that's absent from the JSON MEANS "the sim doesn't support this field at all" (also signaled in SimulatorProfile.capabilities). Producers SHOULD prefer `null` over absent for fields they generally produce but currently lack.
 
+#### Enum Behavior
+
+There are many fields that allow a small subset of string values (e.g., mascon brake type) or integer values (e.g., reverser position). These are likely to be implemented as `enum` or an equivalent type. However, the behavior of such types varies with programming languages and project settings.
+
+Producers MUST match the specified primitive type (string or integer) when writing such values. Similarly, consumers MUST reject values of an incorrect type.
+
 #### Versioning
 
 All documents carry a single `schemaVersion` at the envelope level. A breaking change to any section bumps `schemaVersion`. Consumers MUST tolerate unknown fields added in future minor versions (read what they know, ignore what they don't).
