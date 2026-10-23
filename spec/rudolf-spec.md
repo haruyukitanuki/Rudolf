@@ -1149,15 +1149,15 @@ Recommended transports:
     "physics.curveRadius": false,
     "physics.length": "All",
     "physics.mass": "None",
-    "physics.erPressure": null,
+    "physics.erPressure": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
-    "cars.bpPressure": null,
-    "cars.sapPressure": null,
-    "cars.auxPressure": null,
+    "cars.bpPressure": false,
+    "cars.sapPressure": false,
+    "cars.auxPressure": false,
     "cars.faults": true,
     "cars.bogies": true,
     "input.command.SetNotch": true,
@@ -1517,7 +1517,7 @@ Recommended transports:
     "gradient": -1.9993319511413574,
     "mrPressure": 695.1132202148438,
     "erPressure": null,
-    "totalLoadMass": -1
+    "totalLoadMass": null
   },
   "controllers": {
     "powerNotch": 5,
