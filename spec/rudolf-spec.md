@@ -345,6 +345,7 @@ This section provides information on how certain data fields are populated in th
 | `signals.next` | `NextItemArrayType` | |
 | `cars.bpPressure` | `bool` | Whether the simulator/producer can provide BP (brake pipe, ブレーキ管) pressure, AND the train uses BP. |
 | `cars.sapPressure` | `bool` | Whether the simulator/producer can provide SAP (straight air pipe, 直通管) pressure, AND the train uses SAP. |
+| `cars.auxPressure` | `bool` | Whether the simulator/producer can provide auxiliary reservoir pressure. |
 | `cars.faults` | `bool` | Availability of per-car fault reporting in `OutputDataFrame.cars.list[...].faults` (see §5.11). |
 | `cars.bogies` | `bool` | Availability of per-bogie data in `OutputDataFrame.cars.list[...].bogies` (see §5.11). |
 
