@@ -90,6 +90,12 @@ Rudolfは3種類のドキュメントを定義します。いずれもJSON形式
 
 JSONにフィールド自体が存在しない（省略されている）場合、それは「シミュレーターがそのフィールドをそもそもサポートしていない」ことを意味します（これは `SimulatorProfile.capabilities` でも宣言されます）。通常は出力されるものの現時点で値がないフィールドについては、プロデューサーは省略するのではなく `null` を出力すべきです（SHOULD）。
 
+#### 列挙型の挙動（Enum Behavior）
+
+多くのフィールドは、少数の文字列値（例：ブレーキハンドルの動作方式）または整数値（例：レバーサー位置）のいずれかを取ります。これらは `enum` またはそれに準ずる型として実装されることが想定されますが、そのような型の挙動はプログラミング言語やプロジェクトの設定によって異なります。
+
+プロデューサーは、これらの値を出力する際、仕様で指定されたプリミティブ型（文字列または整数）に一致させなければなりません（MUST）。同様に、コンシューマーは誤った型の値を拒否しなければなりません（MUST）。
+
 #### バージョニング
 
 すべてのドキュメントは、エンベロープレベルに単一の `schemaVersion` を持ちます。いずれかのセクションに破壊的変更が行われた場合、`schemaVersion` を更新します。コンシューマーは、将来のマイナーバージョンで追加される未知のフィールドを許容しなければなりません（MUST。理解できるフィールドを読み取り、未知のフィールドは無視します）。
@@ -219,11 +225,15 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
     "physics.curveRadius": false,
     "physics.length": "All",
     "physics.mass": "None",
+    "physics.erPressure": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.bpPressure": false,
+    "cars.sapPressure": false,
+    "cars.auxPressure": false,
     "cars.faults": true,
     "cars.bogies": true,
     "input.command.SetNotch": true,
@@ -336,6 +346,7 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `time.dateKnown` | `bool` | シミュレーター／プロデューサーが正確な日付を出力できる場合 `true`。例えば、HMIが日付を表示すべきか判断するために使用できます。 |
 | `physics.gradient` | `bool` | 勾配データの利用可否。 |
 | `physics.curveRadius` | `bool` | 曲線半径データの利用可否。 |
+| `physics.erPressure` | `bool` | 均等空気溜圧力の利用可否。 |
 | `physics.length` | {`All`, `TotalOnly`, `None`} のいずれか | `SimulatorProfile.vehicle.cars`、`OutputDataFrame.physics`、`OutputDataFrame.cars` における長さデータの詳細レベル。 |
 | `physics.mass` | {`All`, `TotalOnly`, `None`} のいずれか | `SimulatorProfile.vehicle.cars`、`OutputDataFrame.physics`、`OutputDataFrame.cars` における質量データの詳細レベル。 |
 | `physics.perCar` | {`All`, `FirstCarOnly`, `None`} のいずれか | `OutputDataFrame.cars` における車両ごとの物理データの利用可否。`FirstCarOnly` の場合、配列の先頭インデックスから全車にブロードキャストしなければなりません（MUST）。 |
@@ -343,6 +354,9 @@ InputCommand = { schemaVersion, kind, scenarioId, sentAt, sequenceNumber, comman
 | `stations.next` | `NextItemArrayType` | 駅データ配列の配信形態。 |
 | `speedLimits.next` | `NextItemArrayType` | 速度制限データ配列の配信形態。 |
 | `signals.next` | `NextItemArrayType` | 信号データ配列の配信形態。 |
+| `cars.bpPressure` | `bool` | シミュレーター／プロデューサーがブレーキ管（BP）圧力を出力できる、かつ編成内の少なくとも1両にブレーキ管が存在する場合 `true`。 |
+| `cars.sapPressure` | `bool` | シミュレーター／プロデューサーが直通管（SAP）圧力を出力できる、かつ編成内の少なくとも1両に直通管が存在する場合 `true`。 |
+| `cars.auxPressure` | `bool` | シミュレーター／プロデューサーが補助空気溜圧力を出力できる、かつ編成内の少なくとも1両に補助空気溜が存在する場合 `true`。 |
 | `cars.faults` | `bool` | `OutputDataFrame.cars.list[...].faults` における車両故障報告の利用可否（§5.11 参照）。 |
 | `cars.bogies` | `bool` | `OutputDataFrame.cars.list[...].bogies` における台車データの利用可否（§5.11 参照）。 |
 
@@ -566,7 +580,8 @@ const distanceToNext =
   "absoluteDistance": 47823.6, // meters | null：路線上の絶対キロ程
   "curveRadius": -500.0, // meters | null：TRAIN CREWは非公開。左カーブは負、右カーブは正、直線は0
   "gradient": null, // ‰ | null：旧バージョンのBVEEx等は非公開
-  "mrPressure": 740.0, // kPa。元空気溜圧力（必須）
+  "mrPressure": 740.0, // kPa。元空気溜圧力。列車全体の値（必須）
+  "erPressure": 0.0, // kPa | null。均等空気溜圧力。列車全体の値。シミュレーターがモデル化していない場合は null
   "totalLoadMass": null, // kg | null
 }
 ```
@@ -814,6 +829,9 @@ BVEアダプターは、出力時に `Section.CurrentSignalIndex` へ `+1` を�
       "carNo": 1,
       "occupancyRate": null, // 乗車率（100%を超える場合あり）| null：TCはネイティブ値／BVEはnull
       "loadMass": null, // kg | null
+      "bpPressure": null, // kPa | null：ブレーキ管（BP）圧力。出力されない場合、またはこの車両がブレーキ管を使用しない場合は null
+      "sapPressure": null, // kPa | null：直通管（SAP）圧力。出力されない場合、またはこの車両が直通管を使用しない場合は null
+      "auxPressure": null, // kPa | null：補助空気溜圧力。出力されない場合、またはこの車両が補助空気溜を備えていない場合は null
       "faults": [], // CarFault[] | null：空配列は正常／nullは未モデル（cars.faults ケイパビリティ）
       "bogies": [ // SimulatorProfile.vehicle.cars[...].bogies とインデックス整列／nullは未モデル
         { "position": "Left", "bcPressure": 307.4, "amperage": 62, "faults": [] },
@@ -1138,11 +1156,15 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "physics.curveRadius": false,
     "physics.length": "All",
     "physics.mass": "None",
+    "physics.erPressure": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.bpPressure": false,
+    "cars.sapPressure": false,
+    "cars.auxPressure": false,
     "cars.faults": true,
     "cars.bogies": true,
     "input.command.SetNotch": true,
@@ -1501,7 +1523,8 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
     "curveRadius": null,
     "gradient": -1.9993319511413574,
     "mrPressure": 695.1132202148438,
-    "totalLoadMass": -1
+    "erPressure": null,
+    "totalLoadMass": null
   },
   "controllers": {
     "powerNotch": 5,
@@ -1581,7 +1604,10 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 1,
         "occupancyRate": 100,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
@@ -1591,7 +1617,10 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 2,
         "occupancyRate": 65.47618865966797,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1601,7 +1630,10 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 3,
         "occupancyRate": 77.38095092773438,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1611,7 +1643,10 @@ Rudolfはドキュメントのデータ構造を定義しますが、**トラン
       {
         "carNo": 4,
         "occupancyRate": 85.71428680419922,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
