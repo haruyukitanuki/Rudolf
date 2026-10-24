@@ -20,7 +20,7 @@ public class BogieDynamic
   /// <summary>Matches the static entry at the same index.</summary>
   public BogiePosition Position;
 
-  /// <summary>kPa; null when sim doesn't expose per-bogie BC pressure.</summary>
+  /// <summary>Brake cylinder (BC) pressure in kPa; null when sim doesn't expose.</summary>
   public double? BcPressure;
 
   /// <summary>Amperes; null on unpowered bogies or when sim doesn't expose per-bogie motor current.</summary>
@@ -41,6 +41,15 @@ public class Car
 
   /// <summary>Load in kg. Only available if <c>physics.mass</c> capability is <c>All</c>.</summary>
   public double? LoadMass;
+
+  /// <summary>Brake pipe (BP) pressure in kPa; null if the train doesn't use BP, or the sim doesn't expose.</summary>
+  public double? BpPressure;
+
+  /// <summary>Straight air pipe (SAP) pressure in kPa; null if the train doesn't use SAP, or the sim doesn't expose.</summary>
+  public double? SapPressure;
+
+  /// <summary>Auxiliary reservior pressure in kPa; null if the car doesn't have an auxiliary reservior, or the sim doesn't expose.</summary>
+  public double? AuxPressure;
 
   /// <summary>Body/roof/cab-scoped faults. Empty = normal; null = not modeled.</summary>
   public List<CarFault>? Faults;

@@ -21,8 +21,13 @@ public class Physics
   /// <summary>Per mille; null when the sim doesn't expose gradient.</summary>
   public double? Gradient;
 
-  /// <summary>MR Pressure in kPa; train-level; always present.</summary>
+  /// <summary>Main reservoir (MR) pressure in kPa; train-level; always present.</summary>
   public double MrPressure;
+
+  /// <summary>
+  /// Equalizing reservoir (ER) pressure in kPa; train-level; null when the train doesn't have ER, or the sim doesn't expose.
+  /// </summary>
+  public double? ErPressure;
 
   /// <summary>Total load in kg. Only available if <c>physics.mass</c> capability is <c>All</c> or <c>TotalOnly</c>.</summary>
   public double? TotalLoadMass;

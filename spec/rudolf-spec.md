@@ -89,6 +89,12 @@ A field set to `null` means that "the sim really doesn't have this value right n
 
 A field that's absent from the JSON MEANS "the sim doesn't support this field at all" (also signaled in SimulatorProfile.capabilities). Producers SHOULD prefer `null` over absent for fields they generally produce but currently lack.
 
+#### Enum Behavior
+
+There are many fields that allow a small subset of string values (e.g., mascon brake type) or integer values (e.g., reverser position). These are likely to be implemented as `enum` or an equivalent type. However, the behavior of such types varies with programming languages and project settings.
+
+Producers MUST match the specified primitive type (string or integer) when writing such values. Similarly, consumers MUST reject values of an incorrect type.
+
 #### Versioning
 
 All documents carry a single `schemaVersion` at the envelope level. A breaking change to any section bumps `schemaVersion`. Consumers MUST tolerate unknown fields added in future minor versions (read what they know, ignore what they don't).
@@ -218,11 +224,15 @@ Sent once on scenario load. Re-sent on vehicle change. Cacheable by `scenarioId`
     "physics.curveRadius": false,
     "physics.length": "All",
     "physics.mass": "None",
+    "physics.erPressure": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.bpPressure": false,
+    "cars.sapPressure": false,
+    "cars.auxPressure": false,
     "cars.faults": true,
     "cars.bogies": true,
     "input.command.SetNotch": true,
@@ -335,6 +345,7 @@ This section provides information on how certain data fields are populated in th
 | `time.dateKnown` | `bool` | `true` if the simulator/producer can produce a real date. For example, a HMI may use this to determine if it should show the date. |
 | `physics.gradient` | `bool` | |
 | `physics.curveRadius` | `bool` | |
+| `physics.erPressure` | `bool` | Availability of equalizing reservoir pressure. |
 | `physics.length` | One of {`All`, `TotalOnly`, `None`}. | Length detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.mass` | One of {`All`, `TotalOnly`, `None`}. | Mass detail level in `SimulatorProfile.vehicle.cars`, `OutputDataFrame.physics`, and `OutputDataFrame.cars`. |
 | `physics.perCar` | One of {`All`, `FirstCarOnly`, `None`}. | Per-car physics availability in `OutputDataFrame.cars`. `FirstCarOnly` means that data MUST be broadcast from the first index of the arrays. |
@@ -342,6 +353,9 @@ This section provides information on how certain data fields are populated in th
 | `stations.next` | `NextItemArrayType` | |
 | `speedLimits.next` | `NextItemArrayType` | |
 | `signals.next` | `NextItemArrayType` | |
+| `cars.bpPressure` | `bool` | Whether the simulator/producer can provide BP (brake pipe, ブレーキ管) pressure, and BP is present on at least one car. |
+| `cars.sapPressure` | `bool` | Whether the simulator/producer can provide SAP (straight air pipe, 直通管) pressure, and SAP is present on at least one car. |
+| `cars.auxPressure` | `bool` | Whether the simulator/producer can provide auxiliary reservoir pressure, and an auxiliary reservoir is present on at least one car. |
 | `cars.faults` | `bool` | Availability of per-car fault reporting in `OutputDataFrame.cars.list[...].faults` (see §5.11). |
 | `cars.bogies` | `bool` | Availability of per-bogie data in `OutputDataFrame.cars.list[...].bogies` (see §5.11). |
 
@@ -565,7 +579,8 @@ Total route distance is only guaranteed to be available when `SimulatorProfile.c
   "absoluteDistance": 47823.6, // meters | null: absolute kilometer-post position on the route (キロ程)
   "curveRadius": -500.0, // meters | null: TRAIN CREW doesn't expose; negative for left turns, positive for right turns, 0 for straights
   "gradient": null, // ‰ | null: old versions of BVEEx doesn't expose
-  "mrPressure": 740.0, // kPa; train-level; always present
+  "mrPressure": 740.0, // kPa; main reservoir is train-level; always present
+  "erPressure": 0.0, // kPa | null; equalizing reservoir is train-level; null when the sim doesn't model it
   "totalLoadMass": null, // kg | null
 }
 ```
@@ -813,6 +828,9 @@ Each entry in the list corresponds to one car. The cars are ordered left to righ
       "carNo": 1,
       "occupancyRate": null, // passenger percentage filled (may exceed 100%) | null : TC native; BVE: null
       "loadMass": null, // kg | null
+      "bpPressure": null, // kPa | null: brake pipe pressure; null if not provided or the car doesn't use BP
+      "sapPressure": null, // kPa | null: straight air pipe pressure; null if not provided or the car doesn't use SAP
+      "auxPressure": null, // kPa | null: auxiliary reservoir pressure; null if not provided or the car doesn't have an auxiliary reservoir
       "faults": [], // CarFault[] | null: empty = normal; null = not modeled (cars.faults capability)
       "bogies": [ // index-aligned with SimulatorProfile.vehicle.cars[...].bogies; null = not modeled
         { "position": "Left", "bcPressure": 307.4, "amperage": 62, "faults": [] },
@@ -1137,11 +1155,15 @@ Recommended transports:
     "physics.curveRadius": false,
     "physics.length": "All",
     "physics.mass": "None",
+    "physics.erPressure": false,
     "physics.perCar": "All",
     "ats.richState": true,
     "stations.next": "MultiStatic",
     "speedLimits.next": "Single",
     "signals.next": "Single",
+    "cars.bpPressure": false,
+    "cars.sapPressure": false,
+    "cars.auxPressure": false,
     "cars.faults": true,
     "cars.bogies": true,
     "input.command.SetNotch": true,
@@ -1500,7 +1522,8 @@ Recommended transports:
     "curveRadius": null,
     "gradient": -1.9993319511413574,
     "mrPressure": 695.1132202148438,
-    "totalLoadMass": -1
+    "erPressure": null,
+    "totalLoadMass": null
   },
   "controllers": {
     "powerNotch": 5,
@@ -1580,7 +1603,10 @@ Recommended transports:
       {
         "carNo": 1,
         "occupancyRate": 100,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
@@ -1590,7 +1616,10 @@ Recommended transports:
       {
         "carNo": 2,
         "occupancyRate": 65.47618865966797,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1600,7 +1629,10 @@ Recommended transports:
       {
         "carNo": 3,
         "occupancyRate": 77.38095092773438,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": null, "faults": [] },
@@ -1610,7 +1642,10 @@ Recommended transports:
       {
         "carNo": 4,
         "occupancyRate": 85.71428680419922,
-        "loadMass": -1,
+        "loadMass": null,
+        "bpPressure": null,
+        "sapPressure": null,
+        "auxPressure": null,
         "faults": [],
         "bogies": [
           { "position": "Left", "bcPressure": 0, "amperage": 702.1439208984375, "faults": [] },
