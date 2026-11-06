@@ -46,7 +46,11 @@ If one does not exist for the simulator you are working on, you can always write
 
 ## Specification
 
-The canonical spec lives at [`spec/rudolf-spec.md`](./spec/rudolf-spec.md).
+The canonical spec lives at [`docs/rudolf-spec.md`](./docs/rudolf-spec.md).
+
+## Governance
+
+The governance guidelines live at [`docs/rudolf-governance.md`](./docs/rudolf-governance.md).
 
 ## R-rudolf?
 
