@@ -1,4 +1,7 @@
 # Rudolf Governance
+
+**English** | [日本語](./rudolf-governance.ja.md)
+
 These are guidelines pertaining to how Rudolf should handle requests to add new data pointers to its specification, and when and what should trigger a new release.
 
 > [!Note]
@@ -78,7 +81,7 @@ Rudolf runs on a multitude of software and devices.
 
 If one of these devices "blows up" because of bad implementation, you cannot blame an LLM for it. You own the mistake.
 
-> A computer can never be held accountable, therefore a computer must never make a management decision.
+> **"A computer can never be held accountable, therefore a computer must never make a management decision."**
 > 
 > &mdash; IBM Training Manual, 1979
 
