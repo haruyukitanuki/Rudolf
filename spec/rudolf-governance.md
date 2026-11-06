@@ -94,13 +94,24 @@ It is possible for a formalisation to not have a release due to tight release cy
 Usually formalisations are done at time of release to prevent confusion. 
 
 ### How to handle changes in releases?
-#### Non-breaking (Minor) & Breaking (Major)
+#### Non-breaking (Minor)
 Changes in this category should be batched rather than released as a single change.
 
-Additions and removals to the specifications fall under this category. For correcting an errata, see below.
+Changes such as:
+- new fields
+- new sections
+- new enum members
+- new vocabulary entries. 
+
+Consumers should be able to tolerate new fields without breaking.
+
+#### Breaking (Major)
+Removals, retyping, repurposing and reinterpretation of anything that already exists in the specifications fall under this category. For correcting an errata, see below.
 
 #### Correction to Specifications
 Any changes made to the specifications to correct an errata in a current or previous formalisation, which if not corrected, causes a divergence or misinterpretation of the intended use of a function or field, should be corrected immediately with a release.
+
+A correction is never held back by incomplete minor proposals. It takes first priority in the next outgoing release, which may consist of the errata correction alone if nothing else is ready.
 
 ### What goes into a release?
 In order of priority, if applicable
@@ -112,7 +123,7 @@ In order of priority, if applicable
 The above is assuming the changes are deemed necessary and not made redundant by a specification revision that will be included in the current outgoing cycle.
 
 #### Major releases
-For major releases, only the major change should be included. 
+A major release contains every breaking change accepted for the cycle. Minor changes do not get added to the release.
 
 If there are corrections to formalisation or bug fixes required in the previous release, they should be done in an earlier release first before doing a major release. This gives software maintainers the chance to update to a minor release rather than needing to commit to a major release in order to get a bug fix for example.
 
@@ -126,9 +137,8 @@ Rudolf is assumed to be running on software that cannot be frequently updated or
 
 Before each release, all minor proposals and plans must be included in the release and not deferred to a later one. An exception would be a breaking change that is irrelevant to the one in the release cycle that is outgoing. That breaking change should wait for the next cycle.
 
-
 ### Version Schema
-Rudolf uses two-part version number for all sections inside the wire-format where applicable.
+Rudolf uses two-part version number for all sections inside the wire-format for every document.
 
 #### Versioning for Rudolf wire-format
 ```
