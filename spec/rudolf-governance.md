@@ -1,5 +1,5 @@
 # Rudolf Governance
-These are guidelines pertaining to how Rudolf should handle requests to add new data pointers in its specification to when to and what should trigger a new release.
+These are guidelines pertaining to how Rudolf should handle requests to add new data pointers to its specification, and when and what should trigger a new release.
 
 > [!Note]
 > This document is owned by Haruyuki. 
@@ -12,7 +12,7 @@ In an ideal world, Rudolf should aim to support 100% of all producers and adapte
 
 Producers adopting Rudolf as their main wire-format for their API should not need to have any loss in data points and resolution they wish to carry across the wire. This means that, as much as possible, a game should not have to place its data inside the extensions section because of a lack of support in the `SimulatorProfile` or `OutputDataFrame` document.
 
-### In practice
+### Rudolf in practice
 In practice, Rudolf is unable to cover all edge cases and grounds in order to prevent bloat and unnecessary data points. Every simulator and game out there is unique and programmed in many different ways.
 
 Not everything can be added to Rudolf and some values would need to be placed inside the extensions section which would inadvertently break support in consumers due to unstandardised field naming and producer specific fields.
@@ -21,7 +21,7 @@ Not everything can be added to Rudolf and some values would need to be placed in
 Rudolf is designed to be as prescriptive as possible where needed, without being too overbearing, in order to work on a multitude of different consumer software harmoniously without the need for massive code changes.
 
 ### Complying with Specifications
-In order to be compliant with Rudolf, your game's available set of data points need not be a superset of what Rudolf has. It can be subset and still be compliant. Rudolf is designed to have fields that are nullable. 
+In order to be compliant with Rudolf, your game's available set of data points need not be a superset of what Rudolf has. It can be a subset and still be compliant. Rudolf is designed to have fields that are nullable. 
 
 If for any reason, you are unable to populate non-nullable fields, it means that your game or adapter has insufficient data points to use Rudolf and is incapable of becoming Rudolf compliant. You cannot brute force your way into compliance if this is the case.
 
@@ -32,7 +32,7 @@ This is by design to ensure that consumers are able to still perform useful func
 ### "Rudolf-compliant"
 You can only claim "Rudolf-compliant" if you strictly follow all prescribed requirements in the Specification document without deviations in behaviour.
 
-**For consumer software maintainers consuming Rudolf encountering behavioural issues with output from a producer or adapter, should not write workarounds to accommodate for the unstandardised behaviour. If possible, contact the producer software's maintainer and report it as a bug.** 
+**Consumer software maintainers consuming Rudolf who encounter behavioural issues with output from a producer or adapter should not write workarounds to accommodate the unstandardised behaviour. If possible, contact the producer software's maintainer and report it as a bug.** 
 
 It is the producer software's responsibility to maintain specification prescribed behaviour strictly. You should not budge on this, ever.
 
@@ -40,9 +40,23 @@ It is the producer software's responsibility to maintain specification prescribe
 Refer to the Specification document for full details.
 
 ## Specification proposals
-All proposals to make changes to Rudolf's specification must 
+All proposals to make changes to Rudolf's specification must be as specific and perfectionistic as possible.
+
+What this means is that you should not propose vague pointers such as "I want x value".
+
+Suggestions on what to include in proposals:
+- State what you want
+- What do you need it for
+- Why do you need it
+- What this value means (explain the terminology, please provide the Japanese equivalent if writing in English)
+- What producers (games/simulators) support this value already
 
 ### Chasing the last 10%
+Rudolf does not chase the last 10% to reach 100% coverage for all possible datapoints as per the "Rudolf in practice" section above.
+
+If a request to add a new data point is proposed, it will be evaluated against the current pool of games/simulators, at least 60% should be able to support the data point and reliably populate a value or otherwise be willing to support it in future.
+
+Case-by-case exceptions apply, but generally the above would be used for evaluation on whether to make a revision to the Specification document.
 
 ### Rejected proposals
 We do not accept proposals of the following nature:
@@ -56,7 +70,7 @@ We do not accept proposals of the following nature:
 We are of the stance that LLM-assisted development helps to increase implementation efficiency and sometimes catch human errors. We do not have any reservations with using LLMs to help write contributions, however, we are against low effort, low quality AI slop.
 
 ### Communications
-All communications must be done by a human in which no texts should be written using an LLM. Do not be a meat proxy.
+All communications must be done by a human and no text should be written using an LLM. Do not be a meat proxy.
 
 ### Quality
 #### You are accountable for everything you produce
@@ -101,9 +115,9 @@ Changes such as:
 - new fields
 - new sections
 - new enum members
-- new vocabulary entries. 
+- new vocabulary entries
 
-Consumers should be able to tolerate new fields without breaking.
+Consumers must tolerate new fields, enum members and vocabulary entries without breaking.
 
 #### Breaking (Major)
 Removals, retyping, repurposing and reinterpretation of anything that already exists in the specifications fall under this category. For correcting an errata, see below.
@@ -123,12 +137,12 @@ In order of priority, if applicable
 The above is assuming the changes are deemed necessary and not made redundant by a specification revision that will be included in the current outgoing cycle.
 
 #### Major releases
-A major release contains every breaking change accepted for the cycle. Minor changes do not get added to the release.
+A major release contains every breaking change accepted for the cycle. Breaking changes irrelevant to the outgoing cycle wait for the next one. Minor changes do not get added to the release.
 
 If there are corrections to formalisation or bug fixes required in the previous release, they should be done in an earlier release first before doing a major release. This gives software maintainers the chance to update to a minor release rather than needing to commit to a major release in order to get a bug fix for example.
 
 #### Japanese l10n
-Japanese documentation should be updated before a release is done. This is strictly to be done since Rudolf's major users are of the Japanese demographic.
+Japanese documentation should be updated before a release is done. This is strictly to be done since Rudolf's major users are Japanese.
 
 ### When to release?
 **Be prudent when it comes to deciding to release.**
